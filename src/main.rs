@@ -1,21 +1,20 @@
 use std::time::Instant;
 
-use crate::cube::Cube;
+use crate::cube::{face::Face, Cube};
 
 mod cube;
 
 fn main() {
-    for side_length in 0..8 {
-        println!("Trying {0}x{0}x{0} cube", side_length);
-        let start_time = Instant::now();
+    let side_length = 3;
 
-        let cube = Cube::create(side_length);
-        cube.print_cube();
+    println!("Trying {0}x{0}x{0} cube", side_length);
+    let start_time = Instant::now();
 
-        let elapsed = start_time.elapsed();
-        println!(
-            "Creating and printing {0}x{0}x{0} cube took {1:?}\n",
-            side_length, elapsed
-        );
-    }
+    let mut cube = Cube::create(side_length);
+    cube.print_cube();
+    cube.rotate_face_90_degrees_clockwise(Face::Front);
+    cube.print_cube();
+
+    let elapsed = start_time.elapsed();
+    println!("Overall this cube took {:?}", elapsed);
 }
