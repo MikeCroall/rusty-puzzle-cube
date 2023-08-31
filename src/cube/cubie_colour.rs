@@ -1,5 +1,6 @@
 use colored::ColoredString;
 use colored::Colorize;
+use CubieColour as CC;
 
 const DEFAULT_CUBIE_CHAR: char = '■';
 
@@ -16,30 +17,30 @@ pub(super) enum CubieColour {
 impl CubieColour {
     pub(super) fn get_coloured_display_char(&self) -> ColoredString {
         match self {
-            CubieColour::Blue(Some(c))
-            | CubieColour::Green(Some(c))
-            | CubieColour::Orange(Some(c))
-            | CubieColour::Red(Some(c))
-            | CubieColour::White(Some(c))
-            | CubieColour::Yellow(Some(c)) => self.colourise_string(c.to_string()),
+            CC::Blue(Some(c))
+            | CC::Green(Some(c))
+            | CC::Orange(Some(c))
+            | CC::Red(Some(c))
+            | CC::White(Some(c))
+            | CC::Yellow(Some(c)) => self.colourise_string(c.to_string()),
 
-            CubieColour::Blue(None)
-            | CubieColour::Green(None)
-            | CubieColour::Orange(None)
-            | CubieColour::Red(None)
-            | CubieColour::White(None)
-            | CubieColour::Yellow(None) => self.colourise_string(DEFAULT_CUBIE_CHAR.into()),
+            CC::Blue(None)
+            | CC::Green(None)
+            | CC::Orange(None)
+            | CC::Red(None)
+            | CC::White(None)
+            | CC::Yellow(None) => self.colourise_string(DEFAULT_CUBIE_CHAR.into()),
         }
     }
 
     fn colourise_string(&self, string: String) -> ColoredString {
         match self {
-            CubieColour::Blue(_) => string.truecolor(0, 0, 255),
-            CubieColour::Green(_) => string.truecolor(0, 255, 0),
-            CubieColour::Orange(_) => string.truecolor(255, 127, 0),
-            CubieColour::Red(_) => string.truecolor(255, 0, 0),
-            CubieColour::White(_) => string.truecolor(255, 255, 255),
-            CubieColour::Yellow(_) => string.truecolor(255, 255, 0),
+            CC::Blue(_) => string.truecolor(0, 0, 255),
+            CC::Green(_) => string.truecolor(0, 255, 0),
+            CC::Orange(_) => string.truecolor(255, 127, 0),
+            CC::Red(_) => string.truecolor(255, 0, 0),
+            CC::White(_) => string.truecolor(255, 255, 255),
+            CC::Yellow(_) => string.truecolor(255, 255, 0),
         }
     }
 }
