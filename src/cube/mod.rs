@@ -2,7 +2,7 @@ use enum_map::{enum_map, EnumMap};
 use itertools::izip;
 
 use self::cubie_colour::CubieColour;
-use self::face::{Face, IndexAlignment};
+use self::face::{Face as F, IndexAlignment as IA};
 
 mod cubie_colour;
 pub(crate) mod face;
@@ -12,30 +12,30 @@ type Side = Vec<Vec<CubieColour>>;
 const HORIZONTAL_PADDING: &str = " ";
 
 pub(crate) struct Cube {
-    side_map: EnumMap<Face, Box<Side>>,
+    side_map: EnumMap<F, Box<Side>>,
 }
 
 impl Cube {
     pub(crate) fn create(side_length: usize) -> Self {
         Self {
             side_map: enum_map! {
-                Face::Top => Box::new(create_side_with_unique_characters(side_length, &CubieColour::White)),
-                Face::Bottom => Box::new(create_side_with_unique_characters(side_length, &CubieColour::Yellow)),
-                Face::Front => Box::new(create_side_with_unique_characters(side_length, &CubieColour::Blue)),
-                Face::Right => Box::new(create_side_with_unique_characters(side_length, &CubieColour::Orange)),
-                Face::Back => Box::new(create_side_with_unique_characters(side_length, &CubieColour::Green)),
-                Face::Left => Box::new(create_side_with_unique_characters(side_length, &CubieColour::Red)),
+                F::Top => Box::new(create_side_with_unique_characters(side_length, &CubieColour::White)),
+                F::Bottom => Box::new(create_side_with_unique_characters(side_length, &CubieColour::Yellow)),
+                F::Front => Box::new(create_side_with_unique_characters(side_length, &CubieColour::Blue)),
+                F::Right => Box::new(create_side_with_unique_characters(side_length, &CubieColour::Orange)),
+                F::Back => Box::new(create_side_with_unique_characters(side_length, &CubieColour::Green)),
+                F::Left => Box::new(create_side_with_unique_characters(side_length, &CubieColour::Red)),
             },
         }
     }
 
-    pub(crate) fn rotate_face_90_degrees_clockwise(&mut self, face: Face) {
+    pub(crate) fn rotate_face_90_degrees_clockwise(&mut self, face: F) {
         println!("Simulating rotating {:?} face 90 degrees clockwise", face);
         self.rotate_face_90_degrees_clockwise_without_adjacents(face);
         self.rotate_face_90_degrees_clockwise_only_adjacents(face);
     }
 
-    fn rotate_face_90_degrees_clockwise_without_adjacents(&mut self, face: Face) {
+    fn rotate_face_90_degrees_clockwise_without_adjacents(&mut self, face: F) {
         let side: &mut Vec<Vec<CubieColour>> = &mut self.side_map[face];
         side.reverse();
         for i in 1..side.len() {
@@ -46,7 +46,7 @@ impl Cube {
         }
     }
 
-    fn rotate_face_90_degrees_clockwise_only_adjacents(&mut self, face: Face) {
+    fn rotate_face_90_degrees_clockwise_only_adjacents(&mut self, face: F) {
         let adjacents = face.adjacent_faces_clockwise();
         let slice_0 = get_clockwise_slice_of_side(&self.side_map[adjacents[0].0], &adjacents[0].1);
         let slice_1 = get_clockwise_slice_of_side(&self.side_map[adjacents[1].0], &adjacents[1].1);
@@ -58,16 +58,15 @@ impl Cube {
             let first_element = preliminary_order.next();
             preliminary_order
                 .chain(first_element)
-                .collect::<Vec<&(Face, IndexAlignment)>>()
+                .collect::<Vec<&(F, IA)>>()
         };
 
-        println!("\tOrder to write to: {:?}", final_order); // todo remove prints when copy_adjacent_over finished
-        println!("\t\t{:?} should take {:?}", final_order[0], slice_0);
-        println!("\t\t{:?} should take {:?}", final_order[1], slice_1);
-        println!("\t\t{:?} should take {:?}", final_order[2], slice_2);
-        println!("\t\t{:?} should take {:?}", final_order[3], slice_3);
+        // println!("\tOrder to write to: {:?}", final_order); // todo remove prints when copy_adjacent_over finished
+        // println!("\t\t{:?} should take {:?}", final_order[0], slice_0);
+        // println!("\t\t{:?} should take {:?}", final_order[1], slice_1);
+        // println!("\t\t{:?} should take {:?}", final_order[2], slice_2);
+        // println!("\t\t{:?} should take {:?}", final_order[3], slice_3);
 
-        // todo sometimes needs reversed values - see output
         self.copy_adjacent_over(final_order[0], slice_0);
         self.copy_adjacent_over(final_order[1], slice_1);
         self.copy_adjacent_over(final_order[2], slice_2);
@@ -76,25 +75,43 @@ impl Cube {
 
     fn copy_adjacent_over(
         &mut self,
-        (target_face, target_alignment): &(Face, IndexAlignment),
-        values: Vec<CubieColour>,
+        (target_face, target_alignment): &(F, IA),
+        unadjusted_values: Vec<CubieColour>,
     ) {
+        let values = if target_alignment == &IA::InnerFirst || target_alignment == &IA::OuterEnd {
+            // todo is this always the correct condition?
+            let mut new_values = unadjusted_values.clone();
+            new_values.reverse();
+            new_values
+        } else {
+            unadjusted_values
+        };
+
         let side = &mut self.side_map[*target_face];
         match target_alignment {
-            IndexAlignment::OuterStart => println!(
-                // todo (can change to println! for testing output of other branches etc.)
-                "This index alignment is not implemented yet for copy_adjacent_over - still WIP"
-            ),
-            IndexAlignment::OuterEnd => println!(
-                // todo (can change to println! for testing output of other branches etc.)
-                "This index alignment is not implemented yet for copy_adjacent_over - still WIP"
-            ),
-            IndexAlignment::InnerFirst => {
+            IA::OuterStart => {
+                for i in 0..side.len() {
+                    side[i][0] = values
+                        .get(i)
+                        .expect("Values had no element for index")
+                        .to_owned();
+                }
+            }
+            IA::OuterEnd => {
+                let len = side.len();
+                for i in 0..len {
+                    side[i][len - 1] = values
+                        .get(i)
+                        .expect("Values had no element for index")
+                        .to_owned();
+                }
+            }
+            IA::InnerFirst => {
                 side.first_mut()
                     .expect("Side had no inner")
                     .clone_from_slice(&values);
             }
-            IndexAlignment::InnerLast => {
+            IA::InnerLast => {
                 side.last_mut()
                     .expect("Side had no inner")
                     .clone_from_slice(&values);
@@ -103,12 +120,12 @@ impl Cube {
     }
 
     pub(crate) fn print_cube(&self) {
-        self.print_indented_single_side(Face::Top);
-        self.print_unindented_four_sides(Face::Left, Face::Front, Face::Right, Face::Back);
-        self.print_indented_single_side(Face::Bottom);
+        self.print_indented_single_side(F::Top);
+        self.print_unindented_four_sides(F::Left, F::Front, F::Right, F::Back);
+        self.print_indented_single_side(F::Bottom);
     }
 
-    fn print_indented_single_side(&self, face: Face) {
+    fn print_indented_single_side(&self, face: F) {
         let side = &*self.side_map[face];
         let side_length = side.len();
         for cubie_row in side {
@@ -118,7 +135,7 @@ impl Cube {
         }
     }
 
-    fn print_unindented_four_sides(&self, face_a: Face, face_b: Face, face_c: Face, face_d: Face) {
+    fn print_unindented_four_sides(&self, face_a: F, face_b: F, face_c: F, face_d: F) {
         let side_a = self.side_map[face_a].iter();
         let side_b = self.side_map[face_b].iter();
         let side_c = self.side_map[face_c].iter();
@@ -166,22 +183,22 @@ fn create_side_with_unique_characters(
     side
 }
 
-fn get_clockwise_slice_of_side(side: &Side, index_alignment: &IndexAlignment) -> Vec<CubieColour> {
+fn get_clockwise_slice_of_side(side: &Side, index_alignment: &IA) -> Vec<CubieColour> {
     match index_alignment {
-        IndexAlignment::OuterStart => side
+        IA::OuterStart => side
             .iter()
             .map(|inner| inner.first().expect("Side inner had no member").to_owned())
             .collect::<Vec<CubieColour>>(),
-        IndexAlignment::OuterEnd => side
+        IA::OuterEnd => side
             .iter()
             .map(|inner| inner.last().expect("Side inner had no member").to_owned())
             .rev()
             .collect::<Vec<CubieColour>>(),
-        IndexAlignment::InnerFirst => {
+        IA::InnerFirst => {
             let mut inner_first_vec = side.first().expect("Side had no inner").to_owned();
             inner_first_vec.reverse();
             inner_first_vec
         }
-        IndexAlignment::InnerLast => side.last().expect("Side had no inner").to_owned(),
+        IA::InnerLast => side.last().expect("Side had no inner").to_owned(),
     }
 }
