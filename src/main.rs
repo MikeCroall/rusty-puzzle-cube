@@ -13,6 +13,8 @@ fn main() {
     let mut cube = Cube::create(side_length);
     cube.print_cube();
     cube.rotate_face_90_degrees_clockwise(Face::Front);
+    // cube.rotate_face_90_degrees_clockwise(Face::Right);
+    // cube.rotate_face_90_degrees_clockwise(Face::Back);
     cube.print_cube();
 
     let elapsed = start_time.elapsed();

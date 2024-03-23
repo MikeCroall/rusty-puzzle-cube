@@ -30,7 +30,7 @@ impl Cube {
     }
 
     pub(crate) fn rotate_face_90_degrees_clockwise(&mut self, face: Face) {
-        println!("Rotating {:?} face 90 degrees clockwise", face);
+        println!("Simulating rotating {:?} face 90 degrees clockwise", face);
         self.rotate_face_90_degrees_clockwise_without_adjacents(face);
         self.rotate_face_90_degrees_clockwise_only_adjacents(face);
     }
@@ -54,21 +54,52 @@ impl Cube {
         let slice_3 = get_clockwise_slice_of_side(&self.side_map[adjacents[3].0], &adjacents[3].1);
 
         let final_order = {
-            let mut preliminary_order = adjacents
-                .iter()
-                .map(|tuple| tuple.0)
-                .chain(Some(adjacents[0].0).into_iter());
-            let _ = preliminary_order.next();
-            preliminary_order.collect::<Vec<Face>>()
+            let mut preliminary_order = adjacents.iter();
+            let first_element = preliminary_order.next();
+            preliminary_order
+                .chain(first_element)
+                .collect::<Vec<&(Face, IndexAlignment)>>()
         };
 
-        println!("Order to write to: {:?}", final_order);
-        println!("{:?} should take {:?}", final_order[0], slice_0);
-        println!("{:?} should take {:?}", final_order[1], slice_1);
-        println!("{:?} should take {:?}", final_order[2], slice_2);
-        println!("{:?} should take {:?}", final_order[3], slice_3);
+        println!("\tOrder to write to: {:?}", final_order); // todo remove prints when copy_adjacent_over finished
+        println!("\t\t{:?} should take {:?}", final_order[0], slice_0);
+        println!("\t\t{:?} should take {:?}", final_order[1], slice_1);
+        println!("\t\t{:?} should take {:?}", final_order[2], slice_2);
+        println!("\t\t{:?} should take {:?}", final_order[3], slice_3);
 
-        todo!("slices are not copied anywhere yet - still WIP")
+        // todo sometimes needs reversed values - see output
+        self.copy_adjacent_over(final_order[0], slice_0);
+        self.copy_adjacent_over(final_order[1], slice_1);
+        self.copy_adjacent_over(final_order[2], slice_2);
+        self.copy_adjacent_over(final_order[3], slice_3);
+    }
+
+    fn copy_adjacent_over(
+        &mut self,
+        (target_face, target_alignment): &(Face, IndexAlignment),
+        values: Vec<CubieColour>,
+    ) {
+        let side = &mut self.side_map[*target_face];
+        match target_alignment {
+            IndexAlignment::OuterStart => println!(
+                // todo (can change to println! for testing output of other branches etc.)
+                "This index alignment is not implemented yet for copy_adjacent_over - still WIP"
+            ),
+            IndexAlignment::OuterEnd => println!(
+                // todo (can change to println! for testing output of other branches etc.)
+                "This index alignment is not implemented yet for copy_adjacent_over - still WIP"
+            ),
+            IndexAlignment::InnerFirst => {
+                side.first_mut()
+                    .expect("Side had no inner")
+                    .clone_from_slice(&values);
+            }
+            IndexAlignment::InnerLast => {
+                side.last_mut()
+                    .expect("Side had no inner")
+                    .clone_from_slice(&values);
+            }
+        }
     }
 
     pub(crate) fn print_cube(&self) {
