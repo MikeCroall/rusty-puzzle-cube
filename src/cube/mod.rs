@@ -30,21 +30,15 @@ impl Cube {
     }
 
     pub(crate) fn rotate_face_90_degrees_clockwise(&mut self, face: F) {
-        println!("Simulating rotating {face:?} face 90 degrees clockwise");
-        self.rotate_face_90_degrees_clockwise_without_print(face);
+        self.rotate_face_90_degrees_clockwise_without_adjacents(face);
+        self.rotate_face_90_degrees_clockwise_only_adjacents(face);
     }
 
     pub(crate) fn rotate_face_90_degrees_anticlockwise(&mut self, face: F) {
-        println!("Simulating rotating {face:?} face 90 degrees anticlockwise");
         // todo do this properly? Probably not...
-        self.rotate_face_90_degrees_clockwise_without_print(face);
-        self.rotate_face_90_degrees_clockwise_without_print(face);
-        self.rotate_face_90_degrees_clockwise_without_print(face);
-    }
-
-    fn rotate_face_90_degrees_clockwise_without_print(&mut self, face: F) {
-        self.rotate_face_90_degrees_clockwise_without_adjacents(face);
-        self.rotate_face_90_degrees_clockwise_only_adjacents(face);
+        self.rotate_face_90_degrees_clockwise(face);
+        self.rotate_face_90_degrees_clockwise(face);
+        self.rotate_face_90_degrees_clockwise(face);
     }
 
     fn rotate_face_90_degrees_clockwise_without_adjacents(&mut self, face: F) {
