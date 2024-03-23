@@ -35,6 +35,17 @@ impl Cube {
         self.rotate_face_90_degrees_clockwise_only_adjacents(face);
     }
 
+    pub(crate) fn rotate_face_90_degrees_anticlockwise(&mut self, face: F) {
+        println!(
+            "Simulating rotating {:?} face 90 degrees anticlockwise",
+            face
+        );
+        // todo do this properly? Probably not...
+        self.rotate_face_90_degrees_clockwise(face);
+        self.rotate_face_90_degrees_clockwise(face);
+        self.rotate_face_90_degrees_clockwise(face);
+    }
+
     fn rotate_face_90_degrees_clockwise_without_adjacents(&mut self, face: F) {
         let side: &mut Vec<Vec<CubieColour>> = &mut self.side_map[face];
         side.reverse();
