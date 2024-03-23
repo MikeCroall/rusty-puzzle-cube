@@ -15,25 +15,25 @@ pub(super) enum CubieColour {
 }
 
 impl CubieColour {
-    pub(super) fn get_coloured_display_char(&self) -> ColoredString {
+    pub(super) fn get_coloured_display_char(self) -> ColoredString {
         match self {
             CC::Blue(Some(c))
             | CC::Green(Some(c))
             | CC::Orange(Some(c))
             | CC::Red(Some(c))
             | CC::White(Some(c))
-            | CC::Yellow(Some(c)) => self.colourise_string(c.to_string()),
+            | CC::Yellow(Some(c)) => self.colourise_string(&format!("{c}")),
 
             CC::Blue(None)
             | CC::Green(None)
             | CC::Orange(None)
             | CC::Red(None)
             | CC::White(None)
-            | CC::Yellow(None) => self.colourise_string(DEFAULT_CUBIE_CHAR.into()),
+            | CC::Yellow(None) => self.colourise_string(&format!("{DEFAULT_CUBIE_CHAR}")),
         }
     }
 
-    fn colourise_string(&self, string: String) -> ColoredString {
+    fn colourise_string(self, string: &str) -> ColoredString {
         match self {
             CC::Blue(_) => string.truecolor(0, 0, 255),
             CC::Green(_) => string.truecolor(0, 255, 0),

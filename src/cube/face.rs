@@ -13,7 +13,7 @@ pub(crate) enum Face {
 }
 
 impl Face {
-    pub(crate) fn adjacent_faces_clockwise(&self) -> [(Face, IndexAlignment); 4] {
+    pub(crate) fn adjacent_faces_clockwise(self) -> [(Face, IndexAlignment); 4] {
         match self {
             F::Top => [
                 (F::Front, IA::InnerFirst),

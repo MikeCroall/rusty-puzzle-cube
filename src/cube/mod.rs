@@ -30,20 +30,21 @@ impl Cube {
     }
 
     pub(crate) fn rotate_face_90_degrees_clockwise(&mut self, face: F) {
-        println!("Simulating rotating {:?} face 90 degrees clockwise", face);
-        self.rotate_face_90_degrees_clockwise_without_adjacents(face);
-        self.rotate_face_90_degrees_clockwise_only_adjacents(face);
+        println!("Simulating rotating {face:?} face 90 degrees clockwise");
+        self.rotate_face_90_degrees_clockwise_without_print(face);
     }
 
     pub(crate) fn rotate_face_90_degrees_anticlockwise(&mut self, face: F) {
-        println!(
-            "Simulating rotating {:?} face 90 degrees anticlockwise",
-            face
-        );
+        println!("Simulating rotating {face:?} face 90 degrees anticlockwise");
         // todo do this properly? Probably not...
-        self.rotate_face_90_degrees_clockwise(face);
-        self.rotate_face_90_degrees_clockwise(face);
-        self.rotate_face_90_degrees_clockwise(face);
+        self.rotate_face_90_degrees_clockwise_without_print(face);
+        self.rotate_face_90_degrees_clockwise_without_print(face);
+        self.rotate_face_90_degrees_clockwise_without_print(face);
+    }
+
+    fn rotate_face_90_degrees_clockwise_without_print(&mut self, face: F) {
+        self.rotate_face_90_degrees_clockwise_without_adjacents(face);
+        self.rotate_face_90_degrees_clockwise_only_adjacents(face);
     }
 
     fn rotate_face_90_degrees_clockwise_without_adjacents(&mut self, face: F) {
@@ -71,12 +72,6 @@ impl Cube {
                 .chain(first_element)
                 .collect::<Vec<&(F, IA)>>()
         };
-
-        // println!("\tOrder to write to: {:?}", final_order); // todo remove prints when copy_adjacent_over finished
-        // println!("\t\t{:?} should take {:?}", final_order[0], slice_0);
-        // println!("\t\t{:?} should take {:?}", final_order[1], slice_1);
-        // println!("\t\t{:?} should take {:?}", final_order[2], slice_2);
-        // println!("\t\t{:?} should take {:?}", final_order[3], slice_3);
 
         self.copy_adjacent_over(final_order[0], slice_0);
         self.copy_adjacent_over(final_order[1], slice_1);
@@ -140,8 +135,8 @@ impl Cube {
         let side = &*self.side_map[face];
         let side_length = side.len();
         for cubie_row in side {
-            print!("{}", format!(" {}", HORIZONTAL_PADDING).repeat(side_length));
-            self.print_cubie_row(cubie_row);
+            print!("{}", format!(" {HORIZONTAL_PADDING}").repeat(side_length));
+            Cube::print_cubie_row(cubie_row);
             println!();
         }
     }
@@ -155,15 +150,15 @@ impl Cube {
         for (cubie_row_a, cubie_row_b, cubie_row_c, cubie_row_d) in
             izip!(side_a, side_b, side_c, side_d)
         {
-            self.print_cubie_row(cubie_row_a);
-            self.print_cubie_row(cubie_row_b);
-            self.print_cubie_row(cubie_row_c);
-            self.print_cubie_row(cubie_row_d);
+            Cube::print_cubie_row(cubie_row_a);
+            Cube::print_cubie_row(cubie_row_b);
+            Cube::print_cubie_row(cubie_row_c);
+            Cube::print_cubie_row(cubie_row_d);
             println!();
         }
     }
 
-    fn print_cubie_row(&self, cubie_row: &Vec<CubieColour>) {
+    fn print_cubie_row(cubie_row: &Vec<CubieColour>) {
         for cubie in cubie_row {
             print!(
                 "{}{}",
@@ -178,14 +173,16 @@ fn create_side_with_unique_characters(
     side_length: usize,
     colour_variant_creator: &dyn Fn(Option<char>) -> CubieColour,
 ) -> Side {
-    if side_length > 8 {
-        panic!("create_side_with_unique_characters does not support side_length > 8")
-    }
+    assert!(
+        (1..=8).contains(&side_length),
+        "create_side_with_unique_characters does not support side_length > 8"
+    );
     let mut side = vec![];
     for outer in 0..side_length {
         let mut inner_vec = vec![];
         for inner in 0..side_length {
-            let value = ((side_length * outer) + inner) as u32;
+            let value = u32::try_from((side_length * outer) + inner)
+                .expect("side_length is limited to 8 so conversion to u32 should never fail");
             let display_char = char::from_u32('0' as u32 + value);
             inner_vec.push(colour_variant_creator(display_char));
         }

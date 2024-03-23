@@ -7,7 +7,7 @@ mod cube;
 fn main() {
     let side_length = 3;
 
-    println!("Trying {0}x{0}x{0} cube", side_length);
+    println!("Trying {side_length}x{side_length}x{side_length} cube");
     let start_time = Instant::now();
 
     let mut cube = Cube::create(side_length);
@@ -25,5 +25,5 @@ fn main() {
     cube.rotate_face_90_degrees_anticlockwise(Face::Front);
     cube.print_cube();
     let elapsed = start_time.elapsed();
-    println!("Overall this cube took {:?}", elapsed);
+    println!("Overall this cube took {elapsed:?}");
 }
