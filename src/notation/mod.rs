@@ -2,6 +2,8 @@ use crate::cube::{face::Face, Cube};
 use once_cell::sync::Lazy;
 use regex::Regex;
 
+// TODO how do we denote this only supports 3x3? Or do we expand it to any size? What is that notation like?
+
 // TODO make the *_2 variants simply run the normal one twice - best syntax for this?
 const FN_FOR_TOKEN_F: fn(&mut Cube) = |c| c.rotate_face_90_degrees_clockwise(Face::Front);
 const FN_FOR_TOKEN_F_2: fn(&mut Cube) = |c| {
