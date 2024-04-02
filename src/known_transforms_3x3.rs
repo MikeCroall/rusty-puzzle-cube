@@ -1,5 +1,7 @@
 use crate::cube::{face::Face as F, Cube};
 
+// TODO refactor to use notation module once stable
+
 pub(crate) fn checkerboard_corners(cube: &mut Cube) {
     cube.rotate_face_90_degrees_clockwise(F::Right);
     cube.rotate_face_90_degrees_clockwise(F::Right);

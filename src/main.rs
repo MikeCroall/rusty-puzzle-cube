@@ -7,6 +7,7 @@ use crate::{
 
 mod cube;
 mod known_transforms_3x3;
+mod notation;
 
 fn main() {
     demo_simple_turns();

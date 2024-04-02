@@ -1,0 +1,181 @@
+use crate::cube::{face::Face, Cube};
+use once_cell::sync::Lazy;
+use regex::Regex;
+
+// TODO make the *_2 variants simply run the normal one twice - best syntax for this?
+const FN_FOR_TOKEN_F: fn(&mut Cube) = |c| c.rotate_face_90_degrees_clockwise(Face::Front);
+const FN_FOR_TOKEN_F_2: fn(&mut Cube) = |c| {
+    c.rotate_face_90_degrees_clockwise(Face::Front);
+    c.rotate_face_90_degrees_clockwise(Face::Front);
+};
+const FN_FOR_TOKEN_R: fn(&mut Cube) = |c| c.rotate_face_90_degrees_clockwise(Face::Right);
+const FN_FOR_TOKEN_R_2: fn(&mut Cube) = |c| {
+    c.rotate_face_90_degrees_clockwise(Face::Right);
+    c.rotate_face_90_degrees_clockwise(Face::Right);
+};
+const FN_FOR_TOKEN_U: fn(&mut Cube) = |c| c.rotate_face_90_degrees_clockwise(Face::Top);
+const FN_FOR_TOKEN_U_2: fn(&mut Cube) = |c| {
+    c.rotate_face_90_degrees_clockwise(Face::Top);
+    c.rotate_face_90_degrees_clockwise(Face::Top);
+};
+const FN_FOR_TOKEN_L: fn(&mut Cube) = |c| c.rotate_face_90_degrees_clockwise(Face::Left);
+const FN_FOR_TOKEN_L_2: fn(&mut Cube) = |c| {
+    c.rotate_face_90_degrees_clockwise(Face::Left);
+    c.rotate_face_90_degrees_clockwise(Face::Left);
+};
+const FN_FOR_TOKEN_B: fn(&mut Cube) = |c| c.rotate_face_90_degrees_clockwise(Face::Back);
+const FN_FOR_TOKEN_B_2: fn(&mut Cube) = |c| {
+    c.rotate_face_90_degrees_clockwise(Face::Back);
+    c.rotate_face_90_degrees_clockwise(Face::Back);
+};
+const FN_FOR_TOKEN_D: fn(&mut Cube) = |c| c.rotate_face_90_degrees_clockwise(Face::Bottom);
+const FN_FOR_TOKEN_D_2: fn(&mut Cube) = |c| {
+    c.rotate_face_90_degrees_clockwise(Face::Bottom);
+    c.rotate_face_90_degrees_clockwise(Face::Bottom);
+};
+const FN_FOR_TOKEN_F_PRIME: fn(&mut Cube) = |c| c.rotate_face_90_degrees_anticlockwise(Face::Front);
+const FN_FOR_TOKEN_R_PRIME: fn(&mut Cube) = |c| c.rotate_face_90_degrees_anticlockwise(Face::Right);
+const FN_FOR_TOKEN_U_PRIME: fn(&mut Cube) = |c| c.rotate_face_90_degrees_anticlockwise(Face::Top);
+const FN_FOR_TOKEN_L_PRIME: fn(&mut Cube) = |c| c.rotate_face_90_degrees_anticlockwise(Face::Left);
+const FN_FOR_TOKEN_B_PRIME: fn(&mut Cube) = |c| c.rotate_face_90_degrees_anticlockwise(Face::Back);
+const FN_FOR_TOKEN_D_PRIME: fn(&mut Cube) =
+    |c| c.rotate_face_90_degrees_anticlockwise(Face::Bottom);
+
+macro_rules! lazy_regex {
+    ($s: literal) => {
+        Lazy::new(|| Regex::new($s).expect("Invalid regular expression string in lazy regex"))
+    };
+}
+
+static MULTI_TOKEN_REGEX: Lazy<Regex> = lazy_regex!(r"^([FRULDB])(2|')?(\s([FRULDB])(2|')?)*$");
+static TOKEN_REGEX: Lazy<Regex> = lazy_regex!(r"^([FRULDB])(2|')?$");
+
+pub(crate) fn perform_sequence(token_sequence: &str, cube: &mut Cube) {
+    let token_sequence = token_sequence.trim();
+    assert!(MULTI_TOKEN_REGEX.is_match(token_sequence));
+
+    token_sequence.trim().split(' ').for_each(|token| {
+        let fn_for_token = get_fn_for_token(token);
+        fn_for_token(cube);
+    });
+}
+
+fn get_fn_for_token(token: &str) -> fn(&mut Cube) {
+    let token = token.trim();
+    assert!(TOKEN_REGEX.is_match(token));
+
+    match token {
+        "F" => FN_FOR_TOKEN_F,
+        "R" => FN_FOR_TOKEN_R,
+        "U" => FN_FOR_TOKEN_U,
+        "L" => FN_FOR_TOKEN_L,
+        "B" => FN_FOR_TOKEN_B,
+        "D" => FN_FOR_TOKEN_D,
+        "F2" => FN_FOR_TOKEN_F_2,
+        "R2" => FN_FOR_TOKEN_R_2,
+        "U2" => FN_FOR_TOKEN_U_2,
+        "L2" => FN_FOR_TOKEN_L_2,
+        "B2" => FN_FOR_TOKEN_B_2,
+        "D2" => FN_FOR_TOKEN_D_2,
+        "F'" => FN_FOR_TOKEN_F_PRIME,
+        "R'" => FN_FOR_TOKEN_R_PRIME,
+        "U'" => FN_FOR_TOKEN_U_PRIME,
+        "L'" => FN_FOR_TOKEN_L_PRIME,
+        "B'" => FN_FOR_TOKEN_B_PRIME,
+        "D'" => FN_FOR_TOKEN_D_PRIME,
+        _ => panic!("Unsupported token in notation string: {}. Regexes should have prevented getting to this point.", token),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    macro_rules! test_token_regex {
+        ($expected:literal, $($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    assert_eq!($expected, TOKEN_REGEX.is_match($value));
+                }
+            )*
+        }
+    }
+
+    test_token_regex!(
+        true,
+        matches_f: "F",
+        matches_r: "R",
+        matches_u: "U",
+        matches_l: "L",
+        matches_d: "D",
+        matches_b: "B",
+        matches_f_prime: "F'",
+        matches_r_prime: "R'",
+        matches_u_prime: "U'",
+        matches_l_prime: "L'",
+        matches_d_prime: "D'",
+        matches_b_prime: "B'",
+        matches_f_2: "F2",
+        matches_r_2: "R2",
+        matches_u_2: "U2",
+        matches_l_2: "L2",
+        matches_d_2: "D2",
+        matches_b_2: "B2",
+    );
+
+    test_token_regex!(
+        false,
+        does_not_match_f_0: "F0",
+        does_not_match_f_1: "F1",
+        does_not_match_f_1_prime: "F1'",
+        does_not_match_f_2_prime: "F2'",
+        does_not_match_f_prime_1: "F'1",
+        does_not_match_f_prime_2: "F'2",
+        does_not_match_f_3: "F3",
+        does_not_match_f_f: "FF",
+        does_not_match_f_f_1: "FF1",
+        does_not_match_f_f_2: "FF2",
+        does_not_match_f_2_2: "F22",
+        does_not_match_1: "1",
+        does_not_match_2: "2",
+        does_not_match_3: "3",
+    );
+
+    macro_rules! test_multi_token_regex {
+        ($expected:literal, $($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    assert_eq!($expected, MULTI_TOKEN_REGEX.is_match($value));
+                }
+            )*
+        }
+    }
+
+    test_multi_token_regex!(
+        true,
+        multi_token_single_token_matches: "F",
+        multi_token_single_token_number_matches: "F2",
+        multi_token_single_token_prime_matches: "F'",
+        multi_token_basic_matches: "F R U L D B",
+        multi_token_basic_numbers_matches: "F R2 U2 L D2 B",
+        multi_token_basic_primes_matches: "F' R U L' D B'",
+        multi_token_basic_primes_and_numbers_matches: "F' R2 U2 L' D2 B'",
+        multi_token_basic_repeats_matches: "F2 U2 F2 U2 F' U' F' U'",
+    );
+
+    test_multi_token_regex!(
+        false,
+        multi_token_too_many_spaces: "F  R U",
+        multi_token_not_enough_spaces: "FR U",
+        multi_token_invalid_individual_tokens: "F2' R'' UU",
+        multi_token_invalid_char: "F2 R G U",
+        multi_token_invalid_chars: "F2_ R@ UU",
+    );
+
+    #[test]
+    fn test_perform_sequence() {
+        todo!("impl test") // TODO
+    }
+}
