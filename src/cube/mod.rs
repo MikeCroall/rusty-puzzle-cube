@@ -1,3 +1,5 @@
+use std::fmt;
+
 use enum_map::{enum_map, EnumMap};
 use itertools::izip;
 
@@ -11,12 +13,26 @@ type Side = Vec<Vec<CubieColour>>;
 
 const HORIZONTAL_PADDING: &str = " ";
 
+#[derive(PartialEq)]
 pub(crate) struct Cube {
     side_map: EnumMap<F, Box<Side>>,
 }
 
 impl Cube {
     pub(crate) fn create(side_length: usize) -> Self {
+        Self {
+            side_map: enum_map! {
+                F::Top => Box::new(create_side(side_length, &CubieColour::White)),
+                F::Bottom => Box::new(create_side(side_length, &CubieColour::Yellow)),
+                F::Front => Box::new(create_side(side_length, &CubieColour::Blue)),
+                F::Right => Box::new(create_side(side_length, &CubieColour::Orange)),
+                F::Back => Box::new(create_side(side_length, &CubieColour::Green)),
+                F::Left => Box::new(create_side(side_length, &CubieColour::Red)),
+            },
+        }
+    }
+
+    pub(crate) fn create_with_unique_characters(side_length: usize) -> Self {
         Self {
             side_map: enum_map! {
                 F::Top => Box::new(create_side_with_unique_characters(side_length, &CubieColour::White)),
@@ -35,7 +51,6 @@ impl Cube {
     }
 
     pub(crate) fn rotate_face_90_degrees_anticlockwise(&mut self, face: F) {
-        // todo do this properly? Probably not...
         self.rotate_face_90_degrees_clockwise(face);
         self.rotate_face_90_degrees_clockwise(face);
         self.rotate_face_90_degrees_clockwise(face);
@@ -120,22 +135,32 @@ impl Cube {
     }
 
     pub(crate) fn print_cube(&self) {
-        self.print_indented_single_side(F::Top);
-        self.print_unindented_four_sides(F::Left, F::Front, F::Right, F::Back);
-        self.print_indented_single_side(F::Bottom);
+        println!("{:?}", &self);
     }
 
-    fn print_indented_single_side(&self, face: F) {
+    fn write_indented_single_side(&self, f: &mut fmt::Formatter, face: F) -> fmt::Result {
         let side = &*self.side_map[face];
         let side_length = side.len();
         for cubie_row in side {
-            print!("{}", format!(" {HORIZONTAL_PADDING}").repeat(side_length));
-            Cube::print_cubie_row(cubie_row);
-            println!();
+            write!(
+                f,
+                "{}",
+                format!(" {HORIZONTAL_PADDING}").repeat(side_length)
+            )?;
+            Cube::write_cubie_row(f, cubie_row)?;
+            writeln!(f)?;
         }
+        Ok(())
     }
 
-    fn print_unindented_four_sides(&self, face_a: F, face_b: F, face_c: F, face_d: F) {
+    fn write_unindented_four_sides(
+        &self,
+        f: &mut fmt::Formatter,
+        face_a: F,
+        face_b: F,
+        face_c: F,
+        face_d: F,
+    ) -> fmt::Result {
         let side_a = self.side_map[face_a].iter();
         let side_b = self.side_map[face_b].iter();
         let side_c = self.side_map[face_c].iter();
@@ -144,23 +169,46 @@ impl Cube {
         for (cubie_row_a, cubie_row_b, cubie_row_c, cubie_row_d) in
             izip!(side_a, side_b, side_c, side_d)
         {
-            Cube::print_cubie_row(cubie_row_a);
-            Cube::print_cubie_row(cubie_row_b);
-            Cube::print_cubie_row(cubie_row_c);
-            Cube::print_cubie_row(cubie_row_d);
-            println!();
+            Cube::write_cubie_row(f, cubie_row_a)?;
+            Cube::write_cubie_row(f, cubie_row_b)?;
+            Cube::write_cubie_row(f, cubie_row_c)?;
+            Cube::write_cubie_row(f, cubie_row_d)?;
+            writeln!(f)?;
         }
+        Ok(())
     }
 
-    fn print_cubie_row(cubie_row: &Vec<CubieColour>) {
+    fn write_cubie_row(f: &mut fmt::Formatter, cubie_row: &Vec<CubieColour>) -> fmt::Result {
         for cubie in cubie_row {
-            print!(
-                "{}{}",
+            write!(
+                f,
+                "{}{HORIZONTAL_PADDING}",
                 cubie.get_coloured_display_char(),
-                HORIZONTAL_PADDING
-            );
+            )?;
         }
+        Ok(())
     }
+}
+
+impl fmt::Debug for Cube {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.write_indented_single_side(f, F::Top)?;
+        self.write_unindented_four_sides(f, F::Left, F::Front, F::Right, F::Back)?;
+        self.write_indented_single_side(f, F::Bottom)?;
+        Ok(())
+    }
+}
+
+fn create_side(
+    side_length: usize,
+    colour_variant_creator: &dyn Fn(Option<char>) -> CubieColour,
+) -> Side {
+    let mut side = vec![];
+    for _outer in 0..side_length {
+        let inner_vec = vec![colour_variant_creator(None); side_length];
+        side.push(inner_vec);
+    }
+    side
 }
 
 fn create_side_with_unique_characters(

@@ -51,7 +51,7 @@ fn demo_simple_turns_big_cube() {
 
     let start_time = Instant::now();
 
-    let mut cube = Cube::create(8);
+    let mut cube = Cube::create_with_unique_characters(8);
     cube.print_cube();
     cube.rotate_face_90_degrees_clockwise(Face::Front);
     println!();

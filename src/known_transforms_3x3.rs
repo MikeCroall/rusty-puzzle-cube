@@ -1,43 +1,11 @@
-use crate::cube::{face::Face as F, Cube};
-
-// TODO refactor to use notation module once stable
+use crate::{cube::Cube, notation::perform_3x3_sequence};
 
 pub(crate) fn checkerboard_corners(cube: &mut Cube) {
-    cube.rotate_face_90_degrees_clockwise(F::Right);
-    cube.rotate_face_90_degrees_clockwise(F::Right);
-    cube.rotate_face_90_degrees_anticlockwise(F::Left);
-    cube.rotate_face_90_degrees_anticlockwise(F::Left);
-
-    cube.rotate_face_90_degrees_clockwise(F::Front);
-    cube.rotate_face_90_degrees_clockwise(F::Front);
-    cube.rotate_face_90_degrees_anticlockwise(F::Back);
-    cube.rotate_face_90_degrees_anticlockwise(F::Back);
-
-    cube.rotate_face_90_degrees_clockwise(F::Top);
-    cube.rotate_face_90_degrees_clockwise(F::Top);
-    cube.rotate_face_90_degrees_anticlockwise(F::Bottom);
-    cube.rotate_face_90_degrees_anticlockwise(F::Bottom);
+    let sequence = "R2 L2 F2 B2 U2 D2";
+    perform_3x3_sequence(sequence, cube);
 }
 
 pub(crate) fn cube_in_cube_in_cube(cube: &mut Cube) {
-    cube.rotate_face_90_degrees_clockwise(F::Front);
-    cube.rotate_face_90_degrees_anticlockwise(F::Right);
-    cube.rotate_face_90_degrees_anticlockwise(F::Top);
-    cube.rotate_face_90_degrees_anticlockwise(F::Front);
-    cube.rotate_face_90_degrees_clockwise(F::Top);
-    cube.rotate_face_90_degrees_anticlockwise(F::Left);
-    cube.rotate_face_90_degrees_clockwise(F::Back);
-    cube.rotate_face_90_degrees_anticlockwise(F::Top);
-    cube.rotate_face_90_degrees_clockwise(F::Back);
-    cube.rotate_face_90_degrees_clockwise(F::Back);
-    cube.rotate_face_90_degrees_anticlockwise(F::Top);
-    cube.rotate_face_90_degrees_anticlockwise(F::Front);
-    cube.rotate_face_90_degrees_anticlockwise(F::Right);
-    cube.rotate_face_90_degrees_clockwise(F::Back);
-    cube.rotate_face_90_degrees_clockwise(F::Right);
-    cube.rotate_face_90_degrees_clockwise(F::Right);
-    cube.rotate_face_90_degrees_clockwise(F::Front);
-    cube.rotate_face_90_degrees_clockwise(F::Top);
-    cube.rotate_face_90_degrees_clockwise(F::Left);
-    cube.rotate_face_90_degrees_clockwise(F::Top);
+    let sequence = "F R' U' F' U L' B U' B2 U' F' R' B R2 F U L U";
+    perform_3x3_sequence(sequence, cube);
 }

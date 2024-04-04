@@ -2,8 +2,6 @@ use crate::cube::{face::Face, Cube};
 use once_cell::sync::Lazy;
 use regex::Regex;
 
-// TODO how do we denote this only supports 3x3? Or do we expand it to any size? What is that notation like?
-
 // TODO make the *_2 variants simply run the normal one twice - best syntax for this?
 const FN_FOR_TOKEN_F: fn(&mut Cube) = |c| c.rotate_face_90_degrees_clockwise(Face::Front);
 const FN_FOR_TOKEN_F_2: fn(&mut Cube) = |c| {
@@ -52,7 +50,7 @@ macro_rules! lazy_regex {
 static MULTI_TOKEN_REGEX: Lazy<Regex> = lazy_regex!(r"^([FRULDB])(2|')?(\s([FRULDB])(2|')?)*$");
 static TOKEN_REGEX: Lazy<Regex> = lazy_regex!(r"^([FRULDB])(2|')?$");
 
-pub(crate) fn perform_sequence(token_sequence: &str, cube: &mut Cube) {
+pub(crate) fn perform_3x3_sequence(token_sequence: &str, cube: &mut Cube) {
     let token_sequence = token_sequence.trim();
     assert!(MULTI_TOKEN_REGEX.is_match(token_sequence));
 
@@ -85,13 +83,14 @@ fn get_fn_for_token(token: &str) -> fn(&mut Cube) {
         "L'" => FN_FOR_TOKEN_L_PRIME,
         "B'" => FN_FOR_TOKEN_B_PRIME,
         "D'" => FN_FOR_TOKEN_D_PRIME,
-        _ => panic!("Unsupported token in notation string: {}. Regexes should have prevented getting to this point.", token),
+        _ => panic!("Unsupported token in notation string: {token}. Regexes should have prevented getting to this point."),
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use pretty_assertions::assert_eq;
 
     macro_rules! test_token_regex {
         ($expected:literal, $($name:ident: $value:expr,)*) => {
@@ -177,7 +176,18 @@ mod tests {
     );
 
     #[test]
-    fn test_perform_sequence() {
-        todo!("impl test") // TODO
+    fn test_perform_3x3_sequence() {
+        let mut cube_under_test = Cube::create(3);
+        let mut control_cube = Cube::create(3);
+
+        perform_3x3_sequence("F2 R U F", &mut cube_under_test);
+
+        control_cube.rotate_face_90_degrees_clockwise(Face::Front);
+        control_cube.rotate_face_90_degrees_clockwise(Face::Front);
+        control_cube.rotate_face_90_degrees_clockwise(Face::Right);
+        control_cube.rotate_face_90_degrees_clockwise(Face::Top);
+        control_cube.rotate_face_90_degrees_clockwise(Face::Front);
+
+        assert_eq!(control_cube, cube_under_test);
     }
 }

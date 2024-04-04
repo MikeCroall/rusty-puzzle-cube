@@ -4,7 +4,7 @@ use CubieColour as CC;
 
 const DEFAULT_CUBIE_CHAR: char = '■';
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub(super) enum CubieColour {
     Blue(Option<char>),
     Green(Option<char>),
