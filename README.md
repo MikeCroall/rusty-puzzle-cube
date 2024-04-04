@@ -15,8 +15,6 @@ perform_3x3_sequence(sequence, &mut cube);
 cube.print_cube();
 ```
 
-Will print the below
-
 ![Cube in Cube in Cube output screenshot](demo/cube-in-cube-in-cube.png)
 
 #### Checkerboard Corners
@@ -28,6 +26,17 @@ perform_3x3_sequence(sequence, &mut cube);
 cube.print_cube();
 ```
 
-Will print the below
-
 ![Checkerboard Corners output screenshot](demo/checkerboard-corners.png)
+
+#### Unique Cubies and Large Cubes
+
+Large cubes can be created by providing a larger side length, and cubies can each be given a unique character to keep track of exactly where they move as moves are applied
+
+Note that side length is limited to a maximum of 8 when using unique characters to avoid leaving the basic ASCII range
+
+```rust
+let mut cube = Cube::create_with_unique_characters(8);
+cube.print_cube();
+```
+
+![Big Cube and Unique Cubie output screenshot](demo/big-cube-unique-cubie.png)
