@@ -6,11 +6,13 @@ on:
             - "**.rs"
             - "**.toml"
             - "**.lock"
+            - "**rust-ci.yml"
     pull_request:
         paths:
             - "**.rs"
             - "**.toml"
             - "**.lock"
+            - "**rust-ci.yml"
 
 env:
     CARGO_TERM_COLOR: always
