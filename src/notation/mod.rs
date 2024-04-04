@@ -190,4 +190,26 @@ mod tests {
 
         assert_eq!(control_cube, cube_under_test);
     }
+
+    #[test]
+    #[ignore = "still figuring out how to create the expected cube without explicitly carrying out all the moves required"]
+    fn test_perform_3x3_sequence_every_token_once() {
+        let sequence = "F R U L B D F2 R2 U2 L2 B2 D2 F' R' U' L' B' D'";
+        let mut cube_under_test = Cube::create(3);
+
+        perform_3x3_sequence(sequence, &mut cube_under_test);
+
+        // TODO how do we create the expected? Can we serde with enum map? Want to avoid manually applying moves one by one to test against
+        // let expected_cube = Cube {
+        //     side_map: enum_map![],
+        // };
+
+        // Each face, top row first
+        // Front: orange yellow green, green blue green, white blue red
+        // Top: yellow green green, red white yellow, yellow red white
+        // Bottom: orange yellow yellow, white yellow blue, yellow white blue
+        // Left: blue blue green, blue red orange, red red blue
+        // Right: red green white, red orange yellow, blue orange red
+        // Back: orange white orange, orange green white, white orange green
+    }
 }
