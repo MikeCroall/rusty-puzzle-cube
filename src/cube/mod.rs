@@ -6,10 +6,10 @@ use itertools::izip;
 use self::cubie_colour::CubieColour;
 use self::face::{Face as F, IndexAlignment as IA};
 
-mod cubie_colour;
+pub(crate) mod cubie_colour;
 pub(crate) mod face;
 
-type Side = Vec<Vec<CubieColour>>;
+pub(crate) type Side = Vec<Vec<CubieColour>>;
 
 const HORIZONTAL_PADDING: &str = " ";
 
@@ -196,6 +196,35 @@ impl fmt::Debug for Cube {
         self.write_unindented_four_sides(f, F::Left, F::Front, F::Right, F::Back)?;
         self.write_indented_single_side(f, F::Bottom)?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+impl Cube {
+    pub(crate) fn create_from_sides(
+        top: Side,
+        bottom: Side,
+        front: Side,
+        right: Side,
+        back: Side,
+        left: Side,
+    ) -> Self {
+        let boxed_top = Box::new(top);
+        let boxed_bottom = Box::new(bottom);
+        let boxed_front = Box::new(front);
+        let boxed_right = Box::new(right);
+        let boxed_back = Box::new(back);
+        let boxed_left = Box::new(left);
+        Self {
+            side_map: enum_map! {
+                F::Top => boxed_top.clone(),
+                F::Bottom => boxed_bottom.clone(),
+                F::Front => boxed_front.clone(),
+                F::Right => boxed_right.clone(),
+                F::Back => boxed_back.clone(),
+                F::Left => boxed_left.clone(),
+            },
+        }
     }
 }
 

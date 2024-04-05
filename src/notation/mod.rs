@@ -48,7 +48,6 @@ macro_rules! lazy_regex {
 }
 
 static MULTI_TOKEN_REGEX: Lazy<Regex> = lazy_regex!(r"^([FRULDB])(2|')?(\s([FRULDB])(2|')?)*$");
-static TOKEN_REGEX: Lazy<Regex> = lazy_regex!(r"^([FRULDB])(2|')?$");
 
 pub(crate) fn perform_3x3_sequence(token_sequence: &str, cube: &mut Cube) {
     let token_sequence = token_sequence.trim();
@@ -62,7 +61,6 @@ pub(crate) fn perform_3x3_sequence(token_sequence: &str, cube: &mut Cube) {
 
 fn get_fn_for_token(token: &str) -> fn(&mut Cube) {
     let token = token.trim();
-    assert!(TOKEN_REGEX.is_match(token));
 
     match token {
         "F" => FN_FOR_TOKEN_F,
@@ -89,59 +87,18 @@ fn get_fn_for_token(token: &str) -> fn(&mut Cube) {
 
 #[cfg(test)]
 mod tests {
+    use crate::cube::cubie_colour::CubieColour;
+    use crate::cube::Side;
+
     use super::*;
     use pretty_assertions::assert_eq;
 
-    macro_rules! test_token_regex {
-        ($expected:literal, $($name:ident: $value:expr,)*) => {
-            $(
-                #[test]
-                fn $name() {
-                    assert_eq!($expected, TOKEN_REGEX.is_match($value));
-                }
-            )*
-        }
+    #[test]
+    #[should_panic]
+    fn test_get_fn_for_token_invalid_input() {
+        let invalid_token = "M";
+        get_fn_for_token(invalid_token);
     }
-
-    test_token_regex!(
-        true,
-        matches_f: "F",
-        matches_r: "R",
-        matches_u: "U",
-        matches_l: "L",
-        matches_d: "D",
-        matches_b: "B",
-        matches_f_prime: "F'",
-        matches_r_prime: "R'",
-        matches_u_prime: "U'",
-        matches_l_prime: "L'",
-        matches_d_prime: "D'",
-        matches_b_prime: "B'",
-        matches_f_2: "F2",
-        matches_r_2: "R2",
-        matches_u_2: "U2",
-        matches_l_2: "L2",
-        matches_d_2: "D2",
-        matches_b_2: "B2",
-    );
-
-    test_token_regex!(
-        false,
-        does_not_match_f_0: "F0",
-        does_not_match_f_1: "F1",
-        does_not_match_f_1_prime: "F1'",
-        does_not_match_f_2_prime: "F2'",
-        does_not_match_f_prime_1: "F'1",
-        does_not_match_f_prime_2: "F'2",
-        does_not_match_f_3: "F3",
-        does_not_match_f_f: "FF",
-        does_not_match_f_f_1: "FF1",
-        does_not_match_f_f_2: "FF2",
-        does_not_match_f_2_2: "F22",
-        does_not_match_1: "1",
-        does_not_match_2: "2",
-        does_not_match_3: "3",
-    );
 
     macro_rules! test_multi_token_regex {
         ($expected:literal, $($name:ident: $value:expr,)*) => {
@@ -156,9 +113,24 @@ mod tests {
 
     test_multi_token_regex!(
         true,
-        multi_token_single_token_matches: "F",
-        multi_token_single_token_number_matches: "F2",
-        multi_token_single_token_prime_matches: "F'",
+        multi_token_basic_matches_f: "F",
+        multi_token_basic_matches_r: "R",
+        multi_token_basic_matches_u: "U",
+        multi_token_basic_matches_l: "L",
+        multi_token_basic_matches_d: "D",
+        multi_token_basic_matches_b: "B",
+        multi_token_basic_matches_f_prime: "F'",
+        multi_token_basic_matches_r_prime: "R'",
+        multi_token_basic_matches_u_prime: "U'",
+        multi_token_basic_matches_l_prime: "L'",
+        multi_token_basic_matches_d_prime: "D'",
+        multi_token_basic_matches_b_prime: "B'",
+        multi_token_basic_matches_f_2: "F2",
+        multi_token_basic_matches_r_2: "R2",
+        multi_token_basic_matches_u_2: "U2",
+        multi_token_basic_matches_l_2: "L2",
+        multi_token_basic_matches_d_2: "D2",
+        multi_token_basic_matches_b_2: "B2",
         multi_token_basic_matches: "F R U L D B",
         multi_token_basic_numbers_matches: "F R2 U2 L D2 B",
         multi_token_basic_primes_matches: "F' R U L' D B'",
@@ -168,11 +140,25 @@ mod tests {
 
     test_multi_token_regex!(
         false,
-        multi_token_too_many_spaces: "F  R U",
-        multi_token_not_enough_spaces: "FR U",
-        multi_token_invalid_individual_tokens: "F2' R'' UU",
-        multi_token_invalid_char: "F2 R G U",
-        multi_token_invalid_chars: "F2_ R@ UU",
+        multi_token_does_not_match_f_0: "F0",
+        multi_token_does_not_match_f_1: "F1",
+        multi_token_does_not_match_f_1_prime: "F1'",
+        multi_token_does_not_match_f_2_prime: "F2'",
+        multi_token_does_not_match_f_prime_1: "F'1",
+        multi_token_does_not_match_f_prime_2: "F'2",
+        multi_token_does_not_match_f_3: "F3",
+        multi_token_does_not_match_f_f: "FF",
+        multi_token_does_not_match_f_f_1: "FF1",
+        multi_token_does_not_match_f_f_2: "FF2",
+        multi_token_does_not_match_f_2_2: "F22",
+        multi_token_does_not_match_1: "1",
+        multi_token_does_not_match_2: "2",
+        multi_token_does_not_match_3: "3",
+        multi_token_does_not_match_too_many_spaces: "F  R U",
+        multi_token_does_not_match_not_enough_spaces: "FR U",
+        multi_token_does_not_match_invalid_individual_tokens: "F2' R'' UU",
+        multi_token_does_not_match_invalid_char: "F2 R G U",
+        multi_token_does_not_match_invalid_chars: "F2_ R@ UU",
     );
 
     #[test]
@@ -191,25 +177,60 @@ mod tests {
         assert_eq!(control_cube, cube_under_test);
     }
 
+    macro_rules! create_side {
+        ( $( $($colour:ident)+ ; )+ ) => {
+            vec![ $(
+                vec![ $(CubieColour::$colour(None),)* ],
+            )* ]
+        };
+    }
+
     #[test]
-    #[ignore = "still figuring out how to create the expected cube without explicitly carrying out all the moves required"]
     fn test_perform_3x3_sequence_every_token_once() {
         let sequence = "F R U L B D F2 R2 U2 L2 B2 D2 F' R' U' L' B' D'";
         let mut cube_under_test = Cube::create(3);
 
         perform_3x3_sequence(sequence, &mut cube_under_test);
 
-        // TODO how do we create the expected? Can we serde with enum map? Want to avoid manually applying moves one by one to test against
-        // let expected_cube = Cube {
-        //     side_map: enum_map![],
-        // };
+        let expected_top: Side = create_side!(
+            Green Orange Green;
+            White White Yellow;
+            Blue Red White;
+        );
+        let expected_bottom: Side = create_side!(
+            Orange Yellow Yellow;
+            White Yellow Blue;
+            White Red Blue;
+        );
+        let expected_front: Side = create_side!(
+            Orange Yellow Green;
+            White Blue Green;
+            White Blue Red;
+        );
+        let expected_right: Side = create_side!(
+            Red Green Yellow;
+            Red Orange Yellow;
+            Blue Orange Red;
+        );
+        let expected_back: Side = create_side!(
+            Red Green Orange;
+            Orange Green White;
+            White Blue Green;
+        );
+        let expected_left: Side = create_side!(
+            Yellow Orange Yellow;
+            Blue Red Green;
+            Orange Red Blue;
+        );
+        let expected_cube = Cube::create_from_sides(
+            expected_top,
+            expected_bottom,
+            expected_front,
+            expected_right,
+            expected_back,
+            expected_left,
+        );
 
-        // Each face, top row first
-        // Front: orange yellow green, green blue green, white blue red
-        // Top: yellow green green, red white yellow, yellow red white
-        // Bottom: orange yellow yellow, white yellow blue, yellow white blue
-        // Left: blue blue green, blue red orange, red red blue
-        // Right: red green white, red orange yellow, blue orange red
-        // Back: orange white orange, orange green white, white orange green
+        assert_eq!(expected_cube, cube_under_test);
     }
 }

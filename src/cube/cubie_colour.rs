@@ -5,7 +5,7 @@ use CubieColour as CC;
 const DEFAULT_CUBIE_CHAR: char = '■';
 
 #[derive(Copy, Clone, Debug, PartialEq)]
-pub(super) enum CubieColour {
+pub(crate) enum CubieColour {
     Blue(Option<char>),
     Green(Option<char>),
     Orange(Option<char>),
@@ -15,7 +15,7 @@ pub(super) enum CubieColour {
 }
 
 impl CubieColour {
-    pub(super) fn get_coloured_display_char(self) -> ColoredString {
+    pub(crate) fn get_coloured_display_char(self) -> ColoredString {
         match self {
             CC::Blue(Some(c))
             | CC::Green(Some(c))
