@@ -87,8 +87,8 @@ fn get_fn_for_token(token: &str) -> fn(&mut Cube) {
 
 #[cfg(test)]
 mod tests {
+    use crate::create_cube_side;
     use crate::cube::cubie_colour::CubieColour;
-    use crate::cube::Side;
 
     use super::*;
     use pretty_assertions::assert_eq;
@@ -177,14 +177,6 @@ mod tests {
         assert_eq!(control_cube, cube_under_test);
     }
 
-    macro_rules! create_side {
-        ( $( $($colour:ident)+ ; )+ ) => {
-            vec![ $(
-                vec![ $(CubieColour::$colour(None),)* ],
-            )* ]
-        };
-    }
-
     #[test]
     fn test_perform_3x3_sequence_every_token_once() {
         let sequence = "F R U L B D F2 R2 U2 L2 B2 D2 F' R' U' L' B' D'";
@@ -192,32 +184,32 @@ mod tests {
 
         perform_3x3_sequence(sequence, &mut cube_under_test);
 
-        let expected_top: Side = create_side!(
+        let expected_top = create_cube_side!(
             Green Orange Green;
             White White Yellow;
             Blue Red White;
         );
-        let expected_bottom: Side = create_side!(
+        let expected_bottom = create_cube_side!(
             Orange Yellow Yellow;
             White Yellow Blue;
             White Red Blue;
         );
-        let expected_front: Side = create_side!(
+        let expected_front = create_cube_side!(
             Orange Yellow Green;
             White Blue Green;
             White Blue Red;
         );
-        let expected_right: Side = create_side!(
+        let expected_right = create_cube_side!(
             Red Green Yellow;
             Red Orange Yellow;
             Blue Orange Red;
         );
-        let expected_back: Side = create_side!(
+        let expected_back = create_cube_side!(
             Red Green Orange;
             Orange Green White;
             White Blue Green;
         );
-        let expected_left: Side = create_side!(
+        let expected_left = create_cube_side!(
             Yellow Orange Yellow;
             Blue Red Green;
             Orange Red Blue;

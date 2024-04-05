@@ -9,7 +9,7 @@ use self::face::{Face as F, IndexAlignment as IA};
 pub(crate) mod cubie_colour;
 pub(crate) mod face;
 
-pub(crate) type Side = Vec<Vec<CubieColour>>;
+type Side = Vec<Vec<CubieColour>>;
 
 const HORIZONTAL_PADDING: &str = " ";
 
@@ -197,6 +197,15 @@ impl fmt::Debug for Cube {
         self.write_indented_single_side(f, F::Bottom)?;
         Ok(())
     }
+}
+
+#[macro_export]
+macro_rules! create_cube_side {
+    ( $( $($colour:ident)+ ; )+ ) => {
+        vec![ $(
+            vec![ $(CubieColour::$colour(None),)* ],
+        )* ]
+    };
 }
 
 #[cfg(test)]
