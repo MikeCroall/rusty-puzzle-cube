@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, mem};
 
 use enum_map::{enum_map, EnumMap};
 use itertools::izip;
@@ -67,7 +67,7 @@ impl Cube {
         for i in 1..side.len() {
             let (left, right) = side.split_at_mut(i);
             (0..i).for_each(|j| {
-                std::mem::swap(&mut left[j][i], &mut right[0][j]);
+                mem::swap(&mut left[j][i], &mut right[0][j]);
             });
         }
     }
