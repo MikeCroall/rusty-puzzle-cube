@@ -41,13 +41,10 @@ const FN_FOR_TOKEN_B_PRIME: fn(&mut Cube) = |c| c.rotate_face_90_degrees_anticlo
 const FN_FOR_TOKEN_D_PRIME: fn(&mut Cube) =
     |c| c.rotate_face_90_degrees_anticlockwise(Face::Bottom);
 
-macro_rules! lazy_regex {
-    ($s: literal) => {
-        Lazy::new(|| Regex::new($s).expect("Invalid regular expression string in lazy regex"))
-    };
-}
-
-static MULTI_TOKEN_REGEX: Lazy<Regex> = lazy_regex!(r"^([FRULDB])(2|')?(\s([FRULDB])(2|')?)*$");
+static MULTI_TOKEN_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"^([FRULDB])(2|')?(\s([FRULDB])(2|')?)*$")
+        .expect("Invalid regular expression string in lazy regex")
+});
 
 pub(crate) fn perform_3x3_sequence(token_sequence: &str, cube: &mut Cube) {
     let token_sequence = token_sequence.trim();
