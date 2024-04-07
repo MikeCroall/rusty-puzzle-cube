@@ -2,11 +2,11 @@ use std::time::Instant;
 
 use crate::{
     cube::{face::Face, Cube},
-    known_transforms_3x3::{checkerboard_corners, cube_in_cube_in_cube},
+    known_transforms::{checkerboard_corners, cube_in_cube_in_cube},
 };
 
 mod cube;
-mod known_transforms_3x3;
+mod known_transforms;
 mod notation;
 
 fn main() {
