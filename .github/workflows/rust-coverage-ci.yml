@@ -1,0 +1,38 @@
+name: Coverage Upload
+
+on:
+    push:
+        paths:
+            - "src/**"
+            - ".github/workflows/rust-coverage-ci.yml"
+
+env:
+    CARGO_TERM_COLOR: always
+
+jobs:
+    coverage:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+            - name: Use dependencies cache
+              uses: actions/cache@v3
+              with:
+                  path: |
+                      ~/.cargo/bin/
+                      ~/.cargo/registry/index/
+                      ~/.cargo/registry/cache/
+                      ~/.cargo/git/db/
+                      target/
+                  key: ${{ runner.os }}-cargo-coverage-${{ hashFiles('**/Cargo.lock') }}
+                  restore-keys: ${{ runner.os }}-cargo-coverage-
+            - name: Install cargo-tarpaulin
+              run: cargo install cargo-tarpaulin
+              continue-on-error: true
+            - name: Run Tarpaulin
+              run: cargo tarpaulin --out lcov
+            - name: Coverage Upload
+              uses: codecov/codecov-action@v3
+              with:
+                  token: ${{ secrets.CODECOV_TOKEN }}
+                  files: ./lcov.info
