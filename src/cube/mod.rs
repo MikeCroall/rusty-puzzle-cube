@@ -191,22 +191,24 @@ impl Cube {
             izip!(side_a, side_b, side_c, side_d)
         {
             Cube::write_cubie_row(f, cubie_row_a)?;
+            write!(f, "{HORIZONTAL_PADDING}")?;
             Cube::write_cubie_row(f, cubie_row_b)?;
+            write!(f, "{HORIZONTAL_PADDING}")?;
             Cube::write_cubie_row(f, cubie_row_c)?;
+            write!(f, "{HORIZONTAL_PADDING}")?;
             Cube::write_cubie_row(f, cubie_row_d)?;
             writeln!(f)?;
         }
         Ok(())
     }
 
-    fn write_cubie_row(f: &mut fmt::Formatter, cubie_row: &Vec<CubieColour>) -> fmt::Result {
-        for cubie in cubie_row {
-            write!(
-                f,
-                "{}{HORIZONTAL_PADDING}",
-                cubie.get_coloured_display_char(),
-            )?;
-        }
+    fn write_cubie_row(f: &mut fmt::Formatter, cubie_row: &[CubieColour]) -> fmt::Result {
+        let joined_by_padding = cubie_row
+            .iter()
+            .map(|c| c.get_coloured_display_char().to_string())
+            .collect::<Vec<String>>()
+            .join(HORIZONTAL_PADDING);
+        write!(f, "{joined_by_padding}")?;
         Ok(())
     }
 }
@@ -370,8 +372,25 @@ mod tests {
 
         let output = format!("{:?}", cube);
 
-        let expected_output = include_bytes!("../../res/default-3x3-cube-debug-output.txt");
+        let expected_output = format!(
+            r#"      {0} {0} {0}
+      {0} {0} {0}
+      {0} {0} {0}
+{1} {1} {1} {2} {2} {2} {3} {3} {3} {4} {4} {4}
+{1} {1} {1} {2} {2} {2} {3} {3} {3} {4} {4} {4}
+{1} {1} {1} {2} {2} {2} {3} {3} {3} {4} {4} {4}
+      {5} {5} {5}
+      {5} {5} {5}
+      {5} {5} {5}
+"#,
+            CubieColour::White(None).get_coloured_display_char(),
+            CubieColour::Red(None).get_coloured_display_char(),
+            CubieColour::Blue(None).get_coloured_display_char(),
+            CubieColour::Orange(None).get_coloured_display_char(),
+            CubieColour::Green(None).get_coloured_display_char(),
+            CubieColour::Yellow(None).get_coloured_display_char(),
+        );
 
-        assert_eq!(expected_output, output.as_bytes());
+        assert_eq!(expected_output, output);
     }
 }
