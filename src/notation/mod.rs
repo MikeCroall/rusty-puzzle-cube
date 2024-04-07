@@ -87,7 +87,7 @@ fn get_fn_for_token(token: &str) -> fn(&mut Cube) {
 
 #[cfg(test)]
 mod tests {
-    use crate::cube::cubie_colour::CubieColour;
+    use crate::cube::cubie_face::CubieFace;
     use crate::{create_cube_from_sides, create_cube_side};
 
     use super::*;

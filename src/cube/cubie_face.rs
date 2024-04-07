@@ -1,11 +1,11 @@
 use colored::ColoredString;
 use colored::Colorize;
-use CubieColour as CC;
+use CubieFace as CF;
 
 const DEFAULT_CUBIE_CHAR: char = '■';
 
 #[derive(Copy, Clone, Debug, PartialEq)]
-pub(crate) enum CubieColour {
+pub(crate) enum CubieFace {
     Blue(Option<char>),
     Green(Option<char>),
     Orange(Option<char>),
@@ -14,33 +14,33 @@ pub(crate) enum CubieColour {
     Yellow(Option<char>),
 }
 
-impl CubieColour {
+impl CubieFace {
     pub(crate) fn get_coloured_display_char(self) -> ColoredString {
         match self {
-            CC::Blue(Some(c))
-            | CC::Green(Some(c))
-            | CC::Orange(Some(c))
-            | CC::Red(Some(c))
-            | CC::White(Some(c))
-            | CC::Yellow(Some(c)) => self.colourise_string(&format!("{c}")),
+            CF::Blue(Some(c))
+            | CF::Green(Some(c))
+            | CF::Orange(Some(c))
+            | CF::Red(Some(c))
+            | CF::White(Some(c))
+            | CF::Yellow(Some(c)) => self.colourise_string(&format!("{c}")),
 
-            CC::Blue(None)
-            | CC::Green(None)
-            | CC::Orange(None)
-            | CC::Red(None)
-            | CC::White(None)
-            | CC::Yellow(None) => self.colourise_string(&format!("{DEFAULT_CUBIE_CHAR}")),
+            CF::Blue(None)
+            | CF::Green(None)
+            | CF::Orange(None)
+            | CF::Red(None)
+            | CF::White(None)
+            | CF::Yellow(None) => self.colourise_string(&format!("{DEFAULT_CUBIE_CHAR}")),
         }
     }
 
     fn colourise_string(self, string: &str) -> ColoredString {
         match self {
-            CC::Blue(_) => string.truecolor(0, 0, 255),
-            CC::Green(_) => string.truecolor(0, 255, 0),
-            CC::Orange(_) => string.truecolor(255, 127, 0),
-            CC::Red(_) => string.truecolor(255, 0, 0),
-            CC::White(_) => string.truecolor(255, 255, 255),
-            CC::Yellow(_) => string.truecolor(255, 255, 0),
+            CF::Blue(_) => string.truecolor(0, 0, 255),
+            CF::Green(_) => string.truecolor(0, 255, 0),
+            CF::Orange(_) => string.truecolor(255, 127, 0),
+            CF::Red(_) => string.truecolor(255, 0, 0),
+            CF::White(_) => string.truecolor(255, 255, 255),
+            CF::Yellow(_) => string.truecolor(255, 255, 0),
         }
     }
 }
@@ -54,7 +54,7 @@ mod tests {
 
     #[test]
     fn test_default_char_cubie() {
-        let cubie = CubieColour::Red(None);
+        let cubie = CubieFace::Red(None);
         let displayed_char = cubie
             .get_coloured_display_char()
             .normal()
@@ -67,7 +67,7 @@ mod tests {
 
     #[test]
     fn test_custom_char_cubie() {
-        let cubie = CubieColour::Red(Some('?'));
+        let cubie = CubieFace::Red(Some('?'));
         let displayed_char = cubie
             .get_coloured_display_char()
             .normal()
@@ -92,7 +92,7 @@ mod tests {
             $(
                 #[test]
                 fn $test_name() {
-                    let cubie = CubieColour::$cubie_constructor(Some('?'));
+                    let cubie = CubieFace::$cubie_constructor(Some('?'));
                     let display_char = cubie.get_coloured_display_char();
                     let colour_opt = display_char.fgcolor();
                     assert!(colour_opt.is_some());

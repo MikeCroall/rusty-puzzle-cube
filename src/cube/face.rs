@@ -57,7 +57,7 @@ impl Face {
 
 #[derive(Debug, PartialEq)]
 pub(crate) enum IndexAlignment {
-    /// A side is a Vec of Vec of CubieColour
+    /// A side is a Vec of Vec of CubieFace
     /// This enum describes an edge of the 2d side
     /// e.g.
     /// [

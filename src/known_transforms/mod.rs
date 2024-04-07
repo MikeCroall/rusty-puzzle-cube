@@ -12,7 +12,7 @@ pub(crate) fn cube_in_cube_in_cube(cube: &mut Cube) {
 
 #[cfg(test)]
 mod tests {
-    use crate::cube::cubie_colour::CubieColour;
+    use crate::cube::cubie_face::CubieFace;
     use crate::{create_cube_from_sides, create_cube_side, cube::Cube};
 
     use super::*;

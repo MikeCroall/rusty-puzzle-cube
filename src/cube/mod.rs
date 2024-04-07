@@ -3,13 +3,13 @@ use std::fmt;
 use enum_map::{enum_map, EnumMap};
 use itertools::izip;
 
-use self::cubie_colour::CubieColour;
+use self::cubie_face::CubieFace;
 use self::face::{Face as F, IndexAlignment as IA};
 
-pub(crate) mod cubie_colour;
+pub(crate) mod cubie_face;
 pub(crate) mod face;
 
-type Side = Vec<Vec<CubieColour>>;
+type Side = Vec<Vec<CubieFace>>;
 
 const HORIZONTAL_PADDING: &str = " ";
 
@@ -30,11 +30,11 @@ macro_rules! create_cube_from_sides {
 #[macro_export]
 macro_rules! create_cube_side {
     ($colour:ident ; $side_length:literal) => {
-        vec![vec![CubieColour::$colour(None) ; $side_length] ; $side_length]
+        vec![vec![CubieFace::$colour(None) ; $side_length] ; $side_length]
     };
     ( $( $($colour:ident)+ ; )+ ) => {
         vec![ $(
-            vec![ $(CubieColour::$colour(None),)* ],
+            vec![ $(CubieFace::$colour(None),)* ],
         )* ]
     };
 }
@@ -48,12 +48,12 @@ impl Cube {
     pub(crate) fn create(side_length: usize) -> Self {
         Self {
             side_map: enum_map! {
-                F::Top => Box::new(create_side(side_length, &CubieColour::White)),
-                F::Bottom => Box::new(create_side(side_length, &CubieColour::Yellow)),
-                F::Front => Box::new(create_side(side_length, &CubieColour::Blue)),
-                F::Right => Box::new(create_side(side_length, &CubieColour::Orange)),
-                F::Back => Box::new(create_side(side_length, &CubieColour::Green)),
-                F::Left => Box::new(create_side(side_length, &CubieColour::Red)),
+                F::Top => Box::new(create_side(side_length, &CubieFace::White)),
+                F::Bottom => Box::new(create_side(side_length, &CubieFace::Yellow)),
+                F::Front => Box::new(create_side(side_length, &CubieFace::Blue)),
+                F::Right => Box::new(create_side(side_length, &CubieFace::Orange)),
+                F::Back => Box::new(create_side(side_length, &CubieFace::Green)),
+                F::Left => Box::new(create_side(side_length, &CubieFace::Red)),
             },
         }
     }
@@ -61,12 +61,12 @@ impl Cube {
     pub(crate) fn create_with_unique_characters(side_length: usize) -> Self {
         Self {
             side_map: enum_map! {
-                F::Top => Box::new(create_side_with_unique_characters(side_length, &CubieColour::White)),
-                F::Bottom => Box::new(create_side_with_unique_characters(side_length, &CubieColour::Yellow)),
-                F::Front => Box::new(create_side_with_unique_characters(side_length, &CubieColour::Blue)),
-                F::Right => Box::new(create_side_with_unique_characters(side_length, &CubieColour::Orange)),
-                F::Back => Box::new(create_side_with_unique_characters(side_length, &CubieColour::Green)),
-                F::Left => Box::new(create_side_with_unique_characters(side_length, &CubieColour::Red)),
+                F::Top => Box::new(create_side_with_unique_characters(side_length, &CubieFace::White)),
+                F::Bottom => Box::new(create_side_with_unique_characters(side_length, &CubieFace::Yellow)),
+                F::Front => Box::new(create_side_with_unique_characters(side_length, &CubieFace::Blue)),
+                F::Right => Box::new(create_side_with_unique_characters(side_length, &CubieFace::Orange)),
+                F::Back => Box::new(create_side_with_unique_characters(side_length, &CubieFace::Green)),
+                F::Left => Box::new(create_side_with_unique_characters(side_length, &CubieFace::Red)),
             },
         }
     }
@@ -83,7 +83,7 @@ impl Cube {
     }
 
     fn rotate_face_90_degrees_clockwise_without_adjacents(&mut self, face: F) {
-        let side: &mut Vec<Vec<CubieColour>> = &mut self.side_map[face];
+        let side: &mut Vec<Vec<CubieFace>> = &mut self.side_map[face];
         side.reverse();
         for i in 1..side.len() {
             let (left, right) = side.split_at_mut(i);
@@ -117,7 +117,7 @@ impl Cube {
     fn copy_adjacent_over(
         &mut self,
         (target_face, target_alignment): &(F, IA),
-        unadjusted_values: Vec<CubieColour>,
+        unadjusted_values: Vec<CubieFace>,
     ) {
         let values = if target_alignment == &IA::InnerFirst || target_alignment == &IA::OuterEnd {
             let mut new_values = unadjusted_values.clone();
@@ -202,7 +202,7 @@ impl Cube {
         Ok(())
     }
 
-    fn write_cubie_row(f: &mut fmt::Formatter, cubie_row: &[CubieColour]) -> fmt::Result {
+    fn write_cubie_row(f: &mut fmt::Formatter, cubie_row: &[CubieFace]) -> fmt::Result {
         let joined_by_padding = cubie_row
             .iter()
             .map(|c| c.get_coloured_display_char().to_string())
@@ -253,7 +253,7 @@ impl Cube {
 
 fn create_side(
     side_length: usize,
-    colour_variant_creator: &dyn Fn(Option<char>) -> CubieColour,
+    colour_variant_creator: &dyn Fn(Option<char>) -> CubieFace,
 ) -> Side {
     let mut side = vec![];
     for _outer in 0..side_length {
@@ -265,7 +265,7 @@ fn create_side(
 
 fn create_side_with_unique_characters(
     side_length: usize,
-    colour_variant_creator: &dyn Fn(Option<char>) -> CubieColour,
+    colour_variant_creator: &dyn Fn(Option<char>) -> CubieFace,
 ) -> Side {
     assert!(
         (1..=8).contains(&side_length),
@@ -285,17 +285,17 @@ fn create_side_with_unique_characters(
     side
 }
 
-fn get_clockwise_slice_of_side(side: &Side, index_alignment: &IA) -> Vec<CubieColour> {
+fn get_clockwise_slice_of_side(side: &Side, index_alignment: &IA) -> Vec<CubieFace> {
     match index_alignment {
         IA::OuterStart => side
             .iter()
             .map(|inner| inner.first().expect("Side inner had no member").to_owned())
-            .collect::<Vec<CubieColour>>(),
+            .collect::<Vec<CubieFace>>(),
         IA::OuterEnd => side
             .iter()
             .map(|inner| inner.last().expect("Side inner had no member").to_owned())
             .rev()
-            .collect::<Vec<CubieColour>>(),
+            .collect::<Vec<CubieFace>>(),
         IA::InnerFirst => {
             let mut inner_first_vec = side.first().expect("Side had no inner").to_owned();
             inner_first_vec.reverse();
@@ -332,34 +332,34 @@ mod tests {
 
         let expected_cube = create_cube_from_sides!(
             top: vec![
-                vec![CubieColour::White(Some('0')), CubieColour::White(Some('1')), CubieColour::White(Some('2'))],
-                vec![CubieColour::White(Some('3')), CubieColour::White(Some('4')), CubieColour::White(Some('5'))],
-                vec![CubieColour::White(Some('6')), CubieColour::White(Some('7')), CubieColour::White(Some('8'))],
+                vec![CubieFace::White(Some('0')), CubieFace::White(Some('1')), CubieFace::White(Some('2'))],
+                vec![CubieFace::White(Some('3')), CubieFace::White(Some('4')), CubieFace::White(Some('5'))],
+                vec![CubieFace::White(Some('6')), CubieFace::White(Some('7')), CubieFace::White(Some('8'))],
             ],
             bottom: vec![
-                vec![CubieColour::Yellow(Some('0')), CubieColour::Yellow(Some('1')), CubieColour::Yellow(Some('2'))],
-                vec![CubieColour::Yellow(Some('3')), CubieColour::Yellow(Some('4')), CubieColour::Yellow(Some('5'))],
-                vec![CubieColour::Yellow(Some('6')), CubieColour::Yellow(Some('7')), CubieColour::Yellow(Some('8'))],
+                vec![CubieFace::Yellow(Some('0')), CubieFace::Yellow(Some('1')), CubieFace::Yellow(Some('2'))],
+                vec![CubieFace::Yellow(Some('3')), CubieFace::Yellow(Some('4')), CubieFace::Yellow(Some('5'))],
+                vec![CubieFace::Yellow(Some('6')), CubieFace::Yellow(Some('7')), CubieFace::Yellow(Some('8'))],
             ],
             front: vec![
-                vec![CubieColour::Blue(Some('0')), CubieColour::Blue(Some('1')), CubieColour::Blue(Some('2'))],
-                vec![CubieColour::Blue(Some('3')), CubieColour::Blue(Some('4')), CubieColour::Blue(Some('5'))],
-                vec![CubieColour::Blue(Some('6')), CubieColour::Blue(Some('7')), CubieColour::Blue(Some('8'))],
+                vec![CubieFace::Blue(Some('0')), CubieFace::Blue(Some('1')), CubieFace::Blue(Some('2'))],
+                vec![CubieFace::Blue(Some('3')), CubieFace::Blue(Some('4')), CubieFace::Blue(Some('5'))],
+                vec![CubieFace::Blue(Some('6')), CubieFace::Blue(Some('7')), CubieFace::Blue(Some('8'))],
             ],
             right: vec![
-                vec![CubieColour::Orange(Some('0')), CubieColour::Orange(Some('1')), CubieColour::Orange(Some('2'))],
-                vec![CubieColour::Orange(Some('3')), CubieColour::Orange(Some('4')), CubieColour::Orange(Some('5'))],
-                vec![CubieColour::Orange(Some('6')), CubieColour::Orange(Some('7')), CubieColour::Orange(Some('8'))],
+                vec![CubieFace::Orange(Some('0')), CubieFace::Orange(Some('1')), CubieFace::Orange(Some('2'))],
+                vec![CubieFace::Orange(Some('3')), CubieFace::Orange(Some('4')), CubieFace::Orange(Some('5'))],
+                vec![CubieFace::Orange(Some('6')), CubieFace::Orange(Some('7')), CubieFace::Orange(Some('8'))],
             ],
             back: vec![
-                vec![CubieColour::Green(Some('0')), CubieColour::Green(Some('1')), CubieColour::Green(Some('2'))],
-                vec![CubieColour::Green(Some('3')), CubieColour::Green(Some('4')), CubieColour::Green(Some('5'))],
-                vec![CubieColour::Green(Some('6')), CubieColour::Green(Some('7')), CubieColour::Green(Some('8'))],
+                vec![CubieFace::Green(Some('0')), CubieFace::Green(Some('1')), CubieFace::Green(Some('2'))],
+                vec![CubieFace::Green(Some('3')), CubieFace::Green(Some('4')), CubieFace::Green(Some('5'))],
+                vec![CubieFace::Green(Some('6')), CubieFace::Green(Some('7')), CubieFace::Green(Some('8'))],
             ],
             left: vec![
-                vec![CubieColour::Red(Some('0')), CubieColour::Red(Some('1')), CubieColour::Red(Some('2'))],
-                vec![CubieColour::Red(Some('3')), CubieColour::Red(Some('4')), CubieColour::Red(Some('5'))],
-                vec![CubieColour::Red(Some('6')), CubieColour::Red(Some('7')), CubieColour::Red(Some('8'))],
+                vec![CubieFace::Red(Some('0')), CubieFace::Red(Some('1')), CubieFace::Red(Some('2'))],
+                vec![CubieFace::Red(Some('3')), CubieFace::Red(Some('4')), CubieFace::Red(Some('5'))],
+                vec![CubieFace::Red(Some('6')), CubieFace::Red(Some('7')), CubieFace::Red(Some('8'))],
             ],
         );
 
@@ -383,12 +383,12 @@ mod tests {
       {5} {5} {5}
       {5} {5} {5}
 "#,
-            CubieColour::White(None).get_coloured_display_char(),
-            CubieColour::Red(None).get_coloured_display_char(),
-            CubieColour::Blue(None).get_coloured_display_char(),
-            CubieColour::Orange(None).get_coloured_display_char(),
-            CubieColour::Green(None).get_coloured_display_char(),
-            CubieColour::Yellow(None).get_coloured_display_char(),
+            CubieFace::White(None).get_coloured_display_char(),
+            CubieFace::Red(None).get_coloured_display_char(),
+            CubieFace::Blue(None).get_coloured_display_char(),
+            CubieFace::Orange(None).get_coloured_display_char(),
+            CubieFace::Green(None).get_coloured_display_char(),
+            CubieFace::Yellow(None).get_coloured_display_char(),
         );
 
         assert_eq!(expected_output, output);
