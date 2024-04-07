@@ -310,7 +310,7 @@ mod tests {
         let cube = Cube::create(3);
 
         let display_output = format!("{}", cube);
-        let debug_output = format!("{}", cube);
+        let debug_output = format!("{:?}", cube);
 
         let expected_output = format!(
             r#"      {0} {0} {0}
