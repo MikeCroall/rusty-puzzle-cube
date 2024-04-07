@@ -14,7 +14,7 @@ type Side = Vec<Vec<CubieColour>>;
 const HORIZONTAL_PADDING: &str = " ";
 
 #[macro_export]
-macro_rules! create_cube {
+macro_rules! create_cube_from_sides {
     (
         top: $top:expr,
         bottom: $bottom:expr,
@@ -312,7 +312,7 @@ mod tests {
     fn test_default_3x3_cube() {
         let cube = Cube::create(3);
 
-        let expected_cube = create_cube!(
+        let expected_cube = create_cube_from_sides!(
             top: create_cube_side!(White; 3),
             bottom: create_cube_side!(Yellow; 3),
             front: create_cube_side!(Blue; 3),
@@ -328,7 +328,7 @@ mod tests {
     fn test_unique_chars_3x3_cube() {
         let cube = Cube::create_with_unique_characters(3);
 
-        let expected_cube = create_cube!(
+        let expected_cube = create_cube_from_sides!(
             top: vec![
                 vec![CubieColour::White(Some('0')), CubieColour::White(Some('1')), CubieColour::White(Some('2'))],
                 vec![CubieColour::White(Some('3')), CubieColour::White(Some('4')), CubieColour::White(Some('5'))],

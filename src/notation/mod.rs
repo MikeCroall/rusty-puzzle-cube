@@ -88,7 +88,7 @@ fn get_fn_for_token(token: &str) -> fn(&mut Cube) {
 #[cfg(test)]
 mod tests {
     use crate::cube::cubie_colour::CubieColour;
-    use crate::{create_cube, create_cube_side};
+    use crate::{create_cube_from_sides, create_cube_side};
 
     use super::*;
     use pretty_assertions::assert_eq;
@@ -184,7 +184,7 @@ mod tests {
 
         perform_3x3_sequence(sequence, &mut cube_under_test);
 
-        let expected_cube = create_cube!(
+        let expected_cube = create_cube_from_sides!(
             top: create_cube_side!(
                 Green Orange Green;
                 White White Yellow;
