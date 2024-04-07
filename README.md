@@ -12,7 +12,7 @@ Demos of basic 3x3 notation being parsed and applied to a newly created cube
 let mut cube = Cube::create(3);
 let sequence = "F R' U' F' U L' B U' B2 U' F' R' B R2 F U L U";
 perform_3x3_sequence(sequence, &mut cube);
-cube.print_cube();
+print!("{cube:?}");
 ```
 
 ![Cube in Cube in Cube output screenshot](demo/cube-in-cube-in-cube.png)
@@ -23,7 +23,7 @@ cube.print_cube();
 let mut cube = Cube::create(3);
 let sequence = "R2 L2 F2 B2 U2 D2";
 perform_3x3_sequence(sequence, &mut cube);
-cube.print_cube();
+print!("{cube:?}");
 ```
 
 ![Checkerboard Corners output screenshot](demo/checkerboard-corners.png)
@@ -36,7 +36,7 @@ Note that side length is limited to a maximum of 8 when using unique characters 
 
 ```rust
 let mut cube = Cube::create_with_unique_characters(8);
-cube.print_cube();
+print!("{cube:?}");
 ```
 
 ![Big Cube and Unique Cubie output screenshot](demo/big-cube-unique-cubie.png)
