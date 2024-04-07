@@ -3,7 +3,7 @@ use Face as F;
 use IndexAlignment as IA;
 
 #[derive(Debug, Clone, Copy, Enum, PartialEq)]
-pub(crate) enum Face {
+pub enum Face {
     Top,
     Bottom,
     Front,

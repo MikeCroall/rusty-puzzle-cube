@@ -5,7 +5,7 @@ use CubieFace as CF;
 const DEFAULT_CUBIE_CHAR: char = '■';
 
 #[derive(Copy, Clone, Debug, PartialEq)]
-pub(crate) enum CubieFace {
+pub enum CubieFace {
     Blue(Option<char>),
     Green(Option<char>),
     Orange(Option<char>),
@@ -15,7 +15,7 @@ pub(crate) enum CubieFace {
 }
 
 impl CubieFace {
-    pub(crate) fn get_coloured_display_char(self) -> ColoredString {
+    pub fn get_coloured_display_char(self) -> ColoredString {
         match self {
             CF::Blue(Some(c))
             | CF::Green(Some(c))

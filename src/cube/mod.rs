@@ -10,22 +10,23 @@ use self::cubie_face::CubieFace;
 use self::face::{Face as F, IndexAlignment as IA};
 use self::helpers::get_clockwise_slice_of_side;
 
-pub(crate) mod cubie_face;
-pub(crate) mod face;
+pub mod cubie_face;
+pub mod face;
 pub(crate) mod helpers;
-pub(crate) mod macros;
+pub mod macros;
 
 type Side = Vec<Vec<CubieFace>>;
 
 const HORIZONTAL_PADDING: &str = " ";
 
 #[derive(PartialEq)]
-pub(crate) struct Cube {
+pub struct Cube {
     side_map: EnumMap<F, Box<Side>>,
 }
 
 impl Cube {
-    pub(crate) fn create(side_length: usize) -> Self {
+    #[must_use]
+    pub fn create(side_length: usize) -> Self {
         Self {
             side_map: enum_map! {
                 F::Top => Box::new(create_side(side_length, &CubieFace::White)),
@@ -38,7 +39,8 @@ impl Cube {
         }
     }
 
-    pub(crate) fn create_with_unique_characters(side_length: usize) -> Self {
+    #[must_use]
+    pub fn create_with_unique_characters(side_length: usize) -> Self {
         Self {
             side_map: enum_map! {
                 F::Top => Box::new(create_side_with_unique_characters(side_length, &CubieFace::White)),
@@ -51,12 +53,12 @@ impl Cube {
         }
     }
 
-    pub(crate) fn rotate_face_90_degrees_clockwise(&mut self, face: F) {
+    pub fn rotate_face_90_degrees_clockwise(&mut self, face: F) {
         self.rotate_face_90_degrees_clockwise_without_adjacents(face);
         self.rotate_face_90_degrees_clockwise_only_adjacents(face);
     }
 
-    pub(crate) fn rotate_face_90_degrees_anticlockwise(&mut self, face: F) {
+    pub fn rotate_face_90_degrees_anticlockwise(&mut self, face: F) {
         self.rotate_face_90_degrees_clockwise(face);
         self.rotate_face_90_degrees_clockwise(face);
         self.rotate_face_90_degrees_clockwise(face);
@@ -210,7 +212,7 @@ impl fmt::Display for Cube {
 
 #[cfg(test)]
 impl Cube {
-    pub(crate) fn create_from_sides(
+    pub fn create_from_sides(
         top: Side,
         bottom: Side,
         front: Side,

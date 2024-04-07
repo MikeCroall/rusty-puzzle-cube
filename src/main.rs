@@ -5,9 +5,9 @@ use crate::{
     known_transforms::{checkerboard_corners, cube_in_cube_in_cube},
 };
 
-mod cube;
-mod known_transforms;
-mod notation;
+pub mod cube;
+pub mod known_transforms;
+pub mod notation;
 
 fn main() {
     demo_simple_turns();

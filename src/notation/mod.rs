@@ -46,7 +46,9 @@ static MULTI_TOKEN_REGEX: Lazy<Regex> = Lazy::new(|| {
         .expect("Invalid regular expression string in lazy regex")
 });
 
-pub(crate) fn perform_3x3_sequence(token_sequence: &str, cube: &mut Cube) {
+/// # Panics
+/// Will panic if an unrecognised token makes it past the regex check. This will be considered a bug, and regex should be updated to prevent this.
+pub fn perform_3x3_sequence(token_sequence: &str, cube: &mut Cube) {
     let token_sequence = token_sequence.trim();
     assert!(MULTI_TOKEN_REGEX.is_match(token_sequence));
 
