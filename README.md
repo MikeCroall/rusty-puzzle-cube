@@ -40,3 +40,6 @@ print!("{cube:?}");
 ```
 
 ![Big Cube and Unique Cubie output screenshot](demo/big-cube-unique-cubie.png)
+
+Note that large cubes do not currently support any moves that a 3x3 does not support.
+For example, rotating only the center column of a 5x5, or the 2nd column of a 4x4 is currently impossible.
