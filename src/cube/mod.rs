@@ -159,10 +159,6 @@ impl Cube {
         }
     }
 
-    pub(crate) fn print_cube(&self) {
-        println!("{:?}", &self);
-    }
-
     fn write_indented_single_side(&self, f: &mut fmt::Formatter, face: F) -> fmt::Result {
         let side = &*self.side_map[face];
         let side_length = side.len();
