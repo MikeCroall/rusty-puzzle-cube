@@ -13,6 +13,32 @@ type Side = Vec<Vec<CubieColour>>;
 
 const HORIZONTAL_PADDING: &str = " ";
 
+#[macro_export]
+macro_rules! create_cube {
+    (
+        top: $top:expr,
+        bottom: $bottom:expr,
+        front: $front:expr,
+        right: $right:expr,
+        back: $back:expr,
+        left: $left:expr,
+    ) => {
+        Cube::create_from_sides($top, $bottom, $front, $right, $back, $left)
+    };
+}
+
+#[macro_export]
+macro_rules! create_cube_side {
+    ($colour:ident ; $side_length:literal) => {
+        vec![vec![CubieColour::$colour(None) ; $side_length] ; $side_length]
+    };
+    ( $( $($colour:ident)+ ; )+ ) => {
+        vec![ $(
+            vec![ $(CubieColour::$colour(None),)* ],
+        )* ]
+    };
+}
+
 #[derive(PartialEq)]
 pub(crate) struct Cube {
     side_map: EnumMap<F, Box<Side>>,
@@ -94,7 +120,6 @@ impl Cube {
         unadjusted_values: Vec<CubieColour>,
     ) {
         let values = if target_alignment == &IA::InnerFirst || target_alignment == &IA::OuterEnd {
-            // todo is this always the correct condition?
             let mut new_values = unadjusted_values.clone();
             new_values.reverse();
             new_values
@@ -199,15 +224,6 @@ impl fmt::Debug for Cube {
     }
 }
 
-#[macro_export]
-macro_rules! create_cube_side {
-    ( $( $($colour:ident)+ ; )+ ) => {
-        vec![ $(
-            vec![ $(CubieColour::$colour(None),)* ],
-        )* ]
-    };
-}
-
 #[cfg(test)]
 impl Cube {
     pub(crate) fn create_from_sides(
@@ -288,5 +304,78 @@ fn get_clockwise_slice_of_side(side: &Side, index_alignment: &IA) -> Vec<CubieCo
             inner_first_vec
         }
         IA::InnerLast => side.last().expect("Side had no inner").to_owned(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use pretty_assertions::assert_eq;
+
+    #[test]
+    fn test_default_3x3_cube() {
+        let cube = Cube::create(3);
+
+        let expected_cube = create_cube!(
+            top: create_cube_side!(White; 3),
+            bottom: create_cube_side!(Yellow; 3),
+            front: create_cube_side!(Blue; 3),
+            right: create_cube_side!(Orange; 3),
+            back: create_cube_side!(Green; 3),
+            left: create_cube_side!(Red; 3),
+        );
+
+        assert_eq!(expected_cube, cube);
+    }
+
+    #[test]
+    fn test_unique_chars_3x3_cube() {
+        let cube = Cube::create_with_unique_characters(3);
+
+        let expected_cube = create_cube!(
+            top: vec![
+                vec![CubieColour::White(Some('0')), CubieColour::White(Some('1')), CubieColour::White(Some('2'))],
+                vec![CubieColour::White(Some('3')), CubieColour::White(Some('4')), CubieColour::White(Some('5'))],
+                vec![CubieColour::White(Some('6')), CubieColour::White(Some('7')), CubieColour::White(Some('8'))],
+            ],
+            bottom: vec![
+                vec![CubieColour::Yellow(Some('0')), CubieColour::Yellow(Some('1')), CubieColour::Yellow(Some('2'))],
+                vec![CubieColour::Yellow(Some('3')), CubieColour::Yellow(Some('4')), CubieColour::Yellow(Some('5'))],
+                vec![CubieColour::Yellow(Some('6')), CubieColour::Yellow(Some('7')), CubieColour::Yellow(Some('8'))],
+            ],
+            front: vec![
+                vec![CubieColour::Blue(Some('0')), CubieColour::Blue(Some('1')), CubieColour::Blue(Some('2'))],
+                vec![CubieColour::Blue(Some('3')), CubieColour::Blue(Some('4')), CubieColour::Blue(Some('5'))],
+                vec![CubieColour::Blue(Some('6')), CubieColour::Blue(Some('7')), CubieColour::Blue(Some('8'))],
+            ],
+            right: vec![
+                vec![CubieColour::Orange(Some('0')), CubieColour::Orange(Some('1')), CubieColour::Orange(Some('2'))],
+                vec![CubieColour::Orange(Some('3')), CubieColour::Orange(Some('4')), CubieColour::Orange(Some('5'))],
+                vec![CubieColour::Orange(Some('6')), CubieColour::Orange(Some('7')), CubieColour::Orange(Some('8'))],
+            ],
+            back: vec![
+                vec![CubieColour::Green(Some('0')), CubieColour::Green(Some('1')), CubieColour::Green(Some('2'))],
+                vec![CubieColour::Green(Some('3')), CubieColour::Green(Some('4')), CubieColour::Green(Some('5'))],
+                vec![CubieColour::Green(Some('6')), CubieColour::Green(Some('7')), CubieColour::Green(Some('8'))],
+            ],
+            left: vec![
+                vec![CubieColour::Red(Some('0')), CubieColour::Red(Some('1')), CubieColour::Red(Some('2'))],
+                vec![CubieColour::Red(Some('3')), CubieColour::Red(Some('4')), CubieColour::Red(Some('5'))],
+                vec![CubieColour::Red(Some('6')), CubieColour::Red(Some('7')), CubieColour::Red(Some('8'))],
+            ],
+        );
+
+        assert_eq!(expected_cube, cube);
+    }
+
+    #[test]
+    fn test_default_3x3_cube_debug_repr() {
+        let cube = Cube::create(3);
+
+        let output = format!("{:?}", cube);
+
+        let expected_output = include_bytes!("../../res/default-3x3-cube-debug-output.txt");
+
+        assert_eq!(expected_output, output.as_bytes());
     }
 }

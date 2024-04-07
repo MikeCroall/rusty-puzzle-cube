@@ -87,8 +87,8 @@ fn get_fn_for_token(token: &str) -> fn(&mut Cube) {
 
 #[cfg(test)]
 mod tests {
-    use crate::create_cube_side;
     use crate::cube::cubie_colour::CubieColour;
+    use crate::{create_cube, create_cube_side};
 
     use super::*;
     use pretty_assertions::assert_eq;
@@ -184,43 +184,37 @@ mod tests {
 
         perform_3x3_sequence(sequence, &mut cube_under_test);
 
-        let expected_top = create_cube_side!(
-            Green Orange Green;
-            White White Yellow;
-            Blue Red White;
-        );
-        let expected_bottom = create_cube_side!(
-            Orange Yellow Yellow;
-            White Yellow Blue;
-            White Red Blue;
-        );
-        let expected_front = create_cube_side!(
-            Orange Yellow Green;
-            White Blue Green;
-            White Blue Red;
-        );
-        let expected_right = create_cube_side!(
-            Red Green Yellow;
-            Red Orange Yellow;
-            Blue Orange Red;
-        );
-        let expected_back = create_cube_side!(
-            Red Green Orange;
-            Orange Green White;
-            White Blue Green;
-        );
-        let expected_left = create_cube_side!(
-            Yellow Orange Yellow;
-            Blue Red Green;
-            Orange Red Blue;
-        );
-        let expected_cube = Cube::create_from_sides(
-            expected_top,
-            expected_bottom,
-            expected_front,
-            expected_right,
-            expected_back,
-            expected_left,
+        let expected_cube = create_cube!(
+            top: create_cube_side!(
+                Green Orange Green;
+                White White Yellow;
+                Blue Red White;
+            ),
+            bottom: create_cube_side!(
+                Orange Yellow Yellow;
+                White Yellow Blue;
+                White Red Blue;
+            ),
+            front: create_cube_side!(
+                Orange Yellow Green;
+                White Blue Green;
+                White Blue Red;
+            ),
+            right: create_cube_side!(
+                Red Green Yellow;
+                Red Orange Yellow;
+                Blue Orange Red;
+            ),
+            back: create_cube_side!(
+                Red Green Orange;
+                Orange Green White;
+                White Blue Green;
+            ),
+            left: create_cube_side!(
+                Yellow Orange Yellow;
+                Blue Red Green;
+                Orange Red Blue;
+            ),
         );
 
         assert_eq!(expected_cube, cube_under_test);
