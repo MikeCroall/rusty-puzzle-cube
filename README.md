@@ -2,6 +2,9 @@
 
 ## An experimental implementation of simple puzzle cubes in rust
 
+[![rust-ci](https://github.com/MikeCroall/rusty-puzzle-cube/actions/workflows/rust-ci.yml/badge.svg)](https://github.com/MikeCroall/rusty-puzzle-cube/actions)
+[![codecov](https://codecov.io/gh/MikeCroall/rusty-puzzle-cube/graph/badge.svg?token=FAL4WFJ2ID)](https://codecov.io/gh/MikeCroall/rusty-puzzle-cube)
+
 ### Demo
 
 Demos of basic 3x3 notation being parsed and applied to a newly created cube
