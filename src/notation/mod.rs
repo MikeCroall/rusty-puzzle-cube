@@ -2,36 +2,36 @@ use crate::cube::{face::Face, Cube};
 use once_cell::sync::Lazy;
 use regex::Regex;
 
-// TODO make the *_2 variants simply run the normal one twice - best syntax for this?
+// TODO make the *_2 variants simply run the normal one twice without having to define a const specifically for the double turns - best syntax for this?
 const FN_FOR_TOKEN_F: fn(&mut Cube) = |c| c.rotate_face_90_degrees_clockwise(Face::Front);
 const FN_FOR_TOKEN_F_2: fn(&mut Cube) = |c| {
-    c.rotate_face_90_degrees_clockwise(Face::Front);
-    c.rotate_face_90_degrees_clockwise(Face::Front);
+    FN_FOR_TOKEN_F(c);
+    FN_FOR_TOKEN_F(c);
 };
 const FN_FOR_TOKEN_R: fn(&mut Cube) = |c| c.rotate_face_90_degrees_clockwise(Face::Right);
 const FN_FOR_TOKEN_R_2: fn(&mut Cube) = |c| {
-    c.rotate_face_90_degrees_clockwise(Face::Right);
-    c.rotate_face_90_degrees_clockwise(Face::Right);
+    FN_FOR_TOKEN_R(c);
+    FN_FOR_TOKEN_R(c);
 };
 const FN_FOR_TOKEN_U: fn(&mut Cube) = |c| c.rotate_face_90_degrees_clockwise(Face::Top);
 const FN_FOR_TOKEN_U_2: fn(&mut Cube) = |c| {
-    c.rotate_face_90_degrees_clockwise(Face::Top);
-    c.rotate_face_90_degrees_clockwise(Face::Top);
+    FN_FOR_TOKEN_U(c);
+    FN_FOR_TOKEN_U(c);
 };
 const FN_FOR_TOKEN_L: fn(&mut Cube) = |c| c.rotate_face_90_degrees_clockwise(Face::Left);
 const FN_FOR_TOKEN_L_2: fn(&mut Cube) = |c| {
-    c.rotate_face_90_degrees_clockwise(Face::Left);
-    c.rotate_face_90_degrees_clockwise(Face::Left);
+    FN_FOR_TOKEN_L(c);
+    FN_FOR_TOKEN_L(c);
 };
 const FN_FOR_TOKEN_B: fn(&mut Cube) = |c| c.rotate_face_90_degrees_clockwise(Face::Back);
 const FN_FOR_TOKEN_B_2: fn(&mut Cube) = |c| {
-    c.rotate_face_90_degrees_clockwise(Face::Back);
-    c.rotate_face_90_degrees_clockwise(Face::Back);
+    FN_FOR_TOKEN_B(c);
+    FN_FOR_TOKEN_B(c);
 };
 const FN_FOR_TOKEN_D: fn(&mut Cube) = |c| c.rotate_face_90_degrees_clockwise(Face::Bottom);
 const FN_FOR_TOKEN_D_2: fn(&mut Cube) = |c| {
-    c.rotate_face_90_degrees_clockwise(Face::Bottom);
-    c.rotate_face_90_degrees_clockwise(Face::Bottom);
+    FN_FOR_TOKEN_D(c);
+    FN_FOR_TOKEN_D(c);
 };
 const FN_FOR_TOKEN_F_PRIME: fn(&mut Cube) = |c| c.rotate_face_90_degrees_anticlockwise(Face::Front);
 const FN_FOR_TOKEN_R_PRIME: fn(&mut Cube) = |c| c.rotate_face_90_degrees_anticlockwise(Face::Right);
