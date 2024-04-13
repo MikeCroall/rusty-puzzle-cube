@@ -2,37 +2,12 @@ use crate::cube::{face::Face, Cube};
 use once_cell::sync::Lazy;
 use regex::Regex;
 
-// TODO make the *_2 variants simply run the normal one twice without having to define a const specifically for the double turns - best syntax for this?
 const FN_FOR_TOKEN_F: fn(&mut Cube) = |c| c.rotate_face_90_degrees_clockwise(Face::Front);
-const FN_FOR_TOKEN_F_2: fn(&mut Cube) = |c| {
-    FN_FOR_TOKEN_F(c);
-    FN_FOR_TOKEN_F(c);
-};
 const FN_FOR_TOKEN_R: fn(&mut Cube) = |c| c.rotate_face_90_degrees_clockwise(Face::Right);
-const FN_FOR_TOKEN_R_2: fn(&mut Cube) = |c| {
-    FN_FOR_TOKEN_R(c);
-    FN_FOR_TOKEN_R(c);
-};
 const FN_FOR_TOKEN_U: fn(&mut Cube) = |c| c.rotate_face_90_degrees_clockwise(Face::Top);
-const FN_FOR_TOKEN_U_2: fn(&mut Cube) = |c| {
-    FN_FOR_TOKEN_U(c);
-    FN_FOR_TOKEN_U(c);
-};
 const FN_FOR_TOKEN_L: fn(&mut Cube) = |c| c.rotate_face_90_degrees_clockwise(Face::Left);
-const FN_FOR_TOKEN_L_2: fn(&mut Cube) = |c| {
-    FN_FOR_TOKEN_L(c);
-    FN_FOR_TOKEN_L(c);
-};
 const FN_FOR_TOKEN_B: fn(&mut Cube) = |c| c.rotate_face_90_degrees_clockwise(Face::Back);
-const FN_FOR_TOKEN_B_2: fn(&mut Cube) = |c| {
-    FN_FOR_TOKEN_B(c);
-    FN_FOR_TOKEN_B(c);
-};
 const FN_FOR_TOKEN_D: fn(&mut Cube) = |c| c.rotate_face_90_degrees_clockwise(Face::Bottom);
-const FN_FOR_TOKEN_D_2: fn(&mut Cube) = |c| {
-    FN_FOR_TOKEN_D(c);
-    FN_FOR_TOKEN_D(c);
-};
 const FN_FOR_TOKEN_F_PRIME: fn(&mut Cube) = |c| c.rotate_face_90_degrees_anticlockwise(Face::Front);
 const FN_FOR_TOKEN_R_PRIME: fn(&mut Cube) = |c| c.rotate_face_90_degrees_anticlockwise(Face::Right);
 const FN_FOR_TOKEN_U_PRIME: fn(&mut Cube) = |c| c.rotate_face_90_degrees_anticlockwise(Face::Top);
@@ -53,34 +28,30 @@ pub fn perform_3x3_sequence(token_sequence: &str, cube: &mut Cube) {
     assert!(MULTI_TOKEN_REGEX.is_match(token_sequence));
 
     token_sequence.trim().split(' ').for_each(|token| {
-        let fn_for_token = get_fn_for_token(token);
-        fn_for_token(cube);
+        apply_token(token.trim(), cube);
     });
 }
 
-fn get_fn_for_token(token: &str) -> fn(&mut Cube) {
-    let token = token.trim();
-
-    match token {
+fn apply_token(token: &str, cube: &mut Cube) {
+    let fn_to_apply = match token.trim_end_matches('2') {
         "F" => FN_FOR_TOKEN_F,
         "R" => FN_FOR_TOKEN_R,
         "U" => FN_FOR_TOKEN_U,
         "L" => FN_FOR_TOKEN_L,
         "B" => FN_FOR_TOKEN_B,
         "D" => FN_FOR_TOKEN_D,
-        "F2" => FN_FOR_TOKEN_F_2,
-        "R2" => FN_FOR_TOKEN_R_2,
-        "U2" => FN_FOR_TOKEN_U_2,
-        "L2" => FN_FOR_TOKEN_L_2,
-        "B2" => FN_FOR_TOKEN_B_2,
-        "D2" => FN_FOR_TOKEN_D_2,
         "F'" => FN_FOR_TOKEN_F_PRIME,
         "R'" => FN_FOR_TOKEN_R_PRIME,
         "U'" => FN_FOR_TOKEN_U_PRIME,
         "L'" => FN_FOR_TOKEN_L_PRIME,
         "B'" => FN_FOR_TOKEN_B_PRIME,
         "D'" => FN_FOR_TOKEN_D_PRIME,
-        _ => panic!("Unsupported token in notation string: {token}. Regexes should have prevented getting to this point."),
+        _ => panic!("Unsupported token in notation string: [{token}]. Regexes should have prevented getting to this point."),
+    };
+
+    fn_to_apply(cube);
+    if token.ends_with('2') {
+        fn_to_apply(cube);
     }
 }
 
@@ -94,9 +65,10 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn test_get_fn_for_token_invalid_input() {
+    fn test_apply_token_invalid_input() {
         let invalid_token = "M";
-        get_fn_for_token(invalid_token);
+        let mut cube = Cube::create(3);
+        apply_token(invalid_token, &mut cube);
     }
 
     macro_rules! test_multi_token_regex {
@@ -165,12 +137,12 @@ mod tests {
         let mut cube_under_test = Cube::create(3);
         let mut control_cube = Cube::create(3);
 
-        perform_3x3_sequence("F2 R U F", &mut cube_under_test);
+        perform_3x3_sequence("F2 R U' F", &mut cube_under_test);
 
         control_cube.rotate_face_90_degrees_clockwise(Face::Front);
         control_cube.rotate_face_90_degrees_clockwise(Face::Front);
         control_cube.rotate_face_90_degrees_clockwise(Face::Right);
-        control_cube.rotate_face_90_degrees_clockwise(Face::Top);
+        control_cube.rotate_face_90_degrees_anticlockwise(Face::Top);
         control_cube.rotate_face_90_degrees_clockwise(Face::Front);
 
         assert_eq!(control_cube, cube_under_test);
