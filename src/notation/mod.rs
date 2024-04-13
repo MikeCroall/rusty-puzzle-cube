@@ -17,7 +17,7 @@ pub fn perform_3x3_sequence(token_sequence: &str, cube: &mut Cube) -> Result<(),
 }
 
 fn apply_token(token: &str, cube: &mut Cube) -> Result<(), String> {
-    let base_token = get_base_token(token);
+    let base_token = get_base_token_if_valid(token);
 
     let face = match base_token {
         Some('F') => Ok(Face::Front),
@@ -43,7 +43,7 @@ fn apply_token(token: &str, cube: &mut Cube) -> Result<(), String> {
     Ok(())
 }
 
-fn get_base_token(token: &str) -> Option<char> {
+fn get_base_token_if_valid(token: &str) -> Option<char> {
     let is_valid_2_char_token = token.len() == 2
         && (token.ends_with(CHAR_FOR_ANTICLOCKWISE) || token.ends_with(CHAR_FOR_TURN_TWICE));
 
