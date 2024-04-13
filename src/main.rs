@@ -22,25 +22,25 @@ fn demo_simple_turns() {
     let start_time = Instant::now();
 
     let mut cube = Cube::create(3);
-    print!("{cube:?}");
+    print!("{cube}");
     cube.rotate_face_90_degrees_clockwise(Face::Front);
     println!();
-    print!("{cube:?}");
+    print!("{cube}");
     cube.rotate_face_90_degrees_clockwise(Face::Right);
     println!();
-    print!("{cube:?}");
+    print!("{cube}");
     cube.rotate_face_90_degrees_clockwise(Face::Back);
     println!();
-    print!("{cube:?}");
+    print!("{cube}");
     cube.rotate_face_90_degrees_anticlockwise(Face::Back);
     println!();
-    print!("{cube:?}");
+    print!("{cube}");
     cube.rotate_face_90_degrees_anticlockwise(Face::Right);
     println!();
-    print!("{cube:?}");
+    print!("{cube}");
     cube.rotate_face_90_degrees_anticlockwise(Face::Front);
     println!();
-    print!("{cube:?}");
+    print!("{cube}");
 
     let elapsed = start_time.elapsed();
     println!("Overall (printing included) this demo took {elapsed:?}\n");
@@ -52,25 +52,25 @@ fn demo_simple_turns_big_cube() {
     let start_time = Instant::now();
 
     let mut cube = Cube::create_with_unique_characters(8);
-    print!("{cube:?}");
+    print!("{cube}");
     cube.rotate_face_90_degrees_clockwise(Face::Front);
     println!();
-    print!("{cube:?}");
+    print!("{cube}");
     cube.rotate_face_90_degrees_clockwise(Face::Right);
     println!();
-    print!("{cube:?}");
+    print!("{cube}");
     cube.rotate_face_90_degrees_clockwise(Face::Back);
     println!();
-    print!("{cube:?}");
+    print!("{cube}");
     cube.rotate_face_90_degrees_anticlockwise(Face::Back);
     println!();
-    print!("{cube:?}");
+    print!("{cube}");
     cube.rotate_face_90_degrees_anticlockwise(Face::Right);
     println!();
-    print!("{cube:?}");
+    print!("{cube}");
     cube.rotate_face_90_degrees_anticlockwise(Face::Front);
     println!();
-    print!("{cube:?}");
+    print!("{cube}");
 
     let elapsed = start_time.elapsed();
     println!("Overall (printing included) this demo took {elapsed:?}\n");
@@ -82,13 +82,13 @@ fn demo_checkerboard() {
     let start_time = Instant::now();
 
     let mut cube = Cube::create(3);
-    println!("Cube before:\n{cube:?}");
+    println!("Cube before:\n{cube}");
 
     let start_time_transform_only = Instant::now();
     checkerboard_corners(&mut cube);
     let elapsed_transform_only = start_time_transform_only.elapsed();
 
-    println!("Cube after:\n{cube:?}");
+    println!("Cube after:\n{cube}");
 
     let elapsed = start_time.elapsed();
     println!("Overall (printing included) this demo took {elapsed:?} (transform only took {elapsed_transform_only:?})\n");
@@ -100,13 +100,13 @@ fn demo_cube_in_cube_in_cube() {
     let start_time = Instant::now();
 
     let mut cube = Cube::create(3);
-    println!("Cube before:\n{cube:?}");
+    println!("Cube before:\n{cube}");
 
     let start_time_transform_only = Instant::now();
     cube_in_cube_in_cube(&mut cube);
     let elapsed_transform_only = start_time_transform_only.elapsed();
 
-    println!("Cube after:\n{cube:?}");
+    println!("Cube after:\n{cube}");
 
     let elapsed = start_time.elapsed();
     println!("Overall (printing included) this demo took {elapsed:?} (transform only took {elapsed_transform_only:?})\n");
