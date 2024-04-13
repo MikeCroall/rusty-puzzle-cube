@@ -5,6 +5,7 @@ pub(super) fn create_side(
     side_length: usize,
     colour_variant_creator: &dyn Fn(Option<char>) -> CubieFace,
 ) -> Side {
+    assert!(side_length > 0, "create_side must have 1 <= side_length");
     let mut side = vec![];
     for _outer in 0..side_length {
         let inner_vec = vec![colour_variant_creator(None); side_length];
@@ -19,7 +20,7 @@ pub(super) fn create_side_with_unique_characters(
 ) -> Side {
     assert!(
         (1..=8).contains(&side_length),
-        "create_side_with_unique_characters does not support side_length > 8"
+        "create_side_with_unique_characters must have 1 <= side_length <= 8"
     );
     let mut side = vec![];
     for outer in 0..side_length {
