@@ -14,7 +14,7 @@ Demos of basic 3x3 notation being parsed and applied to a newly created cube
 ```rust
 let mut cube = Cube::create(3);
 let sequence = "F R' U' F' U L' B U' B2 U' F' R' B R2 F U L U";
-perform_3x3_sequence(sequence, &mut cube);
+perform_3x3_sequence(sequence, &mut cube).unwrap();
 print!("{cube}");
 ```
 
@@ -25,7 +25,7 @@ print!("{cube}");
 ```rust
 let mut cube = Cube::create(3);
 let sequence = "R2 L2 F2 B2 U2 D2";
-perform_3x3_sequence(sequence, &mut cube);
+perform_3x3_sequence(sequence, &mut cube).unwrap();
 print!("{cube}");
 ```
 
