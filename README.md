@@ -1,6 +1,6 @@
 # Rusty Puzzle Cube
 
-## An experimental implementation of simple puzzle cubes in rust
+## An experimental implementation of simple puzzle cubes in Rust
 
 [![rust-ci](https://github.com/MikeCroall/rusty-puzzle-cube/actions/workflows/rust-ci.yml/badge.svg)](https://github.com/MikeCroall/rusty-puzzle-cube/actions)
 [![codecov](https://codecov.io/gh/MikeCroall/rusty-puzzle-cube/graph/badge.svg?token=FAL4WFJ2ID)](https://codecov.io/gh/MikeCroall/rusty-puzzle-cube)
