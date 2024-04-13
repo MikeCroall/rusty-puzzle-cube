@@ -29,8 +29,8 @@ impl Cube {
     pub fn create(side_length: usize) -> Self {
         Self {
             side_map: enum_map! {
-                F::Top => Box::new(create_side(side_length, &CubieFace::White)),
-                F::Bottom => Box::new(create_side(side_length, &CubieFace::Yellow)),
+                F::Up => Box::new(create_side(side_length, &CubieFace::White)),
+                F::Down => Box::new(create_side(side_length, &CubieFace::Yellow)),
                 F::Front => Box::new(create_side(side_length, &CubieFace::Blue)),
                 F::Right => Box::new(create_side(side_length, &CubieFace::Orange)),
                 F::Back => Box::new(create_side(side_length, &CubieFace::Green)),
@@ -43,8 +43,8 @@ impl Cube {
     pub fn create_with_unique_characters(side_length: usize) -> Self {
         Self {
             side_map: enum_map! {
-                F::Top => Box::new(create_side_with_unique_characters(side_length, &CubieFace::White)),
-                F::Bottom => Box::new(create_side_with_unique_characters(side_length, &CubieFace::Yellow)),
+                F::Up => Box::new(create_side_with_unique_characters(side_length, &CubieFace::White)),
+                F::Down => Box::new(create_side_with_unique_characters(side_length, &CubieFace::Yellow)),
                 F::Front => Box::new(create_side_with_unique_characters(side_length, &CubieFace::Blue)),
                 F::Right => Box::new(create_side_with_unique_characters(side_length, &CubieFace::Orange)),
                 F::Back => Box::new(create_side_with_unique_characters(side_length, &CubieFace::Green)),
@@ -189,9 +189,9 @@ impl Cube {
     }
 
     fn print_to_formatter(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.write_indented_single_side(f, F::Top)?;
+        self.write_indented_single_side(f, F::Up)?;
         self.write_unindented_four_sides(f, F::Left, F::Front, F::Right, F::Back)?;
-        self.write_indented_single_side(f, F::Bottom)?;
+        self.write_indented_single_side(f, F::Down)?;
         Ok(())
     }
 }
@@ -228,8 +228,8 @@ impl Cube {
         let boxed_left = Box::new(left);
         Self {
             side_map: enum_map! {
-                F::Top => boxed_top.clone(),
-                F::Bottom => boxed_bottom.clone(),
+                F::Up => boxed_top.clone(),
+                F::Down => boxed_bottom.clone(),
                 F::Front => boxed_front.clone(),
                 F::Right => boxed_right.clone(),
                 F::Back => boxed_back.clone(),

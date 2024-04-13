@@ -4,8 +4,8 @@ use IndexAlignment as IA;
 
 #[derive(Debug, Clone, Copy, Enum, PartialEq)]
 pub enum Face {
-    Top,
-    Bottom,
+    Up,
+    Down,
     Front,
     Right,
     Back,
@@ -15,40 +15,40 @@ pub enum Face {
 impl Face {
     pub(crate) fn adjacent_faces_clockwise(self) -> [(Face, IndexAlignment); 4] {
         match self {
-            F::Top => [
+            F::Up => [
                 (F::Front, IA::InnerFirst),
                 (F::Left, IA::InnerFirst),
                 (F::Back, IA::InnerFirst),
                 (F::Right, IA::InnerFirst),
             ],
-            F::Bottom => [
+            F::Down => [
                 (F::Front, IA::InnerLast),
                 (F::Right, IA::InnerLast),
                 (F::Back, IA::InnerLast),
                 (F::Left, IA::InnerLast),
             ],
             F::Front => [
-                (F::Top, IA::InnerLast),
+                (F::Up, IA::InnerLast),
                 (F::Right, IA::OuterStart),
-                (F::Bottom, IA::InnerFirst),
+                (F::Down, IA::InnerFirst),
                 (F::Left, IA::OuterEnd),
             ],
             F::Right => [
-                (F::Top, IA::OuterEnd),
+                (F::Up, IA::OuterEnd),
                 (F::Back, IA::OuterStart),
-                (F::Bottom, IA::OuterEnd),
+                (F::Down, IA::OuterEnd),
                 (F::Front, IA::OuterEnd),
             ],
             F::Back => [
-                (F::Top, IA::InnerFirst),
+                (F::Up, IA::InnerFirst),
                 (F::Left, IA::OuterStart),
-                (F::Bottom, IA::InnerLast),
+                (F::Down, IA::InnerLast),
                 (F::Right, IA::OuterEnd),
             ],
             F::Left => [
-                (F::Top, IA::OuterStart),
+                (F::Up, IA::OuterStart),
                 (F::Front, IA::OuterStart),
-                (F::Bottom, IA::OuterStart),
+                (F::Down, IA::OuterStart),
                 (F::Back, IA::OuterEnd),
             ],
         }

@@ -22,10 +22,10 @@ fn apply_token(token: &str, cube: &mut Cube) -> Result<(), String> {
     let face = match base_token {
         Some('F') => Ok(Face::Front),
         Some('R') => Ok(Face::Right),
-        Some('U') => Ok(Face::Top),
+        Some('U') => Ok(Face::Up),
         Some('L') => Ok(Face::Left),
         Some('B') => Ok(Face::Back),
-        Some('D') => Ok(Face::Bottom),
+        Some('D') => Ok(Face::Down),
         _ => Err(format!("Unsupported token in notation string: [{token}]")),
     }?;
 
@@ -132,7 +132,7 @@ mod tests {
         control_cube.rotate_face_90_degrees_clockwise(Face::Front);
         control_cube.rotate_face_90_degrees_clockwise(Face::Front);
         control_cube.rotate_face_90_degrees_clockwise(Face::Right);
-        control_cube.rotate_face_90_degrees_anticlockwise(Face::Top);
+        control_cube.rotate_face_90_degrees_anticlockwise(Face::Up);
         control_cube.rotate_face_90_degrees_clockwise(Face::Front);
 
         assert_eq!(control_cube, cube_under_test);
