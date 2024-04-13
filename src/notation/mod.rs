@@ -2,19 +2,8 @@ use crate::cube::{face::Face, Cube};
 use once_cell::sync::Lazy;
 use regex::Regex;
 
-const FN_FOR_TOKEN_F: fn(&mut Cube) = |c| c.rotate_face_90_degrees_clockwise(Face::Front);
-const FN_FOR_TOKEN_R: fn(&mut Cube) = |c| c.rotate_face_90_degrees_clockwise(Face::Right);
-const FN_FOR_TOKEN_U: fn(&mut Cube) = |c| c.rotate_face_90_degrees_clockwise(Face::Top);
-const FN_FOR_TOKEN_L: fn(&mut Cube) = |c| c.rotate_face_90_degrees_clockwise(Face::Left);
-const FN_FOR_TOKEN_B: fn(&mut Cube) = |c| c.rotate_face_90_degrees_clockwise(Face::Back);
-const FN_FOR_TOKEN_D: fn(&mut Cube) = |c| c.rotate_face_90_degrees_clockwise(Face::Bottom);
-const FN_FOR_TOKEN_F_PRIME: fn(&mut Cube) = |c| c.rotate_face_90_degrees_anticlockwise(Face::Front);
-const FN_FOR_TOKEN_R_PRIME: fn(&mut Cube) = |c| c.rotate_face_90_degrees_anticlockwise(Face::Right);
-const FN_FOR_TOKEN_U_PRIME: fn(&mut Cube) = |c| c.rotate_face_90_degrees_anticlockwise(Face::Top);
-const FN_FOR_TOKEN_L_PRIME: fn(&mut Cube) = |c| c.rotate_face_90_degrees_anticlockwise(Face::Left);
-const FN_FOR_TOKEN_B_PRIME: fn(&mut Cube) = |c| c.rotate_face_90_degrees_anticlockwise(Face::Back);
-const FN_FOR_TOKEN_D_PRIME: fn(&mut Cube) =
-    |c| c.rotate_face_90_degrees_anticlockwise(Face::Bottom);
+const CHAR_FOR_ANTICLOCKWISE: char = '\'';
+const CHAR_FOR_TURN_TWICE: char = '2';
 
 static MULTI_TOKEN_REGEX: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"^([FRULDB])(2|')?(\s([FRULDB])(2|')?)*$")
@@ -33,25 +22,25 @@ pub fn perform_3x3_sequence(token_sequence: &str, cube: &mut Cube) {
 }
 
 fn apply_token(token: &str, cube: &mut Cube) {
-    let fn_to_apply = match token.trim_end_matches('2') {
-        "F" => FN_FOR_TOKEN_F,
-        "R" => FN_FOR_TOKEN_R,
-        "U" => FN_FOR_TOKEN_U,
-        "L" => FN_FOR_TOKEN_L,
-        "B" => FN_FOR_TOKEN_B,
-        "D" => FN_FOR_TOKEN_D,
-        "F'" => FN_FOR_TOKEN_F_PRIME,
-        "R'" => FN_FOR_TOKEN_R_PRIME,
-        "U'" => FN_FOR_TOKEN_U_PRIME,
-        "L'" => FN_FOR_TOKEN_L_PRIME,
-        "B'" => FN_FOR_TOKEN_B_PRIME,
-        "D'" => FN_FOR_TOKEN_D_PRIME,
+    let face = match token.trim_end_matches(CHAR_FOR_TURN_TWICE).trim_end_matches(CHAR_FOR_ANTICLOCKWISE) {
+        "F" => Face::Front,
+        "R" => Face::Right,
+        "U" => Face::Top,
+        "L" => Face::Left,
+        "B" => Face::Back,
+        "D" => Face::Bottom,
         _ => panic!("Unsupported token in notation string: [{token}]. Regexes should have prevented getting to this point."),
     };
 
-    fn_to_apply(cube);
-    if token.ends_with('2') {
-        fn_to_apply(cube);
+    let fn_to_apply = if token.ends_with(CHAR_FOR_ANTICLOCKWISE) {
+        Cube::rotate_face_90_degrees_anticlockwise
+    } else {
+        Cube::rotate_face_90_degrees_clockwise
+    };
+
+    fn_to_apply(cube, face);
+    if token.ends_with(CHAR_FOR_TURN_TWICE) {
+        fn_to_apply(cube, face);
     }
 }
 
