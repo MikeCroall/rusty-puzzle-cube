@@ -15,6 +15,7 @@ pub enum CubieFace {
 }
 
 impl CubieFace {
+    #[must_use]
     pub fn get_coloured_display_char(self) -> ColoredString {
         match self {
             CF::Blue(Some(c))
