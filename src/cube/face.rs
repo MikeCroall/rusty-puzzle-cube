@@ -55,21 +55,25 @@ impl Face {
     }
 }
 
+/// This enum describes an edge of the 2d side, where a side is a `Vec<Vec<CubieFace>>`.
+///
+/// For example, given a 3x3 side with numbers representing `CubieFace` instances:
+///```text
+/// [
+///     [0, 1, 2],
+///     [3, 4, 5],
+///     [6, 7, 8],
+/// ]
+///```
+/// Variants of this enum would represent the following slices:
+/// ```
+/// InnerFirst  = 0, 1, 2
+/// InnerLast   = 6, 7, 8
+/// OuterStart  = 0, 3, 6
+/// OuterEnd    = 2, 5, 8
+/// ```
 #[derive(Debug, PartialEq)]
 pub(crate) enum IndexAlignment {
-    /// A side is a Vec of Vec of CubieFace
-    /// This enum describes an edge of the 2d side
-    /// e.g.
-    /// [
-    ///     [0, 1, 2],
-    ///     [3, 4, 5],
-    ///     [6, 7, 8],
-    /// ]
-    ///
-    /// InnerFirst  = 0, 1, 2
-    /// InnerLast   = 6, 7, 8
-    /// OuterStart  = 0, 3, 6
-    /// OuterEnd    = 2, 5, 8
     OuterStart,
     OuterEnd,
     InnerFirst,
