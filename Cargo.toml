@@ -6,7 +6,7 @@ authors = ["Mike Croall"]
 
 [dependencies]
 colored = "2.1.0"
-enum-map = "2.6.1"
+enum-map = "2.7.3"
 itertools = "0.12.1"
 
 [dev-dependencies]
