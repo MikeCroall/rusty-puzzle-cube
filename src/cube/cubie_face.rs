@@ -80,7 +80,7 @@ mod tests {
     }
 
     macro_rules! colour_tests {
-        ($($cubie_constructor:ident, $rgb:expr,)*) => {
+        ($($cubie_constructor:ident, $rgb:expr $(,)?)*) => {
             paste! {
                 colour_tests!(
                     $(

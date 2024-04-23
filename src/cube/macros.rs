@@ -6,7 +6,7 @@ macro_rules! create_cube_from_sides {
         front: $front:expr,
         right: $right:expr,
         back: $back:expr,
-        left: $left:expr,
+        left: $left:expr $(,)?
     ) => {
         Cube::create_from_sides($top, $bottom, $front, $right, $back, $left)
     };
