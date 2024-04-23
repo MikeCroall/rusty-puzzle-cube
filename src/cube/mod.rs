@@ -21,6 +21,7 @@ const HORIZONTAL_PADDING: &str = " ";
 
 #[derive(PartialEq)]
 pub struct Cube {
+    side_length: usize,
     side_map: EnumMap<F, Box<Side>>,
 }
 
@@ -28,6 +29,7 @@ impl Cube {
     #[must_use]
     pub fn create(side_length: usize) -> Self {
         Self {
+            side_length,
             side_map: enum_map! {
                 F::Up => Box::new(create_side(side_length, &CubieFace::White)),
                 F::Down => Box::new(create_side(side_length, &CubieFace::Yellow)),
@@ -42,6 +44,7 @@ impl Cube {
     #[must_use]
     pub fn create_with_unique_characters(side_length: usize) -> Self {
         Self {
+            side_length,
             side_map: enum_map! {
                 F::Up => Box::new(create_side_with_unique_characters(side_length, &CubieFace::White)),
                 F::Down => Box::new(create_side_with_unique_characters(side_length, &CubieFace::Yellow)),
@@ -67,7 +70,7 @@ impl Cube {
     fn rotate_face_90_degrees_clockwise_without_adjacents(&mut self, face: F) {
         let side: &mut Vec<Vec<CubieFace>> = &mut self.side_map[face];
         side.reverse();
-        for i in 1..side.len() {
+        for i in 1..self.side_length {
             let (left, right) = side.split_at_mut(i);
             (0..i).for_each(|j| {
                 mem::swap(&mut left[j][i], &mut right[0][j]);
@@ -112,12 +115,12 @@ impl Cube {
         let side = &mut self.side_map[*target_face];
         match target_alignment {
             IA::OuterStart => {
-                for (i, value) in zip(0..side.len(), values.iter()) {
+                for (i, value) in zip(0..self.side_length, values.iter()) {
                     side[i][0] = value.to_owned();
                 }
             }
             IA::OuterEnd => {
-                let last_index = side.len() - 1;
+                let last_index = self.side_length - 1;
                 for (i, value) in zip(0..=last_index, values.iter()) {
                     side[i][last_index] = value.to_owned();
                 }
@@ -136,13 +139,12 @@ impl Cube {
     }
 
     fn write_indented_single_side(&self, f: &mut fmt::Formatter, face: F) -> fmt::Result {
-        let side = &*self.side_map[face];
-        let side_length = side.len();
+        let side = self.side_map[face].as_ref();
         for cubie_row in side {
             write!(
                 f,
                 "{}",
-                format!(" {HORIZONTAL_PADDING}").repeat(side_length)
+                format!(" {HORIZONTAL_PADDING}").repeat(self.side_length)
             )?;
             Cube::write_cubie_row(f, cubie_row)?;
             writeln!(f)?;
@@ -211,6 +213,24 @@ impl fmt::Display for Cube {
 }
 
 #[cfg(test)]
+macro_rules! assert_side_lengths {
+    ($side_length:expr, $( $side:expr $(,)? )*) => {
+        $(
+            assert_eq!($side_length, $side.len(),
+                "{} had outer length {} but was expected to have length {}",
+                stringify!($side), $side.len(), $side_length);
+            $side
+                .iter()
+                .enumerate()
+                .for_each(|(index, inner)|
+                    assert_eq!($side_length, inner.len(),
+                        "{} had inner (index {}) length {} but was expected to have length {}",
+                        stringify!($side), index, inner.len(), $side_length));
+        )*
+    };
+}
+
+#[cfg(test)]
 impl Cube {
     pub fn create_from_sides(
         top: Side,
@@ -220,6 +240,9 @@ impl Cube {
         back: Side,
         left: Side,
     ) -> Self {
+        let side_length = top.len();
+        assert_side_lengths!(side_length, top, bottom, front, right, back, left);
+
         let boxed_top = Box::new(top);
         let boxed_bottom = Box::new(bottom);
         let boxed_front = Box::new(front);
@@ -227,6 +250,7 @@ impl Cube {
         let boxed_back = Box::new(back);
         let boxed_left = Box::new(left);
         Self {
+            side_length,
             side_map: enum_map! {
                 F::Up => boxed_top.clone(),
                 F::Down => boxed_bottom.clone(),
