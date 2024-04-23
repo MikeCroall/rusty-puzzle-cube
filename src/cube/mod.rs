@@ -1,4 +1,3 @@
-use std::iter::zip;
 use std::{fmt, mem};
 
 use enum_map::{enum_map, EnumMap};
@@ -115,14 +114,13 @@ impl Cube {
         let side = &mut self.side_map[*target_face];
         match target_alignment {
             IA::OuterStart => {
-                for (i, value) in zip(0..self.side_length, values.iter()) {
+                for (i, value) in values.iter().enumerate() {
                     side[i][0] = value.to_owned();
                 }
             }
             IA::OuterEnd => {
-                let last_index = self.side_length - 1;
-                for (i, value) in zip(0..=last_index, values.iter()) {
-                    side[i][last_index] = value.to_owned();
+                for (i, value) in values.iter().enumerate() {
+                    side[i][self.side_length - 1] = value.to_owned();
                 }
             }
             IA::InnerFirst => {
