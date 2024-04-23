@@ -113,14 +113,14 @@ impl Cube {
 
         let side = &mut self.side_map[*target_face];
         match target_alignment {
-            IA::OuterStart => {
+            IA::OuterStart | IA::OuterEnd => {
+                let inner_index = match target_alignment {
+                    IA::OuterStart => 0,
+                    IA::OuterEnd => self.side_length - 1,
+                    _ => unreachable!("outer match guard clauses this one to only allow IA::OuterStart and IA::OuterEnd"),
+                };
                 for (i, value) in values.iter().enumerate() {
-                    side[i][0] = value.to_owned();
-                }
-            }
-            IA::OuterEnd => {
-                for (i, value) in values.iter().enumerate() {
-                    side[i][self.side_length - 1] = value.to_owned();
+                    side[i][inner_index] = value.to_owned();
                 }
             }
             IA::InnerFirst => {
