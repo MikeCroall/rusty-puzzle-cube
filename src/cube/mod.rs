@@ -196,6 +196,12 @@ impl Cube {
     }
 }
 
+impl Default for Cube {
+    fn default() -> Self {
+        Self::create(3)
+    }
+}
+
 impl fmt::Debug for Cube {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.print_to_formatter(f)?;
@@ -270,7 +276,7 @@ mod tests {
 
     #[test]
     fn test_default_3x3_cube() {
-        let cube = Cube::create(3);
+        let cube = Cube::default();
 
         let expected_cube = create_cube_from_sides!(
             top: create_cube_side!(White; 3),
@@ -326,7 +332,7 @@ mod tests {
 
     #[test]
     fn test_default_3x3_cube_display_and_debug_repr() {
-        let cube = Cube::create(3);
+        let cube = Cube::default();
 
         let display_output = format!("{}", cube);
         let debug_output = format!("{:?}", cube);
