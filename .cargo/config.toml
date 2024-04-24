@@ -8,8 +8,12 @@ live = [
     "-w",
     "puzzle-cube/Cargo.toml",
     "-w",
+    "puzzle-cube-ui/src/",
+    "-w",
+    "puzzle-cube-ui/Cargo.toml",
+    "-w",
     "Cargo.toml",
     "-x",
     "run",
 ]
-testcov = "tarpaulin --out lcov --exclude-files puzzle-cube/src/main.rs"
+testcov = "tarpaulin --out lcov --exclude-files puzzle-cube-ui/src/main.rs"

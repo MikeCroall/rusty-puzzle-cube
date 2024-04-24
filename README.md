@@ -5,7 +5,7 @@
 [![rust-ci](https://github.com/MikeCroall/rusty-puzzle-cube/actions/workflows/rust-ci.yml/badge.svg)](https://github.com/MikeCroall/rusty-puzzle-cube/actions)
 [![codecov](https://codecov.io/gh/MikeCroall/rusty-puzzle-cube/graph/badge.svg?token=FAL4WFJ2ID)](https://codecov.io/gh/MikeCroall/rusty-puzzle-cube)
 
-Coverage excludes puzzle-cube's `main.rs` which is used solely as a demo
+Coverage excludes puzzle-cube-ui's `main.rs` which is used solely as a demo currently
 
 ### Puzzle Cube Lib Demo
 
