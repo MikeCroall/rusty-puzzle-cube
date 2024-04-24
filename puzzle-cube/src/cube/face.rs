@@ -66,7 +66,7 @@ impl Face {
 /// ]
 ///```
 /// Variants of this enum would represent the following slices:
-/// ```
+/// ```text
 /// InnerFirst  = 0, 1, 2
 /// InnerLast   = 6, 7, 8
 /// OuterStart  = 0, 3, 6
