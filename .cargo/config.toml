@@ -1,3 +1,15 @@
 [alias]
-live = ["watch", "-q", "-c", "-w", "src/", "-w", "Cargo.toml", "-x", "run"]
-testcov = "tarpaulin --out lcov --exclude-files src/main.rs"
+live = [
+    "watch",
+    "-q",
+    "-c",
+    "-w",
+    "puzzle-cube/src/",
+    "-w",
+    "puzzle-cube/Cargo.toml",
+    "-w",
+    "Cargo.toml",
+    "-x",
+    "run",
+]
+testcov = "tarpaulin --out lcov --exclude-files puzzle-cube/src/main.rs"

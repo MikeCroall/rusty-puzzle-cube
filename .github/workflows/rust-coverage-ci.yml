@@ -30,7 +30,7 @@ jobs:
               run: cargo install cargo-tarpaulin
               continue-on-error: true
             - name: Run Tarpaulin
-              run: cargo tarpaulin --out lcov --exclude-files src/main.rs
+              run: cargo tarpaulin --out lcov --exclude-files puzzle-cube/src/main.rs
             - name: Coverage Upload
               uses: codecov/codecov-action@v3
               with:

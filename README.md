@@ -5,9 +5,9 @@
 [![rust-ci](https://github.com/MikeCroall/rusty-puzzle-cube/actions/workflows/rust-ci.yml/badge.svg)](https://github.com/MikeCroall/rusty-puzzle-cube/actions)
 [![codecov](https://codecov.io/gh/MikeCroall/rusty-puzzle-cube/graph/badge.svg?token=FAL4WFJ2ID)](https://codecov.io/gh/MikeCroall/rusty-puzzle-cube)
 
-Coverage excludes `main.rs` which is used solely as a demo
+Coverage excludes puzzle-cube's `main.rs` which is used solely as a demo
 
-### Demo
+### Puzzle Cube Lib Demo
 
 Demos of basic 3x3 notation being parsed and applied to a newly created cube
 
@@ -20,7 +20,7 @@ perform_3x3_sequence(sequence, &mut cube).unwrap();
 print!("{cube}");
 ```
 
-![Cube in Cube in Cube output screenshot](demo/cube-in-cube-in-cube.png)
+![Cube in Cube in Cube output screenshot](img/cube-in-cube-in-cube.png)
 
 #### Checkerboard Corners
 
@@ -31,7 +31,7 @@ perform_3x3_sequence(sequence, &mut cube).unwrap();
 print!("{cube}");
 ```
 
-![Checkerboard Corners output screenshot](demo/checkerboard-corners.png)
+![Checkerboard Corners output screenshot](img/checkerboard-corners.png)
 
 #### Unique Cubies and Large Cubes
 
@@ -44,7 +44,7 @@ let mut cube = Cube::create_with_unique_characters(8);
 print!("{cube}");
 ```
 
-![Big Cube and Unique Cubie output screenshot](demo/big-cube-unique-cubie.png)
+![Big Cube and Unique Cubie output screenshot](img/big-cube-unique-cubie.png)
 
 Note that large cubes do not currently support any moves that a 3x3 does not support.
 For example, rotating only the center column of a 5x5, or the 2nd column of a 4x4 is currently impossible
