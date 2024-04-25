@@ -4,13 +4,13 @@ on:
     push:
         paths:
             - "**.rs"
-            - ".github/workflows/rust-coverage-ci.yml"
+            - "**rust-coverage-ci.yml"
 
 env:
     CARGO_TERM_COLOR: always
 
 jobs:
-    coverage:
+    coverage-lib:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout code
@@ -29,17 +29,37 @@ jobs:
             - name: Install cargo-tarpaulin
               run: cargo install cargo-tarpaulin
               continue-on-error: true
-            - name: Run Tarpaulin on lib
+            - name: Run Tarpaulin on Lib
               run: cargo tarpaulin --out lcov --exclude-files "puzzle-cube-ui/*" && mv lcov.info lcovlib.info
-            - name: Coverage Upload for lib
+            - name: Coverage Upload for Lib
               uses: codecov/codecov-action@v4
               with:
                   token: ${{ secrets.CODECOV_TOKEN }}
                   files: ./lcovlib.info
                   flags: lib
-            - name: Run Tarpaulin on ui
+
+    coverage-ui:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+            - name: Use dependencies cache
+              uses: actions/cache@v4
+              with:
+                  path: |
+                      ~/.cargo/bin/
+                      ~/.cargo/registry/index/
+                      ~/.cargo/registry/cache/
+                      ~/.cargo/git/db/
+                      target/
+                  key: ${{ runner.os }}-cargo-coverage-${{ hashFiles('**/Cargo.lock') }}
+                  restore-keys: ${{ runner.os }}-cargo-coverage-
+            - name: Install cargo-tarpaulin
+              run: cargo install cargo-tarpaulin
+              continue-on-error: true
+            - name: Run Tarpaulin on UI
               run: cargo tarpaulin --out lcov --exclude-files "puzzle-cube/*" && mv lcov.info lcovui.info
-            - name: Coverage Upload for ui
+            - name: Coverage Upload for UI
               uses: codecov/codecov-action@v4
               with:
                   token: ${{ secrets.CODECOV_TOKEN }}
