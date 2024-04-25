@@ -16,7 +16,7 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v4
             - name: Use dependencies cache
-              uses: actions/cache@v3
+              uses: actions/cache@v4
               with:
                   path: |
                       ~/.cargo/bin/
@@ -29,10 +29,19 @@ jobs:
             - name: Install cargo-tarpaulin
               run: cargo install cargo-tarpaulin
               continue-on-error: true
-            - name: Run Tarpaulin
-              run: cargo tarpaulin --out lcov --exclude-files puzzle-cube-ui/src/main.rs
-            - name: Coverage Upload
-              uses: codecov/codecov-action@v3
+            - name: Run Tarpaulin on lib
+              run: cargo tarpaulin --out lcov --exclude-files "puzzle-cube-ui/*" && mv lcov.info lcovlib.info
+            - name: Coverage Upload for lib
+              uses: codecov/codecov-action@v4
               with:
                   token: ${{ secrets.CODECOV_TOKEN }}
-                  files: ./lcov.info
+                  files: ./lcovlib.info
+                  flags: lib
+            - name: Run Tarpaulin on ui
+              run: cargo tarpaulin --out lcov --exclude-files "puzzle-cube/*" && mv lcov.info lcovui.info
+            - name: Coverage Upload for ui
+              uses: codecov/codecov-action@v4
+              with:
+                  token: ${{ secrets.CODECOV_TOKEN }}
+                  files: ./lcovui.info
+                  flags: ui
