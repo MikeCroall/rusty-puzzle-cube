@@ -1,5 +1,8 @@
+mod gui;
+
 use std::time::Instant;
 
+use gui::start_gui;
 use rusty_puzzle_cube::{
     cube::{face::Face, Cube},
     known_transforms::{checkerboard_corners, cube_in_cube_in_cube},
@@ -10,6 +13,7 @@ fn main() {
     demo_simple_turns_big_cube();
     demo_checkerboard();
     demo_cube_in_cube_in_cube();
+    start_gui();
 }
 
 fn demo_simple_turns() {
