@@ -3,7 +3,7 @@ name: Coverage Upload
 on:
     push:
         paths:
-            - "src/**"
+            - "**.rs"
             - ".github/workflows/rust-coverage-ci.yml"
 
 env:
