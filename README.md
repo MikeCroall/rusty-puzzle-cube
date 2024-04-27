@@ -7,6 +7,10 @@
 
 [![rust-ci](https://github.com/MikeCroall/rusty-puzzle-cube/actions/workflows/rust-ci.yml/badge.svg)](https://github.com/MikeCroall/rusty-puzzle-cube/actions) Core lib [![codecov lib](https://codecov.io/gh/MikeCroall/rusty-puzzle-cube/branch/3d/graph/badge.svg?flag=lib&precision=1&token=FAL4WFJ2ID)](https://codecov.io/gh/MikeCroall/rusty-puzzle-cube) UI [![codecov ui](https://codecov.io/gh/MikeCroall/rusty-puzzle-cube/branch/3d/graph/badge.svg?flag=ui&precision=1&token=FAL4WFJ2ID)](https://codecov.io/gh/MikeCroall/rusty-puzzle-cube)
 
+### Puzzle Cube GUI
+
+Highly experimental, early work in progress, etc.
+
 ### Puzzle Cube Lib Demo
 
 Demos of basic 3x3 notation being parsed and applied to a newly created cube
