@@ -1,4 +1,4 @@
-use crate::colours::{BLUE, GREEN, RED};
+use crate::colours::{BLUE, GREEN, ORANGE, RED, WHITE, YELLOW};
 use std::f32::consts::PI;
 
 use three_d::{
@@ -37,6 +37,17 @@ pub(super) fn start_gui() {
     );
     blue_square.set_transformation(Mat4::from_translation(vec3(0., 0., 1.)));
 
+    let mut orange_square = Gm::new(
+        Mesh::new(&context, &CpuMesh::square()),
+        ColorMaterial {
+            color: ORANGE,
+            ..Default::default()
+        },
+    );
+    orange_square.set_transformation(
+        Mat4::from_translation(vec3(1., 0., 0.)) * Mat4::from_angle_y(radians(0.5 * PI)),
+    );
+
     let mut green_square = Gm::new(
         Mesh::new(&context, &CpuMesh::square()),
         ColorMaterial {
@@ -44,9 +55,7 @@ pub(super) fn start_gui() {
             ..Default::default()
         },
     );
-    green_square.set_transformation(
-        Mat4::from_translation(vec3(0., 1., 0.)) * Mat4::from_angle_x(radians(0.5 * PI)),
-    );
+    green_square.set_transformation(Mat4::from_translation(vec3(0., 0., -1.)));
 
     let mut red_square = Gm::new(
         Mesh::new(&context, &CpuMesh::square()),
@@ -56,15 +65,36 @@ pub(super) fn start_gui() {
         },
     );
     red_square.set_transformation(
-        Mat4::from_translation(vec3(1., 0., 0.)) * Mat4::from_angle_y(radians(0.5 * PI)),
+        Mat4::from_translation(vec3(-1., 0., 0.)) * Mat4::from_angle_y(radians(0.5 * PI)),
     );
 
-    let axes = Axes::new(&context, 0.1, 2.);
+    let mut white_square = Gm::new(
+        Mesh::new(&context, &CpuMesh::square()),
+        ColorMaterial {
+            color: WHITE,
+            ..Default::default()
+        },
+    );
+    white_square.set_transformation(
+        Mat4::from_translation(vec3(0., 1., 0.)) * Mat4::from_angle_x(radians(0.5 * PI)),
+    );
+
+    let mut yellow_square = Gm::new(
+        Mesh::new(&context, &CpuMesh::square()),
+        ColorMaterial {
+            color: YELLOW,
+            ..Default::default()
+        },
+    );
+    yellow_square.set_transformation(
+        Mat4::from_translation(vec3(0., -1., 0.)) * Mat4::from_angle_x(radians(0.5 * PI)),
+    );
+
+    let axes = Axes::new(&context, 0.05, 2.);
 
     window.render_loop(move |mut frame_input| {
         camera.set_viewport(frame_input.viewport);
         mouse_control.handle_events(&mut camera, &mut frame_input.events);
-        // gpu_model.animate(frame_input.accumulated_time as f32);
 
         frame_input
             .screen()
@@ -73,8 +103,11 @@ pub(super) fn start_gui() {
                 &camera,
                 blue_square
                     .into_iter()
+                    .chain(&orange_square)
                     .chain(&green_square)
                     .chain(&red_square)
+                    .chain(&white_square)
+                    .chain(&yellow_square)
                     .chain(&axes),
                 &[],
             );
