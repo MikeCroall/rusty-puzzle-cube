@@ -35,7 +35,7 @@ pub(super) fn start_gui() {
             ..Default::default()
         },
     );
-    blue_square.set_transformation(Mat4::from_translation(vec3(-0.5, 0., 1.5)));
+    blue_square.set_transformation(Mat4::from_translation(vec3(0., 0., 1.)));
 
     let mut green_square = Gm::new(
         Mesh::new(&context, &CpuMesh::square()),
@@ -45,7 +45,7 @@ pub(super) fn start_gui() {
         },
     );
     green_square.set_transformation(
-        Mat4::from_angle_x(radians(0.5 * PI)) * Mat4::from_translation(vec3(-0.5, 0.5, -1.)),
+        Mat4::from_translation(vec3(0., 1., 0.)) * Mat4::from_angle_x(radians(0.5 * PI)),
     );
 
     let mut red_square = Gm::new(
@@ -56,7 +56,7 @@ pub(super) fn start_gui() {
         },
     );
     red_square.set_transformation(
-        Mat4::from_angle_y(radians(0.5 * PI)) * Mat4::from_translation(vec3(-0.5, 0., 0.5)),
+        Mat4::from_translation(vec3(1., 0., 0.)) * Mat4::from_angle_y(radians(0.5 * PI)),
     );
 
     let axes = Axes::new(&context, 0.1, 2.);
