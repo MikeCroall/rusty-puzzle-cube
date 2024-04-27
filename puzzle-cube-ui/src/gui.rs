@@ -93,25 +93,32 @@ pub(super) fn start_gui() {
     let axes = Axes::new(&context, 0.05, 2.);
 
     window.render_loop(move |mut frame_input| {
-        camera.set_viewport(frame_input.viewport);
-        mouse_control.handle_events(&mut camera, &mut frame_input.events);
+        let mut redraw = frame_input.first_frame;
+        redraw |= camera.set_viewport(frame_input.viewport);
+        redraw |= mouse_control.handle_events(&mut camera, &mut frame_input.events);
 
-        frame_input
-            .screen()
-            .clear(ClearState::color_and_depth(0.13, 0.13, 0.13, 1.0, 1.0))
-            .render(
-                &camera,
-                blue_square
-                    .into_iter()
-                    .chain(&orange_square)
-                    .chain(&green_square)
-                    .chain(&red_square)
-                    .chain(&white_square)
-                    .chain(&yellow_square)
-                    .chain(&axes),
-                &[],
-            );
+        if redraw {
+            println!("Redrawing {}", frame_input.accumulated_time);
+            frame_input
+                .screen()
+                .clear(ClearState::color_and_depth(0.13, 0.13, 0.13, 1.0, 1.0))
+                .render(
+                    &camera,
+                    blue_square
+                        .into_iter()
+                        .chain(&orange_square)
+                        .chain(&green_square)
+                        .chain(&red_square)
+                        .chain(&white_square)
+                        .chain(&yellow_square)
+                        .chain(&axes),
+                    &[],
+                );
+        }
 
-        FrameOutput::default()
+        FrameOutput {
+            swap_buffers: redraw,
+            ..Default::default()
+        }
     });
 }
