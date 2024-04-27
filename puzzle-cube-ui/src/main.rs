@@ -1,3 +1,4 @@
+mod colours;
 mod gui;
 
 use std::time::Instant;

@@ -1,3 +1,4 @@
+use crate::colours::{BLUE, GREEN, RED};
 use std::f32::consts::PI;
 
 use three_d::*;
@@ -24,55 +25,38 @@ pub(super) fn start_gui() {
 
     let mut mouse_control = OrbitControl::new(*camera.target(), 1.0, 100.0);
 
-    let center_square_to_origin = Mat4::from_translation(vec3(0., 0., 0.));
-
     let mut blue_square = Gm::new(
         Mesh::new(&context, &CpuMesh::square()),
-        PhysicalMaterial::new_opaque(
-            &context,
-            &CpuMaterial {
-                albedo: Srgba::BLUE,
-                ..Default::default()
-            },
-        ),
+        ColorMaterial {
+            color: BLUE,
+            ..Default::default()
+        },
     );
-    blue_square
-        .set_transformation(center_square_to_origin * Mat4::from_translation(vec3(-0.5, 0., 1.5)));
+    blue_square.set_transformation(Mat4::from_translation(vec3(-0.5, 0., 1.5)));
 
     let mut green_square = Gm::new(
         Mesh::new(&context, &CpuMesh::square()),
-        PhysicalMaterial::new_opaque(
-            &context,
-            &CpuMaterial {
-                albedo: Srgba::GREEN,
-                ..Default::default()
-            },
-        ),
+        ColorMaterial {
+            color: GREEN,
+            ..Default::default()
+        },
     );
     green_square.set_transformation(
-        center_square_to_origin
-            * Mat4::from_angle_x(radians(0.5 * PI))
-            * Mat4::from_translation(vec3(-0.5, 0.5, -1.)),
+        Mat4::from_angle_x(radians(0.5 * PI)) * Mat4::from_translation(vec3(-0.5, 0.5, -1.)),
     );
 
     let mut red_square = Gm::new(
         Mesh::new(&context, &CpuMesh::square()),
-        PhysicalMaterial::new_opaque(
-            &context,
-            &CpuMaterial {
-                albedo: Srgba::RED,
-                ..Default::default()
-            },
-        ),
+        ColorMaterial {
+            color: RED,
+            ..Default::default()
+        },
     );
     red_square.set_transformation(
-        center_square_to_origin
-            * Mat4::from_angle_y(radians(0.5 * PI))
-            * Mat4::from_translation(vec3(-0.5, 0., 0.5)),
+        Mat4::from_angle_y(radians(0.5 * PI)) * Mat4::from_translation(vec3(-0.5, 0., 0.5)),
     );
 
-    let directional_light = DirectionalLight::new(&context, 1.0, Srgba::WHITE, &vec3(0., 0.5, 0.5));
-    let ambient_light = AmbientLight::new(&context, 1., Srgba::WHITE);
+    let axes = Axes::new(&context, 0.1, 2.);
 
     window.render_loop(move |mut frame_input| {
         camera.set_viewport(frame_input.viewport);
@@ -87,8 +71,9 @@ pub(super) fn start_gui() {
                 blue_square
                     .into_iter()
                     .chain(&green_square)
-                    .chain(&red_square),
-                &[&ambient_light, &directional_light],
+                    .chain(&red_square)
+                    .chain(&axes),
+                &[],
             );
 
         FrameOutput::default()
