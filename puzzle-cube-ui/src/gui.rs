@@ -1,7 +1,10 @@
 use crate::colours::{BLUE, GREEN, RED};
 use std::f32::consts::PI;
 
-use three_d::*;
+use three_d::{
+    degrees, radians, vec3, Axes, Camera, ClearState, ColorMaterial, CpuMesh, FrameOutput, Gm,
+    Mat4, Mesh, OrbitControl, Window, WindowSettings,
+};
 
 pub(super) fn start_gui() {
     let window = Window::new(WindowSettings {
