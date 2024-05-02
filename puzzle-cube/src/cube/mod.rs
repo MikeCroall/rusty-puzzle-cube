@@ -120,7 +120,7 @@ impl Cube {
                     _ => unreachable!("outer match guard clauses this one to only allow IA::OuterStart and IA::OuterEnd"),
                 };
                 for (i, value) in values.iter().enumerate() {
-                    side[i][inner_index] = value.to_owned();
+                    value.clone_into(&mut side[i][inner_index]);
                 }
             }
             IA::InnerFirst => {
