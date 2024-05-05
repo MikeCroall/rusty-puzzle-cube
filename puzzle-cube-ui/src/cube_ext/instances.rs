@@ -45,25 +45,23 @@ fn face_to_instances(
     side_length: usize,
 ) -> (Vec<Matrix4<f32>>, Vec<Srgba>) {
     let side = &side_map[face];
-    let cubie_sides = side
-        .iter()
-        .flatten()
-        .enumerate()
-        .map(|(i, cubie_face)| {
-            let y = i % side_length;
-            let x = i / side_length;
-            ((x, y), cubie_face)
-        })
-        .map(|((x, y), cubie_face)| {
-            (
-                cubie_face_to_transformation(face, x, y),
-                cubie_face_to_colour(cubie_face),
-            )
-        });
+    let cubie_sides = side.iter().flatten().enumerate().map(|(i, cubie_face)| {
+        let y = i / side_length;
+        let x = i % side_length;
+        (
+            cubie_face_to_transformation(side_length, face, x, y),
+            cubie_face_to_colour(cubie_face),
+        )
+    });
     cubie_sides.unzip()
 }
 
-fn cubie_face_to_transformation(face: Face, x: usize, y: usize) -> Matrix4<f32> {
+fn cubie_face_to_transformation(
+    side_length: usize,
+    face: Face,
+    x: usize,
+    y: usize,
+) -> Matrix4<f32> {
     todo!("impl face,x,y to transformation - start for 1x1 cube (only needs face), then scale down and move around based on x,y to support 2x2+")
 }
 
