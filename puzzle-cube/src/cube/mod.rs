@@ -14,6 +14,7 @@ pub mod face;
 pub(crate) mod helpers;
 pub mod macros;
 
+pub type SideMap = EnumMap<F, Box<Side>>;
 type Side = Vec<Vec<CubieFace>>;
 
 const HORIZONTAL_PADDING: &str = " ";
@@ -21,7 +22,7 @@ const HORIZONTAL_PADDING: &str = " ";
 #[derive(PartialEq)]
 pub struct Cube {
     side_length: usize,
-    side_map: EnumMap<F, Box<Side>>,
+    side_map: SideMap,
 }
 
 impl Cube {
@@ -53,6 +54,14 @@ impl Cube {
                 F::Left => Box::new(create_side_with_unique_characters(side_length, &CubieFace::Red)),
             },
         }
+    }
+
+    pub fn side_length(&self) -> usize {
+        self.side_length
+    }
+
+    pub fn side_map(&self) -> &SideMap {
+        &self.side_map
     }
 
     pub fn rotate_face_90_degrees_clockwise(&mut self, face: F) {
