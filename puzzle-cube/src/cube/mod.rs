@@ -218,7 +218,7 @@ impl fmt::Display for Cube {
 
 #[cfg(test)]
 macro_rules! assert_side_lengths {
-    ($side_length:expr, $( $side:expr $(,)? )*) => {
+    ($side_length:expr, $($side:expr),*) => {
         $(
             assert_eq!($side_length, $side.len(),
                 "{} had outer length {} but was expected to have length {}",
