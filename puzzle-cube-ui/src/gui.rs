@@ -1,10 +1,25 @@
-use crate::colours::{BLUE, GREEN, ORANGE, RED, WHITE, YELLOW};
-use std::f32::consts::PI;
-
 use three_d::{
-    degrees, radians, vec3, Axes, Camera, ClearState, ColorMaterial, CpuMesh, FrameOutput, Gm,
-    Mat4, Mesh, OrbitControl, Window, WindowSettings,
+    degrees, vec3, Axes, Camera, ClearState, ColorMaterial, CpuMesh, FrameOutput, Gm, Mesh,
+    OrbitControl, Window, WindowSettings,
 };
+
+macro_rules! cubie_side {
+    ($ctx:expr, $colour:ident, $($transform_fn:ident),*) => {
+        {
+            let mut cubie_side = Gm::new(
+                Mesh::new($ctx, &CpuMesh::square()),
+                ColorMaterial {
+                    color: crate::colours::$colour,
+                    ..Default::default()
+                },
+            );
+            $(
+                crate::transforms::$transform_fn(&mut cubie_side);
+            )*
+            cubie_side
+        }
+    };
+}
 
 pub(super) fn start_gui() {
     let window = Window::new(WindowSettings {
@@ -14,7 +29,7 @@ pub(super) fn start_gui() {
     })
     .expect("Must be able to create window");
 
-    let context = window.gl();
+    let ctx = window.gl();
 
     let mut camera = Camera::new_perspective(
         window.viewport(),
@@ -28,69 +43,14 @@ pub(super) fn start_gui() {
 
     let mut mouse_control = OrbitControl::new(*camera.target(), 1.0, 100.0);
 
-    let mut blue_square = Gm::new(
-        Mesh::new(&context, &CpuMesh::square()),
-        ColorMaterial {
-            color: BLUE,
-            ..Default::default()
-        },
-    );
-    blue_square.set_transformation(Mat4::from_translation(vec3(0., 0., 1.)));
+    let blue_square = cubie_side!(&ctx, BLUE, translate_toward);
+    let orange_square = cubie_side!(&ctx, ORANGE, quarter_turn_around_y, translate_right);
+    let green_square = cubie_side!(&ctx, GREEN, translate_away);
+    let red_square = cubie_side!(&ctx, RED, quarter_turn_around_y, translate_left);
+    let white_square = cubie_side!(&ctx, WHITE, quarter_turn_around_x, translate_up);
+    let yellow_square = cubie_side!(&ctx, YELLOW, quarter_turn_around_x, translate_down);
 
-    let mut orange_square = Gm::new(
-        Mesh::new(&context, &CpuMesh::square()),
-        ColorMaterial {
-            color: ORANGE,
-            ..Default::default()
-        },
-    );
-    orange_square.set_transformation(
-        Mat4::from_translation(vec3(1., 0., 0.)) * Mat4::from_angle_y(radians(0.5 * PI)),
-    );
-
-    let mut green_square = Gm::new(
-        Mesh::new(&context, &CpuMesh::square()),
-        ColorMaterial {
-            color: GREEN,
-            ..Default::default()
-        },
-    );
-    green_square.set_transformation(Mat4::from_translation(vec3(0., 0., -1.)));
-
-    let mut red_square = Gm::new(
-        Mesh::new(&context, &CpuMesh::square()),
-        ColorMaterial {
-            color: RED,
-            ..Default::default()
-        },
-    );
-    red_square.set_transformation(
-        Mat4::from_translation(vec3(-1., 0., 0.)) * Mat4::from_angle_y(radians(0.5 * PI)),
-    );
-
-    let mut white_square = Gm::new(
-        Mesh::new(&context, &CpuMesh::square()),
-        ColorMaterial {
-            color: WHITE,
-            ..Default::default()
-        },
-    );
-    white_square.set_transformation(
-        Mat4::from_translation(vec3(0., 1., 0.)) * Mat4::from_angle_x(radians(0.5 * PI)),
-    );
-
-    let mut yellow_square = Gm::new(
-        Mesh::new(&context, &CpuMesh::square()),
-        ColorMaterial {
-            color: YELLOW,
-            ..Default::default()
-        },
-    );
-    yellow_square.set_transformation(
-        Mat4::from_translation(vec3(0., -1., 0.)) * Mat4::from_angle_x(radians(0.5 * PI)),
-    );
-
-    let axes = Axes::new(&context, 0.05, 2.);
+    let axes = Axes::new(&ctx, 0.05, 2.);
 
     window.render_loop(move |mut frame_input| {
         let mut redraw = frame_input.first_frame;
