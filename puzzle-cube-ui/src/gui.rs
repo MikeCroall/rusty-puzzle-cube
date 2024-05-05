@@ -28,7 +28,6 @@ pub(super) fn start_gui() {
         ..Default::default()
     })
     .expect("Must be able to create window");
-
     let ctx = window.gl();
 
     let mut camera = Camera::new_perspective(
@@ -43,6 +42,7 @@ pub(super) fn start_gui() {
 
     let mut mouse_control = OrbitControl::new(*camera.target(), 1.0, 100.0);
 
+    // todo use InstancedMesh with set_instances each time cube changes?
     let blue_square = cubie_side!(&ctx, BLUE, translate_toward);
     let orange_square = cubie_side!(&ctx, ORANGE, quarter_turn_around_y, translate_right);
     let green_square = cubie_side!(&ctx, GREEN, translate_away);
