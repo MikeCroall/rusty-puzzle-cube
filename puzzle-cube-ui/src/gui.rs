@@ -2,10 +2,13 @@ use crate::cube_ext::instances::ToInstances;
 use rusty_puzzle_cube::{cube::Cube, known_transforms::cube_in_cube_in_cube};
 use three_d::{
     degrees, vec3, Axes, Camera, ClearState, ColorMaterial, CpuMesh, FrameOutput, Gm,
-    InstancedMesh, OrbitControl, Srgba, Window, WindowSettings,
+    InstancedMesh, Mesh, OrbitControl, Srgba, Window, WindowSettings,
 };
+use tracing::info;
 
 pub(super) fn start_gui() {
+    tracing_subscriber::fmt::init();
+
     let window = Window::new(WindowSettings {
         title: "Rusty Puzzle Cube!".to_string(),
         max_size: Some((1280, 720)),
@@ -27,15 +30,23 @@ pub(super) fn start_gui() {
     let mut mouse_control = OrbitControl::new(*camera.target(), 1.0, 100.0);
 
     // todo use InstancedMesh.set_instances each time cube changes?
-    let mut cube = Cube::create(4);
+    let mut cube = Cube::create(5);
     cube_in_cube_in_cube(&mut cube);
 
-    let instances = cube.to_instances();
-    let instanced_square_mesh = InstancedMesh::new(&ctx, &instances, &CpuMesh::square());
+    let instanced_square_mesh = InstancedMesh::new(&ctx, &cube.to_instances(), &CpuMesh::square());
     let instanced_square = Gm::new(
         instanced_square_mesh,
         ColorMaterial {
             color: Srgba::WHITE,
+            ..Default::default()
+        },
+    );
+
+    // todo could make inner cube instances for each (external facing) cubie to make rotation animations less funky, when I actually add them...
+    let inner_cube = Gm::new(
+        Mesh::new(&ctx, &CpuMesh::cube()),
+        ColorMaterial {
+            color: Srgba::BLACK,
             ..Default::default()
         },
     );
@@ -48,11 +59,15 @@ pub(super) fn start_gui() {
         redraw |= mouse_control.handle_events(&mut camera, &mut frame_input.events);
 
         if redraw {
-            println!("Redrawing {}", frame_input.accumulated_time);
+            info!("Redrawing cube");
             frame_input
                 .screen()
                 .clear(ClearState::color_and_depth(0.13, 0.13, 0.13, 1.0, 1.0))
-                .render(&camera, instanced_square.into_iter().chain(&axes), &[]);
+                .render(
+                    &camera,
+                    instanced_square.into_iter().chain(&inner_cube).chain(&axes),
+                    &[],
+                );
         }
 
         FrameOutput {
