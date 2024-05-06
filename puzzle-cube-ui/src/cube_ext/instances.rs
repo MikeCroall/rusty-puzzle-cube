@@ -1,9 +1,11 @@
 use rusty_puzzle_cube::cube::{cubie_face::CubieFace, face::Face, Cube, SideMap};
-use three_d::{Instances, Matrix4, Srgba};
+use three_d::{Instances, Matrix4, SquareMatrix, Srgba};
+use tracing::warn;
 
 use crate::{
     colours::{BLUE, GREEN, ORANGE, RED, WHITE, YELLOW},
-    combine_transforms,
+    combine_transformations,
+    transforms::{position_to, scale_to_top_left},
 };
 
 pub(crate) trait ToInstances {
@@ -52,7 +54,7 @@ fn face_to_instances(
         let x = i % side_length;
         (
             cubie_face_to_transformation(side_length, face, x, y),
-            cubie_face_to_colour(cubie_face),
+            cubie_face_to_colour(*cubie_face),
         )
     });
     cubie_sides.unzip()
@@ -61,24 +63,29 @@ fn face_to_instances(
 fn cubie_face_to_transformation(
     side_length: usize,
     face: Face,
-    _x: usize,
-    _y: usize,
+    x: usize,
+    y: usize,
 ) -> Matrix4<f32> {
-    if side_length != 1 {
-        todo!("impl side_length,face,x,y to transformation - start for 1x1 cube (only needs face), then scale down and move around based on x,y to support 2x2+");
-    }
+    let scale =
+        if side_length != 1 {
+            warn!("2x2 seems to work (need to check positions etc) but above 2x2 definitely broken still"); //todo
+            scale_to_top_left(side_length as f32)
+        } else {
+            Matrix4::identity()
+        };
 
-    match face {
-        Face::Up => combine_transforms!(quarter_turn_around_x, translate_up),
-        Face::Down => combine_transforms!(quarter_turn_around_x, translate_down),
-        Face::Front => combine_transforms!(translate_toward),
-        Face::Right => combine_transforms!(quarter_turn_around_y, translate_right),
-        Face::Back => combine_transforms!(translate_away),
-        Face::Left => combine_transforms!(quarter_turn_around_y, translate_left),
-    }
+    (match face {
+        Face::Up => combine_transformations!(rev_quarter_turn_around_x, translate_up),
+        Face::Down => combine_transformations!(quarter_turn_around_x, translate_down),
+        Face::Front => combine_transformations!(translate_toward),
+        Face::Right => combine_transformations!(quarter_turn_around_y, translate_right),
+        Face::Back => combine_transformations!(rev_quarter_turn_around_z, translate_away),
+        Face::Left => combine_transformations!(rev_quarter_turn_around_y, translate_left),
+    }) * position_to(side_length as f32, x as f32, y as f32)
+        * scale
 }
 
-fn cubie_face_to_colour(cubie_face: &CubieFace) -> Srgba {
+fn cubie_face_to_colour(cubie_face: CubieFace) -> Srgba {
     match cubie_face {
         CubieFace::Blue(_) => BLUE,
         CubieFace::Green(_) => GREEN,

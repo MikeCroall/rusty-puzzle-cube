@@ -1,5 +1,5 @@
 use crate::cube_ext::instances::ToInstances;
-use rusty_puzzle_cube::cube::Cube;
+use rusty_puzzle_cube::cube::{face::Face, Cube};
 use three_d::{
     degrees, vec3, Axes, Camera, ClearState, ColorMaterial, CpuMesh, FrameOutput, Gm,
     InstancedMesh, OrbitControl, Srgba, Window, WindowSettings,
@@ -27,7 +27,11 @@ pub(super) fn start_gui() {
     let mut mouse_control = OrbitControl::new(*camera.target(), 1.0, 100.0);
 
     // todo use InstancedMesh.set_instances each time cube changes? WIP instances creation in cube_ext mod
-    let cube = Cube::create(1);
+    let mut cube = Cube::create(2);
+    cube.rotate_face_90_degrees_clockwise(Face::Up);
+    cube.rotate_face_90_degrees_clockwise(Face::Front);
+    cube.rotate_face_90_degrees_clockwise(Face::Down);
+    cube.rotate_face_90_degrees_clockwise(Face::Right);
     let instances = cube.to_instances();
     let instanced_square_mesh = InstancedMesh::new(&ctx, &instances, &CpuMesh::square());
     let instanced_square = Gm::new(
