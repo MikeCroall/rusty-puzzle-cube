@@ -5,7 +5,7 @@
 <!-- [![codecov](https://codecov.io/gh/MikeCroall/rusty-puzzle-cube/graph/badge.svg?precision=1&token=FAL4WFJ2ID)](https://codecov.io/gh/MikeCroall/rusty-puzzle-cube) -->
 <!-- todo remove old coverage badge ^ and set new ones to main branch when merged v  -->
 
-[![rust-ci](https://github.com/MikeCroall/rusty-puzzle-cube/actions/workflows/rust-ci.yml/badge.svg)](https://github.com/MikeCroall/rusty-puzzle-cube/actions) Core lib [![codecov lib](https://codecov.io/gh/MikeCroall/rusty-puzzle-cube/branch/3d/graph/badge.svg?flag=lib&precision=1&token=FAL4WFJ2ID)](https://codecov.io/gh/MikeCroall/rusty-puzzle-cube) UI [![codecov ui](https://codecov.io/gh/MikeCroall/rusty-puzzle-cube/branch/3d/graph/badge.svg?flag=ui&precision=1&token=FAL4WFJ2ID)](https://codecov.io/gh/MikeCroall/rusty-puzzle-cube)
+[![rust-ci](https://github.com/MikeCroall/rusty-puzzle-cube/actions/workflows/rust-ci.yml/badge.svg)](https://github.com/MikeCroall/rusty-puzzle-cube/actions) Core lib [![codecov lib](https://codecov.io/gh/MikeCroall/rusty-puzzle-cube/branch/3d-instances/graph/badge.svg?flag=lib&precision=1&token=FAL4WFJ2ID)](https://codecov.io/gh/MikeCroall/rusty-puzzle-cube) UI [![codecov ui](https://codecov.io/gh/MikeCroall/rusty-puzzle-cube/branch/3d-instances/graph/badge.svg?flag=ui&precision=1&token=FAL4WFJ2ID)](https://codecov.io/gh/MikeCroall/rusty-puzzle-cube)
 
 ### Puzzle Cube GUI
 
