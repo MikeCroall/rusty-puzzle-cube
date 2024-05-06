@@ -9,7 +9,13 @@
 
 ### Puzzle Cube GUI
 
-Highly experimental, early work in progress, etc.
+Experimental, still a work in progress, etc.
+
+#### Cube in Cube in Cube (3x3 algo only on multiple cube sizes)
+
+![Cube in Cube in Cube 3d 3x3 screenshot](img/3x3-3d-cicic.png)
+![Cube in Cube in Cube 3d 4x4 screenshot](img/4x4-3d-cicic.png)
+![Cube in Cube in Cube 3d 10x10 screenshot](img/10x10-3d-cicic.png)
 
 ### Puzzle Cube Lib Demo
 
