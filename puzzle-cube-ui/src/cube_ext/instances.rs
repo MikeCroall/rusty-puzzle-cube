@@ -1,6 +1,5 @@
 use rusty_puzzle_cube::cube::{cubie_face::CubieFace, face::Face, Cube, SideMap};
 use three_d::{Instances, Matrix4, SquareMatrix, Srgba};
-use tracing::warn;
 
 use crate::{
     colours::{BLUE, GREEN, ORANGE, RED, WHITE, YELLOW},
@@ -66,13 +65,11 @@ fn cubie_face_to_transformation(
     x: usize,
     y: usize,
 ) -> Matrix4<f32> {
-    let scale =
-        if side_length != 1 {
-            warn!("2x2 seems to work (need to check positions etc) but above 2x2 definitely broken still"); //todo
-            scale_to_top_left(side_length as f32)
-        } else {
-            Matrix4::identity()
-        };
+    let scale = if side_length != 1 {
+        scale_to_top_left(side_length as f32)
+    } else {
+        Matrix4::identity()
+    };
 
     (match face {
         Face::Up => combine_transformations!(rev_quarter_turn_around_x, translate_up),

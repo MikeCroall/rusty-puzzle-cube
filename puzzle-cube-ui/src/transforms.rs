@@ -54,7 +54,7 @@ pub(super) fn scale_to_top_left(side_length: f32) -> Matrix4<f32> {
     let scale_factor = 1_f32 / side_length;
     let scale_mat = Mat4::from_scale(scale_factor);
 
-    let dist_to_edge = (side_length / 2_f32) * scale_factor;
+    let dist_to_edge = (side_length / 2_f32 - 0.5) * 2_f32 * scale_factor;
     let move_to_left = Mat4::from_translation(-TRANSLATE_RIGHT * dist_to_edge);
     let move_to_top = Mat4::from_translation(TRANSLATE_UP * dist_to_edge);
     move_to_top * move_to_left * scale_mat
