@@ -1,10 +1,12 @@
 use rusty_puzzle_cube::cube::{cubie_face::CubieFace, face::Face, Cube, SideMap};
 use three_d::{Instances, Matrix4, Srgba};
 
-use crate::colours::{BLUE, GREEN, ORANGE, RED, WHITE, YELLOW};
+use crate::{
+    colours::{BLUE, GREEN, ORANGE, RED, WHITE, YELLOW},
+    combine_transforms,
+};
 
-#[allow(dead_code)] // todo remove dead code allowance when used to actually generate instances for 3d cube
-trait ToInstances {
+pub(crate) trait ToInstances {
     fn to_instances(&self) -> Instances;
 }
 
@@ -59,10 +61,21 @@ fn face_to_instances(
 fn cubie_face_to_transformation(
     side_length: usize,
     face: Face,
-    x: usize,
-    y: usize,
+    _x: usize,
+    _y: usize,
 ) -> Matrix4<f32> {
-    todo!("impl face,x,y to transformation - start for 1x1 cube (only needs face), then scale down and move around based on x,y to support 2x2+")
+    if side_length != 1 {
+        todo!("impl side_length,face,x,y to transformation - start for 1x1 cube (only needs face), then scale down and move around based on x,y to support 2x2+");
+    }
+
+    match face {
+        Face::Up => combine_transforms!(quarter_turn_around_x, translate_up),
+        Face::Down => combine_transforms!(quarter_turn_around_x, translate_down),
+        Face::Front => combine_transforms!(translate_toward),
+        Face::Right => combine_transforms!(quarter_turn_around_y, translate_right),
+        Face::Back => combine_transforms!(translate_away),
+        Face::Left => combine_transforms!(quarter_turn_around_y, translate_left),
+    }
 }
 
 fn cubie_face_to_colour(cubie_face: &CubieFace) -> Srgba {

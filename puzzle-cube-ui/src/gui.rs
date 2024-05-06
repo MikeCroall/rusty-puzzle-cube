@@ -1,25 +1,9 @@
+use crate::cube_ext::instances::ToInstances;
+use rusty_puzzle_cube::cube::Cube;
 use three_d::{
-    degrees, vec3, Axes, Camera, ClearState, ColorMaterial, CpuMesh, FrameOutput, Gm, Mesh,
-    OrbitControl, Window, WindowSettings,
+    degrees, vec3, Axes, Camera, ClearState, ColorMaterial, CpuMesh, FrameOutput, Gm,
+    InstancedMesh, OrbitControl, Srgba, Window, WindowSettings,
 };
-
-macro_rules! cubie_side {
-    ($ctx:expr, $colour:ident, $($transform_fn:ident),*) => {
-        {
-            let mut cubie_side = Gm::new(
-                Mesh::new($ctx, &CpuMesh::square()),
-                ColorMaterial {
-                    color: crate::colours::$colour,
-                    ..Default::default()
-                },
-            );
-            $(
-                crate::transforms::$transform_fn(&mut cubie_side);
-            )*
-            cubie_side
-        }
-    };
-}
 
 pub(super) fn start_gui() {
     let window = Window::new(WindowSettings {
@@ -42,13 +26,17 @@ pub(super) fn start_gui() {
 
     let mut mouse_control = OrbitControl::new(*camera.target(), 1.0, 100.0);
 
-    // todo use InstancedMesh with set_instances each time cube changes? WIP instances creation in cube_ext mod
-    let blue_square = cubie_side!(&ctx, BLUE, translate_toward);
-    let orange_square = cubie_side!(&ctx, ORANGE, quarter_turn_around_y, translate_right);
-    let green_square = cubie_side!(&ctx, GREEN, translate_away);
-    let red_square = cubie_side!(&ctx, RED, quarter_turn_around_y, translate_left);
-    let white_square = cubie_side!(&ctx, WHITE, quarter_turn_around_x, translate_up);
-    let yellow_square = cubie_side!(&ctx, YELLOW, quarter_turn_around_x, translate_down);
+    // todo use InstancedMesh.set_instances each time cube changes? WIP instances creation in cube_ext mod
+    let cube = Cube::create(1);
+    let instances = cube.to_instances();
+    let instanced_square_mesh = InstancedMesh::new(&ctx, &instances, &CpuMesh::square());
+    let instanced_square = Gm::new(
+        instanced_square_mesh,
+        ColorMaterial {
+            color: Srgba::WHITE,
+            ..Default::default()
+        },
+    );
 
     let axes = Axes::new(&ctx, 0.05, 2.);
 
@@ -62,18 +50,7 @@ pub(super) fn start_gui() {
             frame_input
                 .screen()
                 .clear(ClearState::color_and_depth(0.13, 0.13, 0.13, 1.0, 1.0))
-                .render(
-                    &camera,
-                    blue_square
-                        .into_iter()
-                        .chain(&orange_square)
-                        .chain(&green_square)
-                        .chain(&red_square)
-                        .chain(&white_square)
-                        .chain(&yellow_square)
-                        .chain(&axes),
-                    &[],
-                );
+                .render(&camera, instanced_square.into_iter().chain(&axes), &[]);
         }
 
         FrameOutput {
