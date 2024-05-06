@@ -51,6 +51,10 @@ pub(super) fn translate_away() -> Matrix4<f32> {
     Mat4::from_translation(-TRANSLATE_TOWARD)
 }
 
+pub(super) fn scale_in_place() -> Matrix4<f32> {
+    Mat4::from_scale(0.9)
+}
+
 pub(super) fn scale_to_top_left(side_length: f32) -> Matrix4<f32> {
     let scale_factor = 1_f32 / side_length;
     let scale_mat = Mat4::from_scale(0.9 * scale_factor);

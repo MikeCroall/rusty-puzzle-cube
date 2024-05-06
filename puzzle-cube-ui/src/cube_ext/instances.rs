@@ -1,10 +1,10 @@
 use rusty_puzzle_cube::cube::{cubie_face::CubieFace, face::Face, Cube, SideMap};
-use three_d::{Instances, Matrix4, SquareMatrix, Srgba};
+use three_d::{Instances, Matrix4, Srgba};
 
 use crate::{
     colours::{BLUE, GREEN, ORANGE, RED, WHITE, YELLOW},
     combine_transformations,
-    transforms::{position_to, scale_to_top_left},
+    transforms::{position_to, scale_in_place, scale_to_top_left},
 };
 
 pub(crate) trait ToInstances {
@@ -65,10 +65,10 @@ fn cubie_face_to_transformation(
     x: usize,
     y: usize,
 ) -> Matrix4<f32> {
-    let scale = if side_length != 1 {
-        scale_to_top_left(side_length as f32)
+    let scale = if side_length == 1 {
+        scale_in_place()
     } else {
-        Matrix4::identity()
+        scale_to_top_left(side_length as f32)
     };
 
     (match face {
