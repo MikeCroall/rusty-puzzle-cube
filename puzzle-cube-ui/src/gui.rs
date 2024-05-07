@@ -21,6 +21,7 @@ pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
     let window = initial_window()?;
     let mut camera = initial_camera(window.viewport());
     let mut mouse_control = OrbitControl::new(*camera.target(), 1.0, 100.0);
+    let mut unreasonable_mode = false;
 
     let ctx = window.gl();
     let mut gui = GUI::new(&ctx);
@@ -50,8 +51,14 @@ pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
                     ui.separator();
 
                     ui.heading("Initialise Cube");
+                    let slider_range = if unreasonable_mode {
+                        1..=2000
+                    } else {
+                        1..=100
+                    };
                     let prev_side_length = side_length;
-                    ui.add(Slider::new(&mut side_length, 1..=100).text(format!("{prev_side_length}x{prev_side_length} Cube")));
+                    ui.add(Slider::new(&mut side_length, slider_range).text(format!("{prev_side_length}x{prev_side_length} Cube")));
+                    ui.checkbox(&mut unreasonable_mode, "Unreasonable mode");
                     if ui.button("Apply").clicked() {
                         cube = Cube::create(side_length);
                         instanced_square.set_instances(&cube.to_instances());
