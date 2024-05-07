@@ -11,6 +11,10 @@ use three_d::{
 };
 use tracing::{debug, error, info};
 
+const MIN_CUBE_SIZE: usize = 1;
+const MAX_CUBE_SIZE: usize = 100;
+const UNREASONABLE_MAX_CUBE_SIZE: usize = 2000;
+
 pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
     info!("Initialising default cube");
     let mut side_length = 3;
@@ -51,14 +55,16 @@ pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
                     ui.separator();
 
                     ui.heading("Initialise Cube");
-                    let slider_range = if unreasonable_mode {
-                        1..=2000
+                    let slider_max_value = if unreasonable_mode {
+                        UNREASONABLE_MAX_CUBE_SIZE
                     } else {
-                        1..=100
+                        MAX_CUBE_SIZE
                     };
                     let prev_side_length = side_length;
-                    ui.add(Slider::new(&mut side_length, slider_range).text(format!("{prev_side_length}x{prev_side_length} Cube")));
-                    ui.checkbox(&mut unreasonable_mode, "Unreasonable mode");
+                    ui.add(Slider::new(&mut side_length, MIN_CUBE_SIZE..=slider_max_value).text(format!("{prev_side_length}x{prev_side_length} Cube")));
+                    if ui.checkbox(&mut unreasonable_mode, "Unreasonable mode").changed() && !unreasonable_mode && MAX_CUBE_SIZE < side_length {
+                        side_length = MAX_CUBE_SIZE;
+                    };
                     if ui.button("Apply").clicked() {
                         cube = Cube::create(side_length);
                         instanced_square.set_instances(&cube.to_instances());
