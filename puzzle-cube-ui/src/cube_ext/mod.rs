@@ -18,8 +18,8 @@ macro_rules! populate_all_faces {
     ($tr:ident, $co:ident, $sm:ident, $sl:ident, $($face:ident),*) => {
         $(
             let (new_transformations, new_colours) = face_to_instances(Face::$face, $sm, $sl);
-            $tr.extend(new_transformations.iter());
-            $co.extend(new_colours.iter());
+            $tr.extend(new_transformations);
+            $co.extend(new_colours);
         )*
     };
 }
@@ -46,17 +46,28 @@ fn face_to_instances(
     face: Face,
     side_map: &SideMap,
     side_length: usize,
-) -> (Vec<Matrix4<f32>>, Vec<Srgba>) {
+) -> (
+    impl Iterator<Item = Matrix4<f32>> + '_,
+    impl Iterator<Item = Srgba> + '_,
+) {
     let side = &side_map[face];
-    let cubie_sides = side.iter().flatten().enumerate().map(|(i, cubie_face)| {
-        let y = i / side_length;
-        let x = i % side_length;
-        (
-            cubie_face_to_transformation(side_length, face, x, y),
-            cubie_face_to_colour(*cubie_face),
-        )
-    });
-    cubie_sides.unzip()
+
+    let transformations = side
+        .iter()
+        .flatten()
+        .enumerate()
+        .map(move |(i, _cubie_face)| {
+            let y = i / side_length;
+            let x = i % side_length;
+            cubie_face_to_transformation(side_length, face, x, y)
+        });
+
+    let colours = side
+        .iter()
+        .flatten()
+        .map(move |cubie_face| cubie_face_to_colour(*cubie_face));
+
+    (transformations, colours)
 }
 
 fn cubie_face_to_transformation(
