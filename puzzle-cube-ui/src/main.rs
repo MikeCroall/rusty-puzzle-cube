@@ -10,16 +10,20 @@ use rusty_puzzle_cube::{
     cube::{face::Face, Cube},
     known_transforms::{checkerboard_corners, cube_in_cube_in_cube},
 };
+use tracing::error;
 
 fn main() {
-    // demo_simple_turns();
-    // demo_simple_turns_big_cube();
-    // demo_checkerboard();
-    // demo_cube_in_cube_in_cube();
-    start_gui();
+    tracing_subscriber::fmt::init();
+
+    if let Err(e) = start_gui() {
+        error!("Could not start gui, defaulting to terminal demo: {}", e);
+        demo_simple_turns();
+        demo_simple_turns_big_cube();
+        demo_checkerboard();
+        demo_cube_in_cube_in_cube();
+    }
 }
 
-#[allow(dead_code)]
 fn demo_simple_turns() {
     println!("Demo of simple turns and their inverse");
 
@@ -50,7 +54,6 @@ fn demo_simple_turns() {
     println!("Overall (printing included) this demo took {elapsed:?}\n");
 }
 
-#[allow(dead_code)]
 fn demo_simple_turns_big_cube() {
     println!("Demo of simple turns and their inverse on a big cube");
 
@@ -81,7 +84,6 @@ fn demo_simple_turns_big_cube() {
     println!("Overall (printing included) this demo took {elapsed:?}\n");
 }
 
-#[allow(dead_code)]
 fn demo_checkerboard() {
     println!("Demo of checkerboard pattern");
 
@@ -100,7 +102,6 @@ fn demo_checkerboard() {
     println!("Overall (printing included) this demo took {elapsed:?} (transform only took {elapsed_transform_only:?})\n");
 }
 
-#[allow(dead_code)]
 fn demo_cube_in_cube_in_cube() {
     println!("Demo of cube in cube in cube");
 

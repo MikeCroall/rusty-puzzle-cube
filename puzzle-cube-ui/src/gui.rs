@@ -6,57 +6,28 @@ use rusty_puzzle_cube::{
 use three_d::{
     degrees,
     egui::{epaint, FontId, TextStyle},
-    vec3, Axes, Camera, ClearState, ColorMaterial, CpuMesh, FrameOutput, Gm, InstancedMesh, Mesh,
-    Object, OrbitControl, Srgba, Viewport, Window, WindowSettings, GUI,
+    vec3, Axes, Camera, ClearState, ColorMaterial, Context, CpuMesh, FrameOutput, Gm,
+    InstancedMesh, Mesh, Object, OrbitControl, Srgba, Viewport, Window, WindowSettings, GUI,
 };
 use tracing::{error, info};
 
-pub(super) fn start_gui() {
-    tracing_subscriber::fmt::init();
-
-    let window = Window::new(WindowSettings {
-        title: "Rusty Puzzle Cube!".to_string(),
-        max_size: Some((1280, 720)),
-        ..Default::default()
-    })
-    .expect("Must be able to create window");
-    let ctx = window.gl();
-
-    let mut camera = Camera::new_perspective(
-        window.viewport(),
-        vec3(3.0, 3.0, 6.0),
-        vec3(0.0, 0.0, 0.0),
-        vec3(0.0, 1.0, 0.0),
-        degrees(45.0),
-        0.1,
-        50.0,
-    );
-
-    let mut mouse_control = OrbitControl::new(*camera.target(), 1.0, 100.0);
-
-    let mut gui = GUI::new(&ctx);
-
+pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
+    info!("Initialising default cube");
     let mut side_length = 3;
     let mut cube = Cube::create(side_length);
     cube_in_cube_in_cube(&mut cube);
 
-    let instanced_square_mesh = InstancedMesh::new(&ctx, &cube.to_instances(), &CpuMesh::square());
-    let mut instanced_square = Gm::new(
-        instanced_square_mesh,
-        ColorMaterial {
-            color: Srgba::WHITE,
-            ..Default::default()
-        },
-    );
+    info!("Initialising GUI");
+    let window = initial_window()?;
+    let mut camera = initial_camera(window.viewport());
+    let mut mouse_control = OrbitControl::new(*camera.target(), 1.0, 100.0);
+
+    let ctx = window.gl();
+    let mut gui = GUI::new(&ctx);
+    let mut instanced_square = initial_instances(&ctx, &cube);
 
     // todo could make inner cube instances for each (external facing) cubie to make rotation animations less funky, when I actually add them...
-    let inner_cube = Gm::new(
-        Mesh::new(&ctx, &CpuMesh::cube()),
-        ColorMaterial {
-            color: Srgba::BLACK,
-            ..Default::default()
-        },
-    );
+    let inner_cube = inner_cube(&ctx);
 
     let mut render_axes = false;
     let axes = Axes::new(&ctx, 0.05, 2.);
@@ -124,14 +95,7 @@ pub(super) fn start_gui() {
             },
         );
 
-        let viewport = Viewport {
-            x: (panel_width * frame_input.device_pixel_ratio) as i32,
-            y: 0,
-            width: frame_input.viewport.width
-                - (panel_width * frame_input.device_pixel_ratio) as u32,
-            height: frame_input.viewport.height,
-        };
-
+        let viewport = calc_viewport(panel_width, &frame_input);
         redraw |= camera.set_viewport(viewport);
         redraw |= mouse_control.handle_events(&mut camera, &mut frame_input.events);
 
@@ -162,4 +126,55 @@ pub(super) fn start_gui() {
             ..Default::default()
         }
     });
+    Ok(())
+}
+
+fn initial_window() -> Result<Window, three_d::WindowError> {
+    Window::new(WindowSettings {
+        title: "Rusty Puzzle Cube!".to_string(),
+        max_size: Some((1280, 720)),
+        ..Default::default()
+    })
+}
+
+fn initial_camera(viewport: Viewport) -> Camera {
+    Camera::new_perspective(
+        viewport,
+        vec3(3.0, 3.0, 6.0),
+        vec3(0.0, 0.0, 0.0),
+        vec3(0.0, 1.0, 0.0),
+        degrees(45.0),
+        0.1,
+        50.0,
+    )
+}
+
+fn initial_instances(ctx: &Context, cube: &Cube) -> Gm<InstancedMesh, ColorMaterial> {
+    let instanced_square_mesh = InstancedMesh::new(ctx, &cube.to_instances(), &CpuMesh::square());
+    Gm::new(
+        instanced_square_mesh,
+        ColorMaterial {
+            color: Srgba::WHITE,
+            ..Default::default()
+        },
+    )
+}
+
+fn inner_cube(ctx: &Context) -> Gm<Mesh, ColorMaterial> {
+    Gm::new(
+        Mesh::new(ctx, &CpuMesh::cube()),
+        ColorMaterial {
+            color: Srgba::BLACK,
+            ..Default::default()
+        },
+    )
+}
+
+fn calc_viewport(panel_width: f32, frame_input: &three_d::FrameInput) -> Viewport {
+    Viewport {
+        x: (panel_width * frame_input.device_pixel_ratio) as i32,
+        y: 0,
+        width: frame_input.viewport.width - (panel_width * frame_input.device_pixel_ratio) as u32,
+        height: frame_input.viewport.height,
+    }
 }
