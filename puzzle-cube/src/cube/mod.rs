@@ -56,10 +56,12 @@ impl Cube {
         }
     }
 
+    #[must_use]
     pub fn side_length(&self) -> usize {
         self.side_length
     }
 
+    #[must_use]
     pub fn side_map(&self) -> &SideMap {
         &self.side_map
     }
@@ -282,6 +284,18 @@ mod tests {
 
     use super::*;
     use pretty_assertions::assert_eq;
+
+    #[test]
+    fn test_side_length_getter() {
+        let cube = Cube::default();
+        assert_eq!(cube.side_length, cube.side_length());
+    }
+
+    #[test]
+    fn test_side_map_getter() {
+        let cube = Cube::default();
+        assert_eq!(&cube.side_map, cube.side_map());
+    }
 
     #[test]
     fn test_default_3x3_cube() {
