@@ -3,8 +3,8 @@
 ## An experimental implementation of simple puzzle cubes in Rust
 
 [![rust-ci](https://github.com/MikeCroall/rusty-puzzle-cube/actions/workflows/rust-ci.yml/badge.svg)](https://github.com/MikeCroall/rusty-puzzle-cube/actions)
-[![lib coverage](https://img.shields.io/codecov/c/github/MikeCroall/rusty-puzzle-cube?flag=lib&style=flat&label=lib%20coverage)](https://codecov.io/gh/MikeCroall/rusty-puzzle-cube)
-[![ui coverage](https://img.shields.io/codecov/c/github/MikeCroall/rusty-puzzle-cube?flag=ui&style=flat&label=gui%20coverage)](https://codecov.io/gh/MikeCroall/rusty-puzzle-cube)
+[![lib coverage](https://img.shields.io/codecov/c/github/MikeCroall/rusty-puzzle-cube?flag=lib&style=flat&label=lib%20coverage)](https://codecov.io/gh/MikeCroall/rusty-puzzle-cube?flags[0]=lib)
+[![ui coverage](https://img.shields.io/codecov/c/github/MikeCroall/rusty-puzzle-cube?flag=ui&style=flat&label=gui%20coverage)](https://codecov.io/gh/MikeCroall/rusty-puzzle-cube?flags[0]=ui)
 
 ### Puzzle Cube GUI Crate
 
