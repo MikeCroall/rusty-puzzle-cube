@@ -52,19 +52,23 @@ pub(super) fn translate_away() -> Matrix4<f32> {
     Mat4::from_translation(-TRANSLATE_TOWARD)
 }
 
-pub(super) fn scale_to_top_left(side_length: f32) -> Matrix4<f32> {
-    let scale_factor = 1_f32 / side_length;
-    let scale_mat = Mat4::from_scale(0.9 * scale_factor);
-
-    let dist_to_edge = (side_length / 2_f32 - 0.5) * 2_f32 * scale_factor;
-    let move_to_left = Mat4::from_translation(-TRANSLATE_RIGHT * dist_to_edge);
-    let move_to_top = Mat4::from_translation(TRANSLATE_UP * dist_to_edge);
-    move_to_top * move_to_left * scale_mat
+pub(super) fn scale_down(side_length: f32) -> Matrix4<f32> {
+    Mat4::from_scale(0.9 / side_length)
 }
 
-pub(super) fn position_to(side_length: f32, x: f32, y: f32) -> Matrix4<f32> {
+pub(super) fn position_from_origin_centered_to(side_length: f32, x: f32, y: f32) -> Matrix4<f32> {
+    // dist_to_edge is simplified version of (side_length / 2_f32 - 0.5) * 2_f32 / side_length
+    let dist_to_edge = 1_f32 - (1_f32 / side_length);
+
+    let move_to_left = Mat4::from_translation(-TRANSLATE_RIGHT * dist_to_edge);
+    let move_to_top = Mat4::from_translation(TRANSLATE_UP * dist_to_edge);
+    let move_to_top_left = move_to_top * move_to_left;
+
     let scaled_side_length = 2_f32 / side_length;
-    let translate_right = TRANSLATE_RIGHT * scaled_side_length * x;
-    let translate_down = -TRANSLATE_UP * scaled_side_length * y;
-    Mat4::from_translation(translate_right) * Mat4::from_translation(translate_down)
+    let move_to_x = TRANSLATE_RIGHT * scaled_side_length * x;
+    let move_to_y = -TRANSLATE_UP * scaled_side_length * y;
+    let move_from_top_left_to_x_y =
+        Mat4::from_translation(move_to_x) * Mat4::from_translation(move_to_y);
+
+    move_from_top_left_to_x_y * move_to_top_left
 }

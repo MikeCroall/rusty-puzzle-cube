@@ -4,9 +4,10 @@ use three_d::{Instances, Matrix4, Srgba};
 use crate::{
     colours::{BLUE, GREEN, ORANGE, RED, WHITE, YELLOW},
     transforms::{
-        half_turn_around_y, position_to, quarter_turn_around_x, quarter_turn_around_y,
-        rev_quarter_turn_around_x, rev_quarter_turn_around_y, scale_to_top_left, translate_away,
-        translate_down, translate_left, translate_right, translate_toward, translate_up,
+        half_turn_around_y, position_from_origin_centered_to, quarter_turn_around_x,
+        quarter_turn_around_y, rev_quarter_turn_around_x, rev_quarter_turn_around_y, scale_down,
+        translate_away, translate_down, translate_left, translate_right, translate_toward,
+        translate_up,
     },
 };
 
@@ -80,8 +81,8 @@ fn cubie_face_to_transformation(
     y: usize,
 ) -> Matrix4<f32> {
     move_face_into_place(face)
-        * position_to(side_length as f32, x as f32, y as f32)
-        * scale_to_top_left(side_length as f32)
+        * position_from_origin_centered_to(side_length as f32, x as f32, y as f32)
+        * scale_down(side_length as f32)
 }
 
 fn move_face_into_place(face: Face) -> Matrix4<f32> {
