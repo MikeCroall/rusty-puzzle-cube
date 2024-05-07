@@ -73,7 +73,7 @@ mod tests {
     }
 
     macro_rules! test_invalid_token {
-        ($($name:ident: $value:expr $(,)?)*) => {
+        ($($name:ident: $value:expr),* $(,)?) => {
             $(
                 #[test]
                 fn $name() {
@@ -86,7 +86,7 @@ mod tests {
     }
 
     macro_rules! test_invalid_sequence {
-        ($($name:ident: $value:expr, $err_token:expr $(,)?)*) => {
+        ($($name:ident: $value:expr, $err_token:expr),* $(,)?) => {
             $(
                 #[test]
                 fn $name() {

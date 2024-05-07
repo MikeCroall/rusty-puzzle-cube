@@ -73,11 +73,11 @@ pub(super) fn position_to(side_length: f32, x: f32, y: f32) -> Matrix4<f32> {
 }
 
 #[macro_export]
-macro_rules! combine_transformations {
+macro_rules! combine_transformations { // todo either use for all transforms, or remove - confusing to have some reverse ordered to others
     ($transform:ident) => {
         $crate::transforms::$transform()
     };
-    ($transform:ident, $($tail:ident),+) => {
+    ($transform:ident, $($tail:ident),+ $(,)?) => {
         combine_transformations!($($tail),*) * $crate::transforms::$transform()
     };
 }
