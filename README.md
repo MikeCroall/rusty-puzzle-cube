@@ -16,6 +16,8 @@ Experimental, still a work in progress, etc.
 
 #### Controls
 
+Unreasonable mode simply changes the maximum cube size from 100 to 2000
+
 ![Controls for the 3d renderer](img/controls-3d.png)
 
 ### Puzzle Cube Lib Crate Demo
