@@ -4,8 +4,10 @@ use rusty_puzzle_cube::{
     known_transforms::cube_in_cube_in_cube,
 };
 use three_d::{
-    degrees, vec3, Axes, Camera, ClearState, ColorMaterial, CpuMesh, FrameOutput, Gm,
-    InstancedMesh, Mesh, Object, OrbitControl, Srgba, Viewport, Window, WindowSettings, GUI,
+    degrees,
+    egui::{epaint, FontId, TextStyle},
+    vec3, Axes, Camera, ClearState, ColorMaterial, CpuMesh, FrameOutput, Gm, InstancedMesh, Mesh,
+    Object, OrbitControl, Srgba, Viewport, Window, WindowSettings, GUI,
 };
 use tracing::{error, info};
 
@@ -89,6 +91,10 @@ pub(super) fn start_gui() {
                     macro_rules! rotate_buttons {
                         ($ui:ident, $text:literal, $cube:ident, $face:ident, $instanced_square:ident) => {
                             $ui.horizontal(|ui|{
+                                ui.style_mut().text_styles.insert(
+                                    TextStyle::Button,
+                                    FontId::new(24.0, epaint::FontFamily::Proportional),
+                                );
                                 if ui.button($text).clicked() {
                                     $cube.rotate_face_90_degrees_clockwise(Face::$face);
                                     $instanced_square.set_instances(&$cube.to_instances());
