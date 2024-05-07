@@ -3,8 +3,11 @@ use three_d::{Instances, Matrix4, Srgba};
 
 use crate::{
     colours::{BLUE, GREEN, ORANGE, RED, WHITE, YELLOW},
-    combine_transformations,
-    transforms::{position_to, scale_in_place, scale_to_top_left},
+    transforms::{
+        half_turn_around_y, position_to, quarter_turn_around_x, quarter_turn_around_y,
+        rev_quarter_turn_around_x, rev_quarter_turn_around_y, scale_to_top_left, translate_away,
+        translate_down, translate_left, translate_right, translate_toward, translate_up,
+    },
 };
 
 pub(crate) trait ToInstances {
@@ -76,21 +79,20 @@ fn cubie_face_to_transformation(
     x: usize,
     y: usize,
 ) -> Matrix4<f32> {
-    let scale = if side_length == 1 {
-        scale_in_place()
-    } else {
-        scale_to_top_left(side_length as f32)
-    };
+    move_face_into_place(face)
+        * position_to(side_length as f32, x as f32, y as f32)
+        * scale_to_top_left(side_length as f32)
+}
 
-    (match face {
-        Face::Up => combine_transformations!(rev_quarter_turn_around_x, translate_up),
-        Face::Down => combine_transformations!(quarter_turn_around_x, translate_down),
-        Face::Front => combine_transformations!(translate_toward),
-        Face::Right => combine_transformations!(quarter_turn_around_y, translate_right),
-        Face::Back => combine_transformations!(rev_quarter_turn_around_z, translate_away),
-        Face::Left => combine_transformations!(rev_quarter_turn_around_y, translate_left),
-    }) * position_to(side_length as f32, x as f32, y as f32)
-        * scale
+fn move_face_into_place(face: Face) -> Matrix4<f32> {
+    match face {
+        Face::Up => translate_up() * rev_quarter_turn_around_x(),
+        Face::Down => translate_down() * quarter_turn_around_x(),
+        Face::Front => translate_toward(),
+        Face::Right => translate_right() * quarter_turn_around_y(),
+        Face::Back => translate_away() * half_turn_around_y(),
+        Face::Left => translate_left() * rev_quarter_turn_around_y(),
+    }
 }
 
 fn cubie_face_to_colour(cubie_face: CubieFace) -> Srgba {

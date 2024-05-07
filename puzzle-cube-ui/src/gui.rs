@@ -9,7 +9,7 @@ use three_d::{
     vec3, Axes, Camera, ClearState, ColorMaterial, Context, CpuMesh, FrameOutput, Gm,
     InstancedMesh, Mesh, Object, OrbitControl, Srgba, Viewport, Window, WindowSettings, GUI,
 };
-use tracing::{error, info};
+use tracing::{debug, error, info};
 
 pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
     info!("Initialising default cube");
@@ -90,6 +90,12 @@ pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
                     ui.heading("Control Camera etc.");
                     ui.add(Checkbox::new(&mut render_axes, "Show axes"));
                     ui.label("F is the blue axis\nR is the red axis\nU is the green axis");
+                    ui.separator();
+
+                    ui.heading("Debug");
+                    if ui.button("Print cube to terminal").clicked() {
+                        println!("{}", cube);
+                    }
                 });
                 panel_width = gui_ctx.used_rect().width();
             },
@@ -100,7 +106,7 @@ pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
         redraw |= mouse_control.handle_events(&mut camera, &mut frame_input.events);
 
         if redraw {
-            info!("Drawing cube");
+            debug!("Drawing cube");
             let screen = frame_input.screen();
             let draw_res = screen
                 .clear(ClearState::color_and_depth(0.13, 0.13, 0.13, 1.0, 1.0))

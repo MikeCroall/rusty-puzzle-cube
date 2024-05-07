@@ -3,6 +3,7 @@ use std::f32::consts::PI;
 use three_d::{radians, vec3, Mat4, Matrix4, Rad, Vector3};
 
 const QUARTER_TURN: Rad<f32> = radians(0.5 * PI);
+const HALF_TURN: Rad<f32> = radians(PI);
 const TRANSLATE_UP: Vector3<f32> = vec3(0., 1.001, 0.);
 const TRANSLATE_TOWARD: Vector3<f32> = vec3(0., 0., 1.001);
 const TRANSLATE_RIGHT: Vector3<f32> = vec3(1.001, 0., 0.);
@@ -23,8 +24,8 @@ pub(super) fn rev_quarter_turn_around_y() -> Matrix4<f32> {
     Mat4::from_angle_y(-QUARTER_TURN)
 }
 
-pub(super) fn rev_quarter_turn_around_z() -> Matrix4<f32> {
-    Mat4::from_angle_z(-QUARTER_TURN)
+pub(super) fn half_turn_around_y() -> Matrix4<f32> {
+    Mat4::from_angle_y(HALF_TURN)
 }
 
 pub(super) fn translate_up() -> Matrix4<f32> {
@@ -51,10 +52,6 @@ pub(super) fn translate_away() -> Matrix4<f32> {
     Mat4::from_translation(-TRANSLATE_TOWARD)
 }
 
-pub(super) fn scale_in_place() -> Matrix4<f32> {
-    Mat4::from_scale(0.9)
-}
-
 pub(super) fn scale_to_top_left(side_length: f32) -> Matrix4<f32> {
     let scale_factor = 1_f32 / side_length;
     let scale_mat = Mat4::from_scale(0.9 * scale_factor);
@@ -70,14 +67,4 @@ pub(super) fn position_to(side_length: f32, x: f32, y: f32) -> Matrix4<f32> {
     let translate_right = TRANSLATE_RIGHT * scaled_side_length * x;
     let translate_down = -TRANSLATE_UP * scaled_side_length * y;
     Mat4::from_translation(translate_right) * Mat4::from_translation(translate_down)
-}
-
-#[macro_export]
-macro_rules! combine_transformations { // todo either use for all transforms, or remove - confusing to have some reverse ordered to others
-    ($transform:ident) => {
-        $crate::transforms::$transform()
-    };
-    ($transform:ident, $($tail:ident),+ $(,)?) => {
-        combine_transformations!($($tail),*) * $crate::transforms::$transform()
-    };
 }
