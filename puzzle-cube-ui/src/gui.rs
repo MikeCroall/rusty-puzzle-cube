@@ -190,10 +190,15 @@ fn inner_cube(ctx: &Context) -> Gm<Mesh, ColorMaterial> {
 }
 
 fn calc_viewport(panel_width: f32, frame_input: &three_d::FrameInput) -> Viewport {
-    Viewport {
-        x: (panel_width * frame_input.device_pixel_ratio) as i32,
-        y: 0,
-        width: frame_input.viewport.width - (panel_width * frame_input.device_pixel_ratio) as u32,
-        height: frame_input.viewport.height,
+    if frame_input.viewport.width == 0 {
+        frame_input.viewport
+    } else {
+        Viewport {
+            x: (panel_width * frame_input.device_pixel_ratio) as i32,
+            y: 0,
+            width: frame_input.viewport.width
+                - (panel_width * frame_input.device_pixel_ratio) as u32,
+            height: frame_input.viewport.height,
+        }
     }
 }
