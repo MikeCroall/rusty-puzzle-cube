@@ -101,6 +101,9 @@ pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
                     ui.separator();
 
                     ui.heading("Control Camera etc.");
+                    if ui.button("Reset camera").clicked() {
+                        camera = initial_camera(frame_input.viewport);
+                    }
                     ui.add(Checkbox::new(&mut render_axes, "Show axes"));
                     ui.label("F is the blue axis\nR is the red axis\nU is the green axis");
                     ui.separator();
