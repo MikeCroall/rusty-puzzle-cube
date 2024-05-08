@@ -1,8 +1,9 @@
 mod colours;
 mod cube_ext;
+mod side_panel;
 mod transforms;
 
-use crate::gui::cube_ext::ToInstances;
+use crate::{gui::cube_ext::ToInstances, rotate_buttons};
 use rusty_puzzle_cube::{
     cube::{face::Face, Cube},
     known_transforms::cube_in_cube_in_cube,
@@ -51,12 +52,9 @@ pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
             frame_input.viewport,
             frame_input.device_pixel_ratio,
             |gui_ctx| {
-                use three_d::egui::{Checkbox, SidePanel, Slider, special_emojis::GITHUB};
+                use three_d::egui::{Checkbox, SidePanel, Slider};
                 SidePanel::left("side_panel").show(gui_ctx, |ui| {
-                    ui.heading("Rusty Puzzle Cube");
-                    ui.label("By Mike Croall");
-                    ui.hyperlink_to(format!("{GITHUB} on GitHub"), "https://github.com/MikeCroall/rusty-puzzle-cube/");
-                    ui.separator();
+                    side_panel::header(ui);
 
                     ui.heading("Initialise Cube");
                     let slider_max_value = if unreasonable_mode {
@@ -65,8 +63,16 @@ pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
                         MAX_CUBE_SIZE
                     };
                     let prev_side_length = side_length;
-                    ui.add(Slider::new(&mut side_length, MIN_CUBE_SIZE..=slider_max_value).text(format!("{prev_side_length}x{prev_side_length} Cube")));
-                    if ui.checkbox(&mut unreasonable_mode, "Unreasonable mode").changed() && !unreasonable_mode && MAX_CUBE_SIZE < side_length {
+                    ui.add(
+                        Slider::new(&mut side_length, MIN_CUBE_SIZE..=slider_max_value)
+                            .text(format!("{prev_side_length}x{prev_side_length} Cube")),
+                    );
+                    if ui
+                        .checkbox(&mut unreasonable_mode, "Unreasonable mode")
+                        .changed()
+                        && !unreasonable_mode
+                        && MAX_CUBE_SIZE < side_length
+                    {
                         side_length = MAX_CUBE_SIZE;
                     };
                     if ui.button("Apply").clicked() {
@@ -76,35 +82,10 @@ pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
                     ui.separator();
 
                     ui.heading("Control Cube");
-                    macro_rules! rotate_buttons {
-                        ($ui:ident, $cube:ident, $instanced_square:ident) => {
-                            rotate_buttons!($ui, "F", $cube, Front, $instanced_square);
-                            rotate_buttons!($ui, "R", $cube, Right, $instanced_square);
-                            rotate_buttons!($ui, "U", $cube, Up, $instanced_square);
-                            rotate_buttons!($ui, "L", $cube, Left, $instanced_square);
-                            rotate_buttons!($ui, "B", $cube, Back, $instanced_square);
-                            rotate_buttons!($ui, "D", $cube, Down, $instanced_square);
-                        };
-                        ($ui:ident, $text:literal, $cube:ident, $face:ident, $instanced_square:ident) => {
-                            $ui.horizontal(|ui|{
-                                ui.style_mut().text_styles.insert(
-                                    TextStyle::Button,
-                                    FontId::new(24.0, epaint::FontFamily::Proportional),
-                                );
-                                if ui.button($text).clicked() {
-                                    $cube.rotate_face_90_degrees_clockwise(Face::$face);
-                                    $instanced_square.set_instances(&$cube.to_instances());
-                                }
-                                if ui.button(format!("{}'", $text)).clicked() {
-                                    $cube.rotate_face_90_degrees_anticlockwise(Face::$face);
-                                    $instanced_square.set_instances(&$cube.to_instances());
-                                }
-                            });
-
-                        };
-                    }
                     rotate_buttons!(ui, cube, instanced_square);
-                    ui.label("Moves that don't also apply to 3x3 cubes are not currently supported");
+                    ui.label(
+                        "Moves that don't also apply to 3x3 cubes are not currently supported",
+                    );
                     ui.separator();
 
                     ui.heading("Control Camera etc.");
@@ -115,10 +96,7 @@ pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
                     ui.label("F is the blue axis\nR is the red axis\nU is the green axis");
                     ui.separator();
 
-                    ui.heading("Debug");
-                    if ui.button("Print cube to terminal").clicked() {
-                        println!("{}", cube);
-                    }
+                    side_panel::debug(ui, &cube);
                 });
                 panel_width = gui_ctx.used_rect().width();
             },
