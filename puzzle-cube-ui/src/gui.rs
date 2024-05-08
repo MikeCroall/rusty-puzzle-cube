@@ -73,6 +73,14 @@ pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
 
                     ui.heading("Control Cube");
                     macro_rules! rotate_buttons {
+                        ($ui:ident, $cube:ident, $instanced_square:ident) => {
+                            rotate_buttons!($ui, "F", $cube, Front, $instanced_square);
+                            rotate_buttons!($ui, "R", $cube, Right, $instanced_square);
+                            rotate_buttons!($ui, "U", $cube, Up, $instanced_square);
+                            rotate_buttons!($ui, "L", $cube, Left, $instanced_square);
+                            rotate_buttons!($ui, "B", $cube, Back, $instanced_square);
+                            rotate_buttons!($ui, "D", $cube, Down, $instanced_square);
+                        };
                         ($ui:ident, $text:literal, $cube:ident, $face:ident, $instanced_square:ident) => {
                             $ui.horizontal(|ui|{
                                 ui.style_mut().text_styles.insert(
@@ -91,12 +99,7 @@ pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
 
                         };
                     }
-                    rotate_buttons!(ui, "F", cube, Front, instanced_square);
-                    rotate_buttons!(ui, "R", cube, Right, instanced_square);
-                    rotate_buttons!(ui, "U", cube, Up, instanced_square);
-                    rotate_buttons!(ui, "L", cube, Left, instanced_square);
-                    rotate_buttons!(ui, "B", cube, Back, instanced_square);
-                    rotate_buttons!(ui, "D", cube, Down, instanced_square);
+                    rotate_buttons!(ui, cube, instanced_square);
                     ui.label("Moves that don't also apply to 3x3 cubes are not currently supported");
                     ui.separator();
 
