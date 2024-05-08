@@ -1,4 +1,8 @@
-use crate::cube_ext::ToInstances;
+mod colours;
+mod cube_ext;
+mod transforms;
+
+use crate::gui::cube_ext::ToInstances;
 use rusty_puzzle_cube::{
     cube::{face::Face, Cube},
     known_transforms::cube_in_cube_in_cube,

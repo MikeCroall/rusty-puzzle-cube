@@ -1,7 +1,4 @@
-mod colours;
-mod cube_ext;
 mod gui;
-mod transforms;
 
 use std::time::Instant;
 

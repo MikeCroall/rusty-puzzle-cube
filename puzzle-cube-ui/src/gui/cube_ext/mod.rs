@@ -1,7 +1,7 @@
 use rusty_puzzle_cube::cube::{cubie_face::CubieFace, face::Face, Cube, SideMap};
 use three_d::{Instances, Matrix4, Srgba};
 
-use crate::{
+use crate::gui::{
     colours::{BLUE, GREEN, ORANGE, RED, WHITE, YELLOW},
     transforms::{
         half_turn_around_y, position_from_origin_centered_to, quarter_turn_around_x,
