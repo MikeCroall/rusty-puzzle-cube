@@ -1,4 +1,4 @@
-use rusty_puzzle_cube::cube::{cubie_face::CubieFace, face::Face, Cube, SideMap};
+use rusty_puzzle_cube::cube::{cubie_face::CubieFace, face::Face, Cube};
 use three_d::{Instances, Matrix4, Srgba};
 
 use crate::gui::{
@@ -15,29 +15,45 @@ pub(crate) trait ToInstances {
     fn to_instances(&self) -> Instances;
 }
 
-macro_rules! populate_all_faces {
-    ($tr:ident, $co:ident, $sm:ident, $sl:ident) => {
-        populate_all_faces!($tr, $co, $sm, $sl, Up, Down, Front, Right, Back, Left);
+macro_rules! all_faces_to_instances {
+    ($side_map:ident, $side_length:ident) => {{
+        let (iter_transformations, iter_colours) = all_faces_to_instances!(
+            $side_map,
+            $side_length,
+            Face::Front,
+            Face::Back,
+            Face::Left,
+            Face::Right,
+            Face::Up,
+            Face::Down,
+        );
+
+        let required_capacity = 6 * $side_length * $side_length;
+        let mut transformations = Vec::with_capacity(required_capacity);
+        transformations.extend(iter_transformations);
+        let mut colours = Vec::with_capacity(required_capacity);
+        colours.extend(iter_colours);
+
+        (transformations, colours)
+    }};
+    ($side_map:ident, $side_length:ident, $this_face:expr) => {
+        face_to_instances($this_face, &$side_map[$this_face], $side_length)
     };
-    ($tr:ident, $co:ident, $sm:ident, $sl:ident, $($face:ident),*) => {
-        $(
-            let (new_transformations, new_colours) = face_to_instances(Face::$face, $sm, $sl);
-            $tr.extend(new_transformations);
-            $co.extend(new_colours);
-        )*
-    };
+    ($side_map:ident, $side_length:ident, $this_face:expr, $($tail:expr),+ $(,)?) => {{
+        let (transforms, colours) = all_faces_to_instances!($side_map, $side_length, $this_face);
+        let (tail_transforms, tail_colours) = all_faces_to_instances!($side_map, $side_length, $($tail),*);
+        (
+            transforms.chain(tail_transforms),
+            colours.chain(tail_colours),
+        )
+    }};
 }
 
 impl ToInstances for Cube {
     fn to_instances(&self) -> Instances {
         let side_length = self.side_length();
-        let capacity = 6 * side_length * side_length;
-        let mut transformations = Vec::with_capacity(capacity);
-        let mut colours = Vec::with_capacity(capacity);
-
         let side_map = self.side_map();
-        populate_all_faces!(transformations, colours, side_map, side_length);
-
+        let (transformations, colours) = all_faces_to_instances!(side_map, side_length);
         Instances {
             transformations,
             colors: Some(colours),
@@ -48,14 +64,12 @@ impl ToInstances for Cube {
 
 fn face_to_instances(
     face: Face,
-    side_map: &SideMap,
+    side: &[Vec<CubieFace>],
     side_length: usize,
 ) -> (
     impl Iterator<Item = Matrix4<f32>> + '_,
     impl Iterator<Item = Srgba> + '_,
 ) {
-    let side = &side_map[face];
-
     let transformations = side
         .iter()
         .flatten()
