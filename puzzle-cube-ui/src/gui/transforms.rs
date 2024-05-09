@@ -69,3 +69,39 @@ pub(super) fn position_from_origin_centered_to(side_length: f32, x: f32, y: f32)
     let vertical = TRANSLATE_UP * (dist_to_edge - (scaled_side_length * y));
     Mat4::from_translation(horizontal + vertical)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use pretty_assertions::assert_eq;
+
+    #[test]
+    fn test_scale_down() {
+        let actual = scale_down(2.);
+
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            0.45, 0., 0., 0.,
+            0., 0.45, 0., 0.,
+            0., 0., 0.45, 0.,
+            0., 0., 0., 1.,
+        );
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_scale_down_inner_cube() {
+        let actual = scale_down_inner_cube();
+
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            0.9999, 0., 0., 0.,
+            0., 0.9999, 0., 0.,
+            0., 0., 0.9999, 0.,
+            0., 0., 0., 1.,
+        );
+
+        assert_eq!(expected, actual);
+    }
+}
