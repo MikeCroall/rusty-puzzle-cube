@@ -1,17 +1,18 @@
 mod colours;
 mod cube_ext;
 mod defaults;
+mod file_io;
 mod side_panel;
 mod transforms;
 
 use crate::gui::{
     cube_ext::ToInstances,
-    defaults::{initial_camera, initial_window},
+    defaults::{clear_state, initial_camera, initial_window},
 };
 use rusty_puzzle_cube::{cube::Cube, known_transforms::cube_in_cube_in_cube};
 use three_d::{
-    Axes, ClearState, ColorMaterial, Context, CpuMesh, FrameOutput, Gm, InstancedMesh, Mesh,
-    Object, OrbitControl, Srgba, Viewport, GUI,
+    Axes, ColorMaterial, Context, CpuMesh, FrameOutput, Gm, InstancedMesh, Mesh, Object,
+    OrbitControl, Srgba, Viewport, GUI,
 };
 use tracing::{debug, error, info};
 
@@ -66,7 +67,15 @@ pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
                         frame_input.viewport,
                         &mut render_axes,
                     );
-                    side_panel::debug(ui, &cube);
+                    side_panel::debug(
+                        ui,
+                        &cube,
+                        &ctx,
+                        frame_input.viewport,
+                        &camera,
+                        &tiles,
+                        &inner_cube,
+                    );
                 });
                 panel_width = gui_ctx.used_rect().width();
             },
@@ -80,7 +89,7 @@ pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
             debug!("Drawing cube");
             let screen = frame_input.screen();
             let draw_res = screen
-                .clear(ClearState::color_and_depth(0.13, 0.13, 0.13, 1.0, 1.0))
+                .clear(clear_state())
                 .render(&camera, tiles.into_iter().chain(&inner_cube), &[])
                 .write(|| {
                     if render_axes {

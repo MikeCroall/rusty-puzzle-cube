@@ -1,4 +1,4 @@
-use three_d::{degrees, vec3, Camera, Viewport, Window, WindowSettings};
+use three_d::{degrees, vec3, Camera, ClearState, Viewport, Window, WindowSettings};
 
 pub(super) fn initial_window() -> Result<Window, three_d::WindowError> {
     Window::new(WindowSettings {
@@ -18,4 +18,8 @@ pub(super) fn initial_camera(viewport: Viewport) -> Camera {
         0.1,
         100.0,
     )
+}
+
+pub(super) fn clear_state() -> ClearState {
+    ClearState::color_and_depth(0.13, 0.13, 0.13, 1.0, 1.0)
 }

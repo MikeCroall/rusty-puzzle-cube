@@ -2,10 +2,11 @@ use crate::gui::cube_ext::ToInstances;
 use rusty_puzzle_cube::cube::{face::Face, Cube};
 use three_d::{
     egui::{epaint, special_emojis::GITHUB, Checkbox, FontId, Slider, TextStyle, Ui},
-    Camera, ColorMaterial, Gm, InstancedMesh, Viewport,
+    Camera, ColorMaterial, Context, Gm, InstancedMesh, Mesh, Viewport,
 };
+use tracing::error;
 
-use super::defaults::initial_camera;
+use super::{defaults::initial_camera, file_io::save_as_image};
 
 const MIN_CUBE_SIZE: usize = 1;
 const MAX_CUBE_SIZE: usize = 100;
@@ -107,9 +108,22 @@ pub(super) fn control_camera(
     ui.separator();
 }
 
-pub(super) fn debug(ui: &mut Ui, cube: &Cube) {
+pub(super) fn debug(
+    ui: &mut Ui,
+    cube: &Cube,
+    ctx: &Context,
+    viewport: Viewport,
+    camera: &Camera,
+    tiles: &Gm<InstancedMesh, ColorMaterial>,
+    inner_cube: &Gm<Mesh, ColorMaterial>,
+) {
     ui.heading("Debug");
     if ui.button("Print cube to terminal").clicked() {
         println!("{cube}");
+    }
+    if ui.button("Save as image").clicked() {
+        if let Err(e) = save_as_image(ctx, viewport, camera, tiles, inner_cube) {
+            error!("Could not save image file: {}", e);
+        }
     }
 }
