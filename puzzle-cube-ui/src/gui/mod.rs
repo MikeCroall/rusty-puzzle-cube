@@ -1,24 +1,19 @@
 mod colours;
 mod cube_ext;
+mod defaults;
 mod side_panel;
 mod transforms;
 
-use crate::{gui::cube_ext::ToInstances, rotate_buttons};
-use rusty_puzzle_cube::{
-    cube::{face::Face, Cube},
-    known_transforms::cube_in_cube_in_cube,
+use crate::gui::{
+    cube_ext::ToInstances,
+    defaults::{initial_camera, initial_window},
 };
+use rusty_puzzle_cube::{cube::Cube, known_transforms::cube_in_cube_in_cube};
 use three_d::{
-    degrees,
-    egui::{epaint, FontId, TextStyle},
-    vec3, Axes, Camera, ClearState, ColorMaterial, Context, CpuMesh, FrameOutput, Gm,
-    InstancedMesh, Mesh, Object, OrbitControl, Srgba, Viewport, Window, WindowSettings, GUI,
+    Axes, ClearState, ColorMaterial, Context, CpuMesh, FrameOutput, Gm, InstancedMesh, Mesh,
+    Object, OrbitControl, Srgba, Viewport, GUI,
 };
 use tracing::{debug, error, info};
-
-const MIN_CUBE_SIZE: usize = 1;
-const MAX_CUBE_SIZE: usize = 100;
-const UNREASONABLE_MAX_CUBE_SIZE: usize = 2000;
 
 pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
     info!("Initialising default cube");
@@ -29,12 +24,12 @@ pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
     info!("Initialising GUI");
     let window = initial_window()?;
     let mut camera = initial_camera(window.viewport());
-    let mut mouse_control = OrbitControl::new(*camera.target(), 1.0, 100.0);
+    let mut mouse_control = OrbitControl::new(*camera.target(), 1.0, 80.0);
     let mut unreasonable_mode = false;
 
     let ctx = window.gl();
     let mut gui = GUI::new(&ctx);
-    let mut instanced_square = initial_instances(&ctx, &cube);
+    let mut tiles = initial_instances(&ctx, &cube);
 
     // todo could make inner cube instances for each (external facing) cubie to make rotation animations less funky, when I actually add them...
     let inner_cube = inner_cube(&ctx);
@@ -52,50 +47,23 @@ pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
             frame_input.viewport,
             frame_input.device_pixel_ratio,
             |gui_ctx| {
-                use three_d::egui::{Checkbox, SidePanel, Slider};
+                use three_d::egui::SidePanel;
                 SidePanel::left("side_panel").show(gui_ctx, |ui| {
                     side_panel::header(ui);
-
-                    ui.heading("Initialise Cube");
-                    let slider_max_value = if unreasonable_mode {
-                        UNREASONABLE_MAX_CUBE_SIZE
-                    } else {
-                        MAX_CUBE_SIZE
-                    };
-                    let prev_side_length = side_length;
-                    ui.add(
-                        Slider::new(&mut side_length, MIN_CUBE_SIZE..=slider_max_value)
-                            .text(format!("{prev_side_length}x{prev_side_length} Cube")),
+                    side_panel::initialise_cube(
+                        ui,
+                        &mut unreasonable_mode,
+                        &mut side_length,
+                        &mut cube,
+                        &mut tiles,
                     );
-                    if ui
-                        .checkbox(&mut unreasonable_mode, "Unreasonable mode")
-                        .changed()
-                        && !unreasonable_mode
-                        && MAX_CUBE_SIZE < side_length
-                    {
-                        side_length = MAX_CUBE_SIZE;
-                    };
-                    if ui.button("Apply").clicked() {
-                        cube = Cube::create(side_length);
-                        instanced_square.set_instances(&cube.to_instances());
-                    }
-                    ui.separator();
-
-                    ui.heading("Control Cube");
-                    rotate_buttons!(ui, cube, instanced_square);
-                    ui.label(
-                        "Moves that don't also apply to 3x3 cubes are not currently supported",
+                    side_panel::control_cube(ui, &mut cube, &mut tiles);
+                    side_panel::control_camera(
+                        ui,
+                        &mut camera,
+                        frame_input.viewport,
+                        &mut render_axes,
                     );
-                    ui.separator();
-
-                    ui.heading("Control Camera etc.");
-                    if ui.button("Reset camera").clicked() {
-                        camera = initial_camera(frame_input.viewport);
-                    }
-                    ui.add(Checkbox::new(&mut render_axes, "Show axes"));
-                    ui.label("F is the blue axis\nR is the red axis\nU is the green axis");
-                    ui.separator();
-
                     side_panel::debug(ui, &cube);
                 });
                 panel_width = gui_ctx.used_rect().width();
@@ -111,11 +79,7 @@ pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
             let screen = frame_input.screen();
             let draw_res = screen
                 .clear(ClearState::color_and_depth(0.13, 0.13, 0.13, 1.0, 1.0))
-                .render(
-                    &camera,
-                    instanced_square.into_iter().chain(&inner_cube),
-                    &[],
-                )
+                .render(&camera, tiles.into_iter().chain(&inner_cube), &[])
                 .write(|| {
                     if render_axes {
                         axes.render(&camera, &[]);
@@ -134,26 +98,6 @@ pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
         }
     });
     Ok(())
-}
-
-fn initial_window() -> Result<Window, three_d::WindowError> {
-    Window::new(WindowSettings {
-        title: "Rusty Puzzle Cube!".to_string(),
-        max_size: Some((1280, 720)),
-        ..Default::default()
-    })
-}
-
-fn initial_camera(viewport: Viewport) -> Camera {
-    Camera::new_perspective(
-        viewport,
-        vec3(3.0, 3.0, 6.0),
-        vec3(0.0, 0.0, 0.0),
-        vec3(0.0, 1.0, 0.0),
-        degrees(45.0),
-        0.1,
-        50.0,
-    )
 }
 
 fn initial_instances(ctx: &Context, cube: &Cube) -> Gm<InstancedMesh, ColorMaterial> {

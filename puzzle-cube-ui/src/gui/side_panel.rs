@@ -1,7 +1,16 @@
-use rusty_puzzle_cube::cube::Cube;
-use three_d::egui::{special_emojis::GITHUB, Ui};
+use crate::gui::cube_ext::ToInstances;
+use rusty_puzzle_cube::cube::{face::Face, Cube};
+use three_d::{
+    egui::{epaint, special_emojis::GITHUB, Checkbox, FontId, Slider, TextStyle, Ui},
+    Camera, ColorMaterial, Gm, InstancedMesh, Viewport,
+};
 
-#[macro_export]
+use super::defaults::initial_camera;
+
+const MIN_CUBE_SIZE: usize = 1;
+const MAX_CUBE_SIZE: usize = 100;
+const UNREASONABLE_MAX_CUBE_SIZE: usize = 2000;
+
 macro_rules! rotate_buttons {
     ($ui:ident, $cube:ident, $instanced_square:ident) => {
         rotate_buttons!($ui, $cube, $instanced_square, "F", Front);
@@ -36,6 +45,65 @@ pub(super) fn header(ui: &mut Ui) {
         format!("{GITHUB} on GitHub"),
         "https://github.com/MikeCroall/rusty-puzzle-cube/",
     );
+    ui.separator();
+}
+
+pub(super) fn initialise_cube(
+    ui: &mut Ui,
+    unreasonable_mode: &mut bool,
+    side_length: &mut usize,
+    cube: &mut Cube,
+    instanced_square: &mut Gm<InstancedMesh, ColorMaterial>,
+) {
+    ui.heading("Initialise Cube");
+    let slider_max_value = if *unreasonable_mode {
+        UNREASONABLE_MAX_CUBE_SIZE
+    } else {
+        MAX_CUBE_SIZE
+    };
+    let prev_side_length = *side_length;
+    ui.add(
+        Slider::new(side_length, MIN_CUBE_SIZE..=slider_max_value)
+            .text(format!("{prev_side_length}x{prev_side_length} Cube")),
+    );
+    if ui
+        .checkbox(unreasonable_mode, "Unreasonable mode")
+        .changed()
+        && !*unreasonable_mode
+        && MAX_CUBE_SIZE < *side_length
+    {
+        *side_length = MAX_CUBE_SIZE;
+    };
+    if ui.button("Apply").clicked() {
+        *cube = Cube::create(*side_length);
+        instanced_square.set_instances(&cube.to_instances());
+    }
+    ui.separator();
+}
+
+pub(super) fn control_cube(
+    ui: &mut Ui,
+    cube: &mut Cube,
+    instanced_square: &mut Gm<InstancedMesh, ColorMaterial>,
+) {
+    ui.heading("Control Cube");
+    rotate_buttons!(ui, cube, instanced_square);
+    ui.label("Moves that don't also apply to 3x3 cubes are not currently supported");
+    ui.separator();
+}
+
+pub(super) fn control_camera(
+    ui: &mut Ui,
+    camera: &mut Camera,
+    viewport: Viewport,
+    render_axes: &mut bool,
+) {
+    ui.heading("Control Camera etc.");
+    if ui.button("Reset camera").clicked() {
+        *camera = initial_camera(viewport);
+    }
+    ui.add(Checkbox::new(render_axes, "Show axes"));
+    ui.label("F is the blue axis\nR is the red axis\nU is the green axis");
     ui.separator();
 }
 
