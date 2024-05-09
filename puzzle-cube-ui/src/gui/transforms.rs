@@ -76,6 +76,96 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     #[test]
+    fn test_translate_up() {
+        let actual = translate_up();
+
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            1., 0., 0., 0.,
+            0., 1., 0., 0.,
+            0., 0., 1., 0.,
+            0., 1., 0., 1.,
+        );
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_translate_down() {
+        let actual = translate_down();
+
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            1., 0., 0., 0.,
+            0., 1., 0., 0.,
+            0., 0., 1., 0.,
+            0., -1., 0., 1.,
+        );
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_translate_right() {
+        let actual = translate_right();
+
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            1., 0., 0., 0.,
+            0., 1., 0., 0.,
+            0., 0., 1., 0.,
+            1., 0., 0., 1.,
+        );
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_translate_left() {
+        let actual = translate_left();
+
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            1., 0., 0., 0.,
+            0., 1., 0., 0.,
+            0., 0., 1., 0.,
+            -1., 0., 0., 1.,
+        );
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_translate_toward() {
+        let actual = translate_toward();
+
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            1., 0., 0., 0.,
+            0., 1., 0., 0.,
+            0., 0., 1., 0.,
+            0., 0., 1., 1.,
+        );
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_translate_away() {
+        let actual = translate_away();
+
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            1., 0., 0., 0.,
+            0., 1., 0., 0.,
+            0., 0., 1., 0.,
+            0., 0., -1., 1.,
+        );
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
     fn test_scale_down() {
         let actual = scale_down(2.);
 
