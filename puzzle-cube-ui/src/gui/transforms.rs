@@ -59,16 +59,9 @@ pub(super) fn scale_down(side_length: f32) -> Matrix4<f32> {
 pub(super) fn position_from_origin_centered_to(side_length: f32, x: f32, y: f32) -> Matrix4<f32> {
     // dist_to_edge is simplified version of (side_length / 2_f32 - 0.5) * 2_f32 / side_length
     let dist_to_edge = 1_f32 - (1_f32 / side_length);
-
-    let move_to_left = Mat4::from_translation(-TRANSLATE_RIGHT * dist_to_edge);
-    let move_to_top = Mat4::from_translation(TRANSLATE_UP * dist_to_edge);
-    let move_to_top_left = move_to_top * move_to_left;
-
+    // three_d in-built square mesh spans from -1.0 to 1.0, so we divide 2 by the amount of tiles to fit
     let scaled_side_length = 2_f32 / side_length;
-    let move_to_x = TRANSLATE_RIGHT * scaled_side_length * x;
-    let move_to_y = -TRANSLATE_UP * scaled_side_length * y;
-    let move_from_top_left_to_x_y =
-        Mat4::from_translation(move_to_x) * Mat4::from_translation(move_to_y);
-
-    move_from_top_left_to_x_y * move_to_top_left
+    let total_x_movement = TRANSLATE_RIGHT * ((scaled_side_length * x) - dist_to_edge);
+    let total_y_movement = TRANSLATE_UP * (dist_to_edge - (scaled_side_length * y));
+    Mat4::from_translation(total_x_movement + total_y_movement)
 }
