@@ -65,7 +65,7 @@ pub(super) fn position_from_origin_centered_to(side_length: f32, x: f32, y: f32)
     let dist_to_edge = 1_f32 - (1_f32 / side_length);
     // three_d in-built square mesh spans from -1.0 to 1.0, so we divide 2 by the amount of tiles to fit
     let scaled_side_length = 2_f32 / side_length;
-    let total_x_movement = TRANSLATE_RIGHT * ((scaled_side_length * x) - dist_to_edge);
-    let total_y_movement = TRANSLATE_UP * (dist_to_edge - (scaled_side_length * y));
-    Mat4::from_translation(total_x_movement + total_y_movement)
+    let horizontal = TRANSLATE_RIGHT * ((scaled_side_length * x) - dist_to_edge);
+    let vertical = TRANSLATE_UP * (dist_to_edge - (scaled_side_length * y));
+    Mat4::from_translation(horizontal + vertical)
 }
