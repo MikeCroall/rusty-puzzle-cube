@@ -4,9 +4,9 @@ use three_d::{radians, vec3, Mat4, Matrix4, Rad, Vector3};
 
 const QUARTER_TURN: Rad<f32> = radians(0.5 * PI);
 const HALF_TURN: Rad<f32> = radians(PI);
-const TRANSLATE_UP: Vector3<f32> = vec3(0., 1.001, 0.);
-const TRANSLATE_TOWARD: Vector3<f32> = vec3(0., 0., 1.001);
-const TRANSLATE_RIGHT: Vector3<f32> = vec3(1.001, 0., 0.);
+const TRANSLATE_UP: Vector3<f32> = vec3(0., 1., 0.);
+const TRANSLATE_TOWARD: Vector3<f32> = vec3(0., 0., 1.);
+const TRANSLATE_RIGHT: Vector3<f32> = vec3(1., 0., 0.);
 
 pub(super) fn quarter_turn_around_x() -> Matrix4<f32> {
     Mat4::from_angle_x(QUARTER_TURN)
@@ -54,6 +54,10 @@ pub(super) fn translate_away() -> Matrix4<f32> {
 
 pub(super) fn scale_down(side_length: f32) -> Matrix4<f32> {
     Mat4::from_scale(0.9 / side_length)
+}
+
+pub(super) fn scale_down_inner_cube() -> Matrix4<f32> {
+    Mat4::from_scale(0.9999)
 }
 
 pub(super) fn position_from_origin_centered_to(side_length: f32, x: f32, y: f32) -> Matrix4<f32> {

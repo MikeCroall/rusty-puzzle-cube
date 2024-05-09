@@ -15,6 +15,8 @@ use three_d::{
 };
 use tracing::{debug, error, info};
 
+use self::transforms::scale_down_inner_cube;
+
 pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
     info!("Initialising default cube");
     let mut side_length = 3;
@@ -112,13 +114,15 @@ fn initial_instances(ctx: &Context, cube: &Cube) -> Gm<InstancedMesh, ColorMater
 }
 
 fn inner_cube(ctx: &Context) -> Gm<Mesh, ColorMaterial> {
-    Gm::new(
+    let mut inner_cube = Gm::new(
         Mesh::new(ctx, &CpuMesh::cube()),
         ColorMaterial {
             color: Srgba::BLACK,
             ..Default::default()
         },
-    )
+    );
+    inner_cube.set_transformation(scale_down_inner_cube());
+    inner_cube
 }
 
 fn calc_viewport(panel_width: f32, frame_input: &three_d::FrameInput) -> Viewport {
