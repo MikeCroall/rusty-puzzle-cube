@@ -74,6 +74,87 @@ pub(super) fn position_from_origin_centered_to(side_length: f32, x: f32, y: f32)
 mod tests {
     use super::*;
     use pretty_assertions::assert_eq;
+    use three_d::{Angle as _, Deg};
+
+    #[test]
+    fn test_quarter_turn_around_x() {
+        let actual = quarter_turn_around_x();
+
+        let (s, c) = Rad::sin_cos(Deg(90.).into());
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            1., 0., 0., 0.,
+            0., c, s, 0.,
+            0., -s, c, 0.,
+            0., 0., 0., 1.,
+        );
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_rev_quarter_turn_around_x() {
+        let actual = rev_quarter_turn_around_x();
+
+        let (s, c) = Rad::sin_cos(Deg(-90.).into());
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            1., 0., 0., 0.,
+            0., c, s, 0.,
+            0., -s, c, 0.,
+            0., 0., 0., 1.,
+        );
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_quarter_turn_around_y() {
+        let actual = quarter_turn_around_y();
+
+        let (s, c) = Rad::sin_cos(Deg(90.).into());
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            c, 0., -s, 0.,
+            0., 1., 0., 0.,
+            s, 0., c, 0.,
+            0., 0., 0., 1.,
+        );
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_rev_quarter_turn_around_y() {
+        let actual = rev_quarter_turn_around_y();
+
+        let (s, c) = Rad::sin_cos(Deg(-90.).into());
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            c, 0., -s, 0.,
+            0., 1., 0., 0.,
+            s, 0., c, 0.,
+            0., 0., 0., 1.,
+        );
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_half_turn_around_y() {
+        let actual = half_turn_around_y();
+
+        let (s, c) = Rad::sin_cos(Deg(180.).into());
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            c, 0., -s, 0.,
+            0., 1., 0., 0.,
+            s, 0., c, 0.,
+            0., 0., 0., 1.,
+        );
+
+        assert_eq!(expected, actual);
+    }
 
     #[test]
     fn test_translate_up() {
