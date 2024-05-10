@@ -68,6 +68,7 @@ pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
                         frame_input.viewport,
                         &mut render_axes,
                     );
+                    #[cfg(not(target_arch = "wasm32"))]
                     side_panel::debug(
                         ui,
                         &cube,

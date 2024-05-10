@@ -110,6 +110,7 @@ pub(super) fn control_camera(
     ui.separator();
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub(super) fn debug(
     ui: &mut Ui,
     cube: &Cube,
@@ -124,7 +125,6 @@ pub(super) fn debug(
         info!("\n{cube}");
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
     if ui.button("Save as image").clicked() {
         if let Err(e) = save_as_image(ctx, viewport, camera, tiles, inner_cube) {
             error!("Could not save image file: {}", e);
