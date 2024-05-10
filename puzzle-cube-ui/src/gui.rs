@@ -1,6 +1,7 @@
 mod colours;
 mod cube_ext;
 mod defaults;
+#[cfg(not(target_arch = "wasm32"))]
 mod file_io;
 mod side_panel;
 mod transforms;

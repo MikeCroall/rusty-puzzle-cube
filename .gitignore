@@ -1,3 +1,6 @@
 /target
 lcov.info
 *.profraw
+
+# for web/wasm version
+node_modules/

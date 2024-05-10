@@ -6,7 +6,9 @@ use three_d::{
 };
 use tracing::error;
 
-use super::{defaults::initial_camera, file_io::save_as_image};
+use super::defaults::initial_camera;
+#[cfg(not(target_arch = "wasm32"))]
+use super::file_io::save_as_image;
 
 const MIN_CUBE_SIZE: usize = 1;
 const MAX_CUBE_SIZE: usize = 100;
@@ -121,6 +123,8 @@ pub(super) fn debug(
     if ui.button("Print cube to terminal").clicked() {
         println!("{cube}");
     }
+
+    #[cfg(not(target_arch = "wasm32"))]
     if ui.button("Save as image").clicked() {
         if let Err(e) = save_as_image(ctx, viewport, camera, tiles, inner_cube) {
             error!("Could not save image file: {}", e);

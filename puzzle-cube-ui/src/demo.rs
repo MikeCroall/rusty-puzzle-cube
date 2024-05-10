@@ -1,15 +1,15 @@
-mod gui;
+use crate::gui::start_gui;
 
 use std::time::Instant;
 
-use gui::start_gui;
 use rusty_puzzle_cube::{
     cube::{face::Face, Cube},
     known_transforms::{checkerboard_corners, cube_in_cube_in_cube},
 };
 use tracing::error;
 
-fn main() {
+pub fn run() {
+    #[cfg(not(target_arch = "wasm32"))]
     tracing_subscriber::fmt::init();
 
     if let Err(e) = start_gui() {

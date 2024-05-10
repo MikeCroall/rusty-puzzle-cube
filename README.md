@@ -22,6 +22,22 @@ Unreasonable mode simply changes the maximum cube size from 100 to 2000
 
 ![Controls for the 3d renderer](img/controls-3d.png)
 
+### Building Puzzle Cube GUI Crate for web
+
+Build command written from inside the `web` dir
+
+```bash
+npx wasm-pack build "../puzzle-cube-ui" --target web --out-name web --out-dir ../web/pkg
+```
+
+Files built into `web/pkg/`, which can be hosted by
+
+```bash
+npm run serve
+```
+
+Then visit `http://localhost:8080`
+
 ### Puzzle Cube Lib Crate Demo
 
 Demos of basic 3x3 notation being parsed and applied to a newly created cube
