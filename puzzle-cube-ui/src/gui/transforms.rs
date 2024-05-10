@@ -275,4 +275,49 @@ mod tests {
 
         assert_eq!(expected, actual);
     }
+
+    #[test]
+    fn test_position_from_origin_centered_to_1x1_0_0() {
+        let actual = position_from_origin_centered_to(1., 0., 0.);
+
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            1., 0., 0., 0.,
+            0., 1., 0., 0.,
+            0., 0., 1., 0.,
+            0., 0., 0., 1.,
+        );
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_position_from_origin_centered_to_3x3_0_0() {
+        let actual = position_from_origin_centered_to(3., 0., 0.);
+
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            1., 0., 0., 0.,
+            0., 1., 0., 0.,
+            0., 0., 1., 0.,
+            -0.6666666, 0.6666666, 0., 1.,
+        );
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_position_from_origin_centered_to_3x3_2_0() {
+        let actual = position_from_origin_centered_to(3., 2., 0.);
+
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            1., 0., 0., 0.,
+            0., 1., 0., 0.,
+            0., 0., 1., 0.,
+            0.66666675, 0.6666666, 0., 1.,
+        );
+
+        assert_eq!(expected, actual);
+    }
 }
