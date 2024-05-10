@@ -4,7 +4,7 @@ use three_d::{
     egui::{epaint, special_emojis::GITHUB, Checkbox, FontId, Slider, TextStyle, Ui},
     Camera, ColorMaterial, Context, Gm, InstancedMesh, Mesh, Viewport,
 };
-use tracing::error;
+use tracing::{error, info};
 
 use super::defaults::initial_camera;
 #[cfg(not(target_arch = "wasm32"))]
@@ -121,7 +121,7 @@ pub(super) fn debug(
 ) {
     ui.heading("Debug");
     if ui.button("Print cube to terminal").clicked() {
-        println!("{cube}");
+        info!("\n{cube}");
     }
 
     #[cfg(not(target_arch = "wasm32"))]
