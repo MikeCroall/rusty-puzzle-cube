@@ -1,12 +1,14 @@
 name: WASM to GitHub Pages
 
 on:
+    workflow_run:
+        workflows: ["Rust CI"]
+        branches: ["main"]
+        types:
+            - completed
     push:
         branches: ["main"]
         paths:
-            - "**.rs"
-            - "**.toml"
-            - "**.lock"
             - "**pages.yml"
 
 jobs:
