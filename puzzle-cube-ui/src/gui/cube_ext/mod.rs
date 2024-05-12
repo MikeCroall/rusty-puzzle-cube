@@ -88,6 +88,7 @@ fn face_to_instances(
     (transformations, colours)
 }
 
+#[allow(clippy::cast_precision_loss)]
 fn cubie_face_to_transformation(
     side_length: usize,
     face: Face,
