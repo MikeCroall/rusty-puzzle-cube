@@ -83,7 +83,11 @@ pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
             },
         );
 
-        let viewport = calc_viewport(panel_width, &frame_input);
+        let viewport = calc_viewport(
+            panel_width,
+            frame_input.viewport,
+            frame_input.device_pixel_ratio,
+        );
         redraw |= camera.set_viewport(viewport);
         redraw |= mouse_control.handle_events(&mut camera, &mut frame_input.events);
 
@@ -137,16 +141,33 @@ fn inner_cube(ctx: &Context) -> Gm<Mesh, ColorMaterial> {
 }
 
 #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-fn calc_viewport(panel_width: f32, frame_input: &three_d::FrameInput) -> Viewport {
-    if frame_input.viewport.width == 0 {
-        frame_input.viewport
+fn calc_viewport(panel_width: f32, viewport: Viewport, device_pixel_ratio: f32) -> Viewport {
+    if viewport.width == 0 {
+        viewport
     } else {
         Viewport {
-            x: (panel_width * frame_input.device_pixel_ratio) as i32,
+            x: (panel_width * device_pixel_ratio) as i32,
             y: 0,
-            width: frame_input.viewport.width
-                - (panel_width * frame_input.device_pixel_ratio) as u32,
-            height: frame_input.viewport.height,
+            width: viewport.width - (panel_width * device_pixel_ratio) as u32,
+            height: viewport.height,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use three_d::Viewport;
+
+    use super::calc_viewport;
+
+    #[test]
+    fn test_valid_viewport_when_window_minimized() {
+        let minimized_viewport = Viewport {
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 0,
+        };
+        let _ = calc_viewport(50., minimized_viewport, 1.);
     }
 }
