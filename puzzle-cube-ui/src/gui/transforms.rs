@@ -98,7 +98,27 @@ pub(super) fn cubie_face_to_transformation(
 mod tests {
     use super::*;
     use pretty_assertions::assert_eq;
-    use three_d::{Angle as _, Deg};
+    use three_d::{Angle as _, Deg, Vector4};
+
+    fn assert_mat_eq_with_tolerance(m1: Matrix4<f32>, m2: Matrix4<f32>, epsilon: f32) {
+        assert_vec_eq_with_tolerance(m1.w, m2.w, epsilon);
+        assert_vec_eq_with_tolerance(m1.x, m2.x, epsilon);
+        assert_vec_eq_with_tolerance(m1.y, m2.y, epsilon);
+        assert_vec_eq_with_tolerance(m1.z, m2.z, epsilon);
+    }
+
+    fn assert_vec_eq_with_tolerance(v1: Vector4<f32>, v2: Vector4<f32>, epsilon: f32) {
+        assert_eq_with_tolerance(v1.w, v2.w, epsilon);
+        assert_eq_with_tolerance(v1.x, v2.x, epsilon);
+        assert_eq_with_tolerance(v1.y, v2.y, epsilon);
+        assert_eq_with_tolerance(v1.z, v2.z, epsilon);
+    }
+
+    fn assert_eq_with_tolerance(f1: f32, f2: f32, epsilon: f32) {
+        let diff = f1 - f2;
+        let abs = diff.abs();
+        assert!(abs < epsilon);
+    }
 
     #[test]
     fn test_quarter_turn_around_x() {
@@ -352,12 +372,12 @@ mod tests {
         #[rustfmt::skip]
         let expected = Matrix4::new(
             1., 0., 0., 0.,
-            0., -4.371139e-8, -1., 0.,
-            0., 1., -4.371139e-8, 0.,
+            0., 0., -1., 0.,
+            0., 1., 0., 0.,
             0., 1., 0., 1.,
         );
 
-        assert_eq!(expected, actual);
+        assert_mat_eq_with_tolerance(expected, actual, 0.0000001);
     }
 
     #[test]
@@ -367,12 +387,12 @@ mod tests {
         #[rustfmt::skip]
         let expected = Matrix4::new(
             1., 0., 0., 0.,
-            0., -4.371139e-8, 1., 0.,
-            0., -1., -4.371139e-8, 0.,
+            0., 0., 1., 0.,
+            0., -1., 0., 0.,
             0., -1., 0., 1.,
         );
 
-        assert_eq!(expected, actual);
+        assert_mat_eq_with_tolerance(expected, actual, 0.0000001);
     }
 
     #[test]
@@ -398,11 +418,11 @@ mod tests {
         let expected = Matrix4::new(
             -4.371139e-8, 0., -1., 0.,
             0., 1., 0., 0.,
-            1., 0., -4.371139e-8, 0.,
+            1., 0., 0., 0.,
             1., 0., 0., 1.,
         );
 
-        assert_eq!(expected, actual);
+        assert_mat_eq_with_tolerance(expected, actual, 0.0000001);
     }
 
     #[test]
@@ -411,13 +431,13 @@ mod tests {
 
         #[rustfmt::skip]
         let expected = Matrix4::new(
-            -1., 0., 8.742278e-8, 0.,
+            -1., 0., 0., 0.,
             0., 1., 0., 0.,
-            -8.742278e-8, 0., -1., 0.,
+            0., 0., -1., 0.,
             0., 0., -1., 1.,
         );
 
-        assert_eq!(expected, actual);
+        assert_mat_eq_with_tolerance(expected, actual, 0.0000001);
     }
 
     #[test]
@@ -426,12 +446,12 @@ mod tests {
 
         #[rustfmt::skip]
         let expected = Matrix4::new(
-            -4.371139e-8, 0., 1., 0.,
+            0., 0., 1., 0.,
             0., 1., 0., 0.,
-            -1., 0., -4.371139e-8, 0.,
+            -1., 0., 0., 0.,
             -1., 0., 0., 1.,
         );
 
-        assert_eq!(expected, actual);
+        assert_mat_eq_with_tolerance(expected, actual, 0.0000001);
     }
 }
