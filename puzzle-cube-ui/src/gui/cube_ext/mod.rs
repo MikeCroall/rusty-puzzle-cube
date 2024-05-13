@@ -121,3 +121,67 @@ fn cubie_face_to_colour(cubie_face: CubieFace) -> Srgba {
         CubieFace::Yellow(_) => YELLOW,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use pretty_assertions::assert_eq;
+
+    #[test]
+    fn test_cubie_face_to_colour() {
+        assert_eq!(
+            cubie_face_to_colour(CubieFace::Blue(None)),
+            Srgba {
+                r: 0,
+                g: 0,
+                b: 204,
+                a: 255
+            }
+        );
+        assert_eq!(
+            cubie_face_to_colour(CubieFace::Green(None)),
+            Srgba {
+                r: 0,
+                g: 204,
+                b: 0,
+                a: 255
+            }
+        );
+        assert_eq!(
+            cubie_face_to_colour(CubieFace::Orange(None)),
+            Srgba {
+                r: 224,
+                g: 112,
+                b: 0,
+                a: 255
+            }
+        );
+        assert_eq!(
+            cubie_face_to_colour(CubieFace::Red(None)),
+            Srgba {
+                r: 204,
+                g: 0,
+                b: 0,
+                a: 255
+            }
+        );
+        assert_eq!(
+            cubie_face_to_colour(CubieFace::White(None)),
+            Srgba {
+                r: 255,
+                g: 255,
+                b: 255,
+                a: 255
+            }
+        );
+        assert_eq!(
+            cubie_face_to_colour(CubieFace::Yellow(None)),
+            Srgba {
+                r: 224,
+                g: 224,
+                b: 0,
+                a: 255
+            }
+        );
+    }
+}
