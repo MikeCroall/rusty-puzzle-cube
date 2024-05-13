@@ -1,14 +1,9 @@
 use rusty_puzzle_cube::cube::{cubie_face::CubieFace, face::Face, Cube};
 use three_d::{Instances, Matrix4, Srgba};
 
-use crate::gui::{
+use super::{
     colours::{BLUE, GREEN, ORANGE, RED, WHITE, YELLOW},
-    transforms::{
-        half_turn_around_y, position_from_origin_centered_to, quarter_turn_around_x,
-        quarter_turn_around_y, rev_quarter_turn_around_x, rev_quarter_turn_around_y, scale_down,
-        translate_away, translate_down, translate_left, translate_right, translate_toward,
-        translate_up,
-    },
+    transforms::cubie_face_to_transformation,
 };
 
 pub(crate) trait ToInstances {
@@ -88,29 +83,6 @@ fn face_to_instances(
     (transformations, colours)
 }
 
-#[allow(clippy::cast_precision_loss)]
-fn cubie_face_to_transformation(
-    side_length: usize,
-    face: Face,
-    x: usize,
-    y: usize,
-) -> Matrix4<f32> {
-    move_face_into_place(face)
-        * position_from_origin_centered_to(side_length as f32, x as f32, y as f32)
-        * scale_down(side_length as f32)
-}
-
-fn move_face_into_place(face: Face) -> Matrix4<f32> {
-    match face {
-        Face::Up => translate_up() * rev_quarter_turn_around_x(),
-        Face::Down => translate_down() * quarter_turn_around_x(),
-        Face::Front => translate_toward(),
-        Face::Right => translate_right() * quarter_turn_around_y(),
-        Face::Back => translate_away() * half_turn_around_y(),
-        Face::Left => translate_left() * rev_quarter_turn_around_y(),
-    }
-}
-
 fn cubie_face_to_colour(cubie_face: CubieFace) -> Srgba {
     match cubie_face {
         CubieFace::Blue(_) => BLUE,
@@ -128,7 +100,7 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     #[test]
-    fn test_cubie_face_to_colour() {
+    fn test_cubie_face_to_colour_blue() {
         assert_eq!(
             cubie_face_to_colour(CubieFace::Blue(None)),
             Srgba {
@@ -138,6 +110,10 @@ mod tests {
                 a: 255
             }
         );
+    }
+
+    #[test]
+    fn test_cubie_face_to_colour_green() {
         assert_eq!(
             cubie_face_to_colour(CubieFace::Green(None)),
             Srgba {
@@ -147,6 +123,10 @@ mod tests {
                 a: 255
             }
         );
+    }
+
+    #[test]
+    fn test_cubie_face_to_colour_orange() {
         assert_eq!(
             cubie_face_to_colour(CubieFace::Orange(None)),
             Srgba {
@@ -156,6 +136,10 @@ mod tests {
                 a: 255
             }
         );
+    }
+
+    #[test]
+    fn test_cubie_face_to_colour_red() {
         assert_eq!(
             cubie_face_to_colour(CubieFace::Red(None)),
             Srgba {
@@ -165,6 +149,10 @@ mod tests {
                 a: 255
             }
         );
+    }
+
+    #[test]
+    fn test_cubie_face_to_colour_white() {
         assert_eq!(
             cubie_face_to_colour(CubieFace::White(None)),
             Srgba {
@@ -174,6 +162,10 @@ mod tests {
                 a: 255
             }
         );
+    }
+
+    #[test]
+    fn test_cubie_face_to_colour_yellow() {
         assert_eq!(
             cubie_face_to_colour(CubieFace::Yellow(None)),
             Srgba {

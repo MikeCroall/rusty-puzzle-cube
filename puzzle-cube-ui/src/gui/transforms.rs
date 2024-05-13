@@ -1,5 +1,6 @@
 use std::f32::consts::PI;
 
+use rusty_puzzle_cube::cube::face::Face;
 use three_d::{radians, vec3, Mat4, Matrix4, Rad, Vector3};
 
 const QUARTER_TURN: Rad<f32> = radians(0.5 * PI);
@@ -68,6 +69,29 @@ pub(super) fn position_from_origin_centered_to(side_length: f32, x: f32, y: f32)
     let horizontal = TRANSLATE_RIGHT * ((scaled_side_length * x) - dist_to_edge);
     let vertical = TRANSLATE_UP * (dist_to_edge - (scaled_side_length * y));
     Mat4::from_translation(horizontal + vertical)
+}
+
+pub(super) fn move_face_into_place(face: Face) -> Matrix4<f32> {
+    match face {
+        Face::Up => translate_up() * rev_quarter_turn_around_x(),
+        Face::Down => translate_down() * quarter_turn_around_x(),
+        Face::Front => translate_toward(),
+        Face::Right => translate_right() * quarter_turn_around_y(),
+        Face::Back => translate_away() * half_turn_around_y(),
+        Face::Left => translate_left() * rev_quarter_turn_around_y(),
+    }
+}
+
+#[allow(clippy::cast_precision_loss)]
+pub(super) fn cubie_face_to_transformation(
+    side_length: usize,
+    face: Face,
+    x: usize,
+    y: usize,
+) -> Matrix4<f32> {
+    move_face_into_place(face)
+        * position_from_origin_centered_to(side_length as f32, x as f32, y as f32)
+        * scale_down(side_length as f32)
 }
 
 #[cfg(test)]
@@ -316,6 +340,96 @@ mod tests {
             0., 1., 0., 0.,
             0., 0., 1., 0.,
             0.66666675, 0.6666666, 0., 1.,
+        );
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_move_face_into_place_up() {
+        let actual = move_face_into_place(Face::Up);
+
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            1., 0., 0., 0.,
+            0., -4.371139e-8, -1., 0.,
+            0., 1., -4.371139e-8, 0.,
+            0., 1., 0., 1.,
+        );
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_move_face_into_place_down() {
+        let actual = move_face_into_place(Face::Down);
+
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            1., 0., 0., 0.,
+            0., -4.371139e-8, 1., 0.,
+            0., -1., -4.371139e-8, 0.,
+            0., -1., 0., 1.,
+        );
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_move_face_into_place_front() {
+        let actual = move_face_into_place(Face::Front);
+
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            1., 0., 0., 0.,
+            0., 1., 0., 0.,
+            0., 0., 1., 0.,
+            0., 0., 1., 1.,
+        );
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_move_face_into_place_right() {
+        let actual = move_face_into_place(Face::Right);
+
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            -4.371139e-8, 0., -1., 0.,
+            0., 1., 0., 0.,
+            1., 0., -4.371139e-8, 0.,
+            1., 0., 0., 1.,
+        );
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_move_face_into_place_back() {
+        let actual = move_face_into_place(Face::Back);
+
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            -1., 0., 8.742278e-8, 0.,
+            0., 1., 0., 0.,
+            -8.742278e-8, 0., -1., 0.,
+            0., 0., -1., 1.,
+        );
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_move_face_into_place_left() {
+        let actual = move_face_into_place(Face::Left);
+
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            -4.371139e-8, 0., 1., 0.,
+            0., 1., 0., 0.,
+            -1., 0., -4.371139e-8, 0.,
+            -1., 0., 0., 1.,
         );
 
         assert_eq!(expected, actual);

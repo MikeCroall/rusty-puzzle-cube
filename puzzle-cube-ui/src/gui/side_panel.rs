@@ -1,4 +1,3 @@
-use crate::gui::cube_ext::ToInstances;
 use rusty_puzzle_cube::cube::{face::Face, Cube};
 use three_d::{
     egui::{epaint, special_emojis::GITHUB, Checkbox, FontId, Slider, TextStyle, Ui},
@@ -6,9 +5,9 @@ use three_d::{
 };
 use tracing::{error, info};
 
-use super::defaults::initial_camera;
 #[cfg(not(target_arch = "wasm32"))]
 use super::file_io::save_as_image;
+use super::{cube_ext::ToInstances, defaults::initial_camera};
 
 const MIN_CUBE_SIZE: usize = 1;
 const MAX_CUBE_SIZE: usize = 100;
