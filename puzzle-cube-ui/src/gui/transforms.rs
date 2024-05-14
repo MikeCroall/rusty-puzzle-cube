@@ -58,7 +58,13 @@ pub(super) fn scale_down(side_length: f32) -> Matrix4<f32> {
 }
 
 pub(super) fn scale_down_inner_cube() -> Matrix4<f32> {
-    Mat4::from_scale(0.9999)
+    #[cfg(not(target_arch = "wasm32"))]
+    let scale = Mat4::from_scale(0.9999);
+
+    #[cfg(target_arch = "wasm32")]
+    let scale = Mat4::from_scale(0.996);
+
+    scale
 }
 
 pub(super) fn position_from_origin_centered_to(side_length: f32, x: f32, y: f32) -> Matrix4<f32> {
@@ -309,11 +315,17 @@ mod tests {
     fn test_scale_down_inner_cube() {
         let actual = scale_down_inner_cube();
 
+        #[cfg(not(target_arch = "wasm32"))]
+        let expected_scale = 0.9999;
+
+        #[cfg(target_arch = "wasm32")]
+        let expected_scale = 0.996;
+
         #[rustfmt::skip]
         let expected = Matrix4::new(
-            0.9999, 0., 0., 0.,
-            0., 0.9999, 0., 0.,
-            0., 0., 0.9999, 0.,
+            expected_scale, 0., 0., 0.,
+            0., expected_scale, 0., 0.,
+            0., 0., expected_scale, 0.,
             0., 0., 0., 1.,
         );
 
