@@ -107,24 +107,24 @@ mod tests {
     use pretty_assertions::assert_eq;
     use three_d::{Angle as _, Deg, Vector4};
 
-    fn assert_mat_eq_with_tolerance(m1: Matrix4<f32>, m2: Matrix4<f32>, epsilon: f32) {
-        assert_vec_eq_with_tolerance(m1.w, m2.w, epsilon);
-        assert_vec_eq_with_tolerance(m1.x, m2.x, epsilon);
-        assert_vec_eq_with_tolerance(m1.y, m2.y, epsilon);
-        assert_vec_eq_with_tolerance(m1.z, m2.z, epsilon);
+    fn assert_mat_eq_with_tolerance(m1: Matrix4<f32>, m2: Matrix4<f32>) {
+        assert_vec_eq_with_tolerance(m1.w, m2.w);
+        assert_vec_eq_with_tolerance(m1.x, m2.x);
+        assert_vec_eq_with_tolerance(m1.y, m2.y);
+        assert_vec_eq_with_tolerance(m1.z, m2.z);
     }
 
-    fn assert_vec_eq_with_tolerance(v1: Vector4<f32>, v2: Vector4<f32>, epsilon: f32) {
-        assert_eq_with_tolerance(v1.w, v2.w, epsilon);
-        assert_eq_with_tolerance(v1.x, v2.x, epsilon);
-        assert_eq_with_tolerance(v1.y, v2.y, epsilon);
-        assert_eq_with_tolerance(v1.z, v2.z, epsilon);
+    fn assert_vec_eq_with_tolerance(v1: Vector4<f32>, v2: Vector4<f32>) {
+        assert_eq_with_tolerance(v1.w, v2.w);
+        assert_eq_with_tolerance(v1.x, v2.x);
+        assert_eq_with_tolerance(v1.y, v2.y);
+        assert_eq_with_tolerance(v1.z, v2.z);
     }
 
-    fn assert_eq_with_tolerance(f1: f32, f2: f32, epsilon: f32) {
+    fn assert_eq_with_tolerance(f1: f32, f2: f32) {
         let diff = f1 - f2;
         let abs = diff.abs();
-        assert!(abs < epsilon);
+        assert!(abs < f32::EPSILON);
     }
 
     #[test]
@@ -390,7 +390,7 @@ mod tests {
             0., 1., 0., 1.,
         );
 
-        assert_mat_eq_with_tolerance(expected, actual, 0.0000001);
+        assert_mat_eq_with_tolerance(expected, actual);
     }
 
     #[test]
@@ -405,7 +405,7 @@ mod tests {
             0., -1., 0., 1.,
         );
 
-        assert_mat_eq_with_tolerance(expected, actual, 0.0000001);
+        assert_mat_eq_with_tolerance(expected, actual);
     }
 
     #[test]
@@ -435,7 +435,7 @@ mod tests {
             1., 0., 0., 1.,
         );
 
-        assert_mat_eq_with_tolerance(expected, actual, 0.0000001);
+        assert_mat_eq_with_tolerance(expected, actual);
     }
 
     #[test]
@@ -450,7 +450,7 @@ mod tests {
             0., 0., -1., 1.,
         );
 
-        assert_mat_eq_with_tolerance(expected, actual, 0.0000001);
+        assert_mat_eq_with_tolerance(expected, actual);
     }
 
     #[test]
@@ -465,6 +465,6 @@ mod tests {
             -1., 0., 0., 1.,
         );
 
-        assert_mat_eq_with_tolerance(expected, actual, 0.0000001);
+        assert_mat_eq_with_tolerance(expected, actual);
     }
 }
