@@ -118,7 +118,7 @@ pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
 }
 
 fn initial_instances(ctx: &Context, cube: &Cube) -> Gm<InstancedMesh, ColorMaterial> {
-    let instanced_square_mesh = InstancedMesh::new(ctx, &cube.to_instances(), &CpuMesh::square());
+    let instanced_square_mesh = InstancedMesh::new(ctx, &cube.to_instances(), &CpuMesh::cube());
     Gm::new(
         instanced_square_mesh,
         ColorMaterial {

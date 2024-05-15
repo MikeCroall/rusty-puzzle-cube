@@ -54,7 +54,8 @@ pub(super) fn translate_away() -> Matrix4<f32> {
 }
 
 pub(super) fn scale_down(side_length: f32) -> Matrix4<f32> {
-    Mat4::from_scale(0.9 / side_length)
+    let scale = 0.9 / side_length;
+    Mat4::from_nonuniform_scale(scale, scale, 0.015)
 }
 
 pub(super) fn scale_down_inner_cube() -> Matrix4<f32> {
