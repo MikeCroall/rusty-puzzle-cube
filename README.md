@@ -20,6 +20,8 @@ Experimental, still a work in progress, etc.
 
 Unreasonable mode simply changes the maximum cube size from 100 to 2000
 
+Some controls are removed on the WASM target
+
 ![Controls for the 3d renderer](img/controls-3d.png)
 
 ### Building Puzzle Cube GUI Crate for web
