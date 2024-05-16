@@ -3,17 +3,19 @@ mod cube_ext;
 mod defaults;
 #[cfg(not(target_arch = "wasm32"))]
 mod file_io;
+mod mouse_control;
 mod side_panel;
 mod transforms;
 
 use crate::gui::{
     cube_ext::ToInstances,
     defaults::{clear_state, initial_camera, initial_window},
+    mouse_control::MouseControl,
 };
 use rusty_puzzle_cube::{cube::Cube, known_transforms::cube_in_cube_in_cube};
 use three_d::{
-    Axes, ColorMaterial, Context, CpuMesh, FrameOutput, Gm, InstancedMesh, Mesh, Object,
-    OrbitControl, Srgba, Viewport, GUI,
+    Axes, ColorMaterial, Context, CpuMesh, Cull, FrameOutput, Gm, InstancedMesh, Mesh, Object,
+    RenderStates, Srgba, Viewport, GUI,
 };
 use tracing::{debug, error, info};
 
@@ -26,11 +28,12 @@ pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
     info!("Initialising GUI");
     let window = initial_window()?;
     let mut camera = initial_camera(window.viewport());
-    let mut mouse_control = OrbitControl::new(*camera.target(), 1.0, 80.0);
+    let mut mouse_control = MouseControl::new(*camera.target(), 1.0, 80.0);
     let mut unreasonable_mode = false;
 
     let ctx = window.gl();
     let mut gui = GUI::new(&ctx);
+    // todo mouse control cube, or camera if cube itself not interacted
     let mut tiles = initial_instances(&ctx, &cube);
 
     // todo could make inner cube instances for each (external facing) cubie to make rotation animations less funky, when I actually add them...
@@ -117,13 +120,15 @@ pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
 
 fn initial_instances(ctx: &Context, cube: &Cube) -> Gm<InstancedMesh, ColorMaterial> {
     let instanced_square_mesh = InstancedMesh::new(ctx, &cube.to_instances(), &CpuMesh::cube());
-    Gm::new(
-        instanced_square_mesh,
-        ColorMaterial {
-            color: Srgba::WHITE,
+    let material = ColorMaterial {
+        color: Srgba::WHITE,
+        render_states: RenderStates {
+            cull: Cull::Back,
             ..Default::default()
         },
-    )
+        ..Default::default()
+    };
+    Gm::new(instanced_square_mesh, material)
 }
 
 fn inner_cube(ctx: &Context) -> Gm<Mesh, ColorMaterial> {
