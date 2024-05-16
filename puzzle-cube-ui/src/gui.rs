@@ -90,7 +90,13 @@ pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
             frame_input.device_pixel_ratio,
         );
         redraw |= camera.set_viewport(viewport);
-        redraw |= mouse_control.handle_events(&mut camera, &mut frame_input.events);
+        redraw |= mouse_control.handle_events(
+            &ctx,
+            &inner_cube,
+            side_length,
+            &mut camera,
+            &mut frame_input.events,
+        );
 
         if redraw {
             debug!("Drawing cube");
