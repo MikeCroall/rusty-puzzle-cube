@@ -17,8 +17,6 @@ use three_d::{
 };
 use tracing::{debug, error, info};
 
-use self::transforms::scale_down_inner_cube;
-
 pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
     info!("Initialising default cube");
     let mut side_length = 3;
@@ -129,15 +127,13 @@ fn initial_instances(ctx: &Context, cube: &Cube) -> Gm<InstancedMesh, ColorMater
 }
 
 fn inner_cube(ctx: &Context) -> Gm<Mesh, ColorMaterial> {
-    let mut inner_cube = Gm::new(
+    Gm::new(
         Mesh::new(ctx, &CpuMesh::cube()),
         ColorMaterial {
             color: Srgba::BLACK,
             ..Default::default()
         },
-    );
-    inner_cube.set_transformation(scale_down_inner_cube());
-    inner_cube
+    )
 }
 
 #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]

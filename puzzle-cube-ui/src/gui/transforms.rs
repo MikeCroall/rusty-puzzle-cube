@@ -58,16 +58,6 @@ pub(super) fn scale_down(side_length: f32) -> Matrix4<f32> {
     Mat4::from_nonuniform_scale(scale, scale, 0.015)
 }
 
-pub(super) fn scale_down_inner_cube() -> Matrix4<f32> {
-    #[cfg(not(target_arch = "wasm32"))]
-    let scale = Mat4::from_scale(0.9999);
-
-    #[cfg(target_arch = "wasm32")]
-    let scale = Mat4::from_scale(0.996);
-
-    scale
-}
-
 pub(super) fn position_from_origin_centered_to(side_length: f32, x: f32, y: f32) -> Matrix4<f32> {
     // dist_to_edge is simplified version of (side_length / 2_f32 - 0.5) * 2_f32 / side_length
     let dist_to_edge = 1_f32 - (1_f32 / side_length);
@@ -306,27 +296,6 @@ mod tests {
             0.45, 0., 0., 0.,
             0., 0.45, 0., 0.,
             0., 0., 0.015, 0.,
-            0., 0., 0., 1.,
-        );
-
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_scale_down_inner_cube() {
-        let actual = scale_down_inner_cube();
-
-        #[cfg(not(target_arch = "wasm32"))]
-        let expected_scale = 0.9999;
-
-        #[cfg(target_arch = "wasm32")]
-        let expected_scale = 0.996;
-
-        #[rustfmt::skip]
-        let expected = Matrix4::new(
-            expected_scale, 0., 0., 0.,
-            0., expected_scale, 0., 0.,
-            0., 0., expected_scale, 0.,
             0., 0., 0., 1.,
         );
 
