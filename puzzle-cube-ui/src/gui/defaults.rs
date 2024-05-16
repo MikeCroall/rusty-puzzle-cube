@@ -4,7 +4,7 @@ pub(super) fn initial_window() -> Result<Window, three_d::WindowError> {
     Window::new(WindowSettings {
         title: "Rusty Puzzle Cube!".to_string(),
         #[cfg(not(target_arch = "wasm32"))]
-        max_size: Some((1280, 720)),
+        max_size: Some((1920, 1080)),
         ..Default::default()
     })
 }
