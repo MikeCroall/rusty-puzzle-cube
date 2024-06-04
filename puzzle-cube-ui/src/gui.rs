@@ -96,6 +96,7 @@ pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
             side_length,
             &mut camera,
             &mut frame_input.events,
+            &mut cube,
         );
 
         if redraw {
