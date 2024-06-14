@@ -12,6 +12,7 @@ use crate::gui::{
     defaults::{clear_state, initial_camera, initial_window},
     mouse_control::MouseControl,
 };
+use mouse_control::MouseControlOutput;
 use rusty_puzzle_cube::{cube::Cube, known_transforms::cube_in_cube_in_cube};
 use three_d::{
     Axes, ColorMaterial, Context, CpuMesh, Cull, FrameOutput, Gm, InstancedMesh, Mesh, Object,
@@ -90,7 +91,11 @@ pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
             frame_input.device_pixel_ratio,
         );
         redraw |= camera.set_viewport(viewport);
-        redraw |= mouse_control.handle_events(
+
+        let MouseControlOutput {
+            redraw: needs_redraw,
+            updated_cube,
+        } = mouse_control.handle_events(
             &ctx,
             &inner_cube,
             side_length,
@@ -98,6 +103,10 @@ pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
             &mut frame_input.events,
             &mut cube,
         );
+        if updated_cube {
+            tiles.set_instances(&cube.to_instances());
+        }
+        redraw |= needs_redraw;
 
         if redraw {
             debug!("Drawing cube");
