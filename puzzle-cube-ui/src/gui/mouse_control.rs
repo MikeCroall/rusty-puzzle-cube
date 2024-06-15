@@ -5,11 +5,12 @@ use three_d::{
     pick, radians, Camera, ColorMaterial, Context, Event, Gm, InnerSpace, Mesh, MouseButton,
     OrbitControl, Rad, Transform, Vec3, Vector3,
 };
-use tracing::{info, warn};
+use tracing::warn;
 
 use crate::gui::transforms::move_face_into_place;
 
 const DIAGONAL_MOVE_THRESHOLD: Rad<f32> = radians(0.125 * PI);
+const EPSILON: f32 = 0.0001;
 
 pub(super) struct MouseControl {
     orbit: OrbitControl,
@@ -145,7 +146,6 @@ impl MouseControl {
 }
 
 fn pick_to_face(pick: Vector3<f32>) -> Face {
-    const EPSILON: f32 = 0.0001;
     if (pick.x - 1.).abs() < EPSILON {
         Face::Right
     } else if (pick.x + 1.).abs() < EPSILON {
@@ -222,8 +222,10 @@ fn validate_straight_dir(
     }
 
     let smallest = angles[0];
-    let move_along_x = smallest == angle_to_x || smallest == angle_to_neg_x;
-    let toward_positive = smallest == angle_to_x || smallest == angle_to_y;
+    let move_along_x =
+        (smallest - angle_to_x).abs() < EPSILON || (smallest - angle_to_neg_x).abs() < EPSILON;
+    let toward_positive =
+        (smallest - angle_to_x).abs() < EPSILON || (smallest - angle_to_y).abs() < EPSILON;
     Some((move_along_x, toward_positive))
 }
 
@@ -231,33 +233,21 @@ fn translate_vertical_drag(col: usize, dragged_face: Face, toward_positive: bool
     let col_0 = col == 0;
     let face = match (dragged_face, col_0) {
         // todo check all - very likely some are wrong
-        (Face::Up, true) => Face::Left,
-        (Face::Up, false) => Face::Right,
-        (Face::Down, true) => Face::Left,
-        (Face::Down, false) => Face::Right,
-        (Face::Front, true) => Face::Left,
-        (Face::Front, false) => Face::Right,
-        (Face::Right, true) => Face::Front,
-        (Face::Right, false) => Face::Back,
-        (Face::Back, true) => Face::Right,
-        (Face::Back, false) => Face::Left,
-        (Face::Left, true) => Face::Back,
-        (Face::Left, false) => Face::Front,
+        (Face::Up | Face::Down | Face::Front, true) | (Face::Back, false) => Face::Left,
+        (Face::Up | Face::Down | Face::Front, false) | (Face::Back, true) => Face::Right,
+        (Face::Right, true) | (Face::Left, false) => Face::Front,
+        (Face::Right, false) | (Face::Left, true) => Face::Back,
     };
     let clockwise = match (dragged_face, face) {
         // todo check all - very likely some are wrong
-        (Face::Up, Face::Left) => !toward_positive,
-        (Face::Up, Face::Right) => toward_positive,
-        (Face::Down, Face::Left) => !toward_positive,
-        (Face::Down, Face::Right) => toward_positive,
-        (Face::Front, Face::Left) => !toward_positive,
-        (Face::Front, Face::Right) => toward_positive,
-        (Face::Right, Face::Front) => !toward_positive,
-        (Face::Right, Face::Back) => toward_positive,
-        (Face::Back, Face::Right) => !toward_positive,
-        (Face::Back, Face::Left) => toward_positive,
-        (Face::Left, Face::Back) => !toward_positive,
-        (Face::Left, Face::Front) => toward_positive,
+        (Face::Up | Face::Down | Face::Front, Face::Left)
+        | (Face::Right, Face::Front)
+        | (Face::Back, Face::Right)
+        | (Face::Left, Face::Back) => !toward_positive,
+        (Face::Up | Face::Down | Face::Front, Face::Right)
+        | (Face::Right, Face::Back)
+        | (Face::Back, Face::Left)
+        | (Face::Left, Face::Front) => toward_positive,
         _ => unreachable!(),
     };
     (face, clockwise)
@@ -271,33 +261,19 @@ fn translate_horizontal_drag(
     let row_0 = row == 0;
     let face = match (dragged_face, row_0) {
         // todo check all - very likely some are wrong
-        (Face::Up, true) => Face::Front,
-        (Face::Up, false) => Face::Back,
-        (Face::Down, true) => Face::Back,
-        (Face::Down, false) => Face::Front,
-        (Face::Front, true) => Face::Down,
-        (Face::Front, false) => Face::Up,
-        (Face::Right, true) => Face::Down,
-        (Face::Right, false) => Face::Up,
-        (Face::Back, true) => Face::Down,
-        (Face::Back, false) => Face::Up,
-        (Face::Left, true) => Face::Down,
-        (Face::Left, false) => Face::Up,
+        (Face::Up, true) | (Face::Down, false) => Face::Front,
+        (Face::Up, false) | (Face::Down, true) => Face::Back,
+        (Face::Front | Face::Right | Face::Back | Face::Left, true) => Face::Down,
+        (Face::Front | Face::Right | Face::Back | Face::Left, false) => Face::Up,
     };
     let clockwise = match (dragged_face, face) {
         // todo check all - very likely some are wrong
-        (Face::Up, Face::Front) => toward_positive,
-        (Face::Up, Face::Back) => !toward_positive,
-        (Face::Down, Face::Front) => !toward_positive,
-        (Face::Down, Face::Back) => toward_positive,
-        (Face::Front, Face::Up) => !toward_positive,
-        (Face::Front, Face::Down) => toward_positive,
-        (Face::Right, Face::Up) => !toward_positive,
-        (Face::Right, Face::Down) => toward_positive,
-        (Face::Back, Face::Up) => !toward_positive,
-        (Face::Back, Face::Down) => toward_positive,
-        (Face::Left, Face::Up) => !toward_positive,
-        (Face::Left, Face::Down) => toward_positive,
+        (Face::Up, Face::Front)
+        | (Face::Down, Face::Back)
+        | (Face::Front | Face::Right | Face::Back | Face::Left, Face::Down) => toward_positive,
+        (Face::Up, Face::Back)
+        | (Face::Down, Face::Front)
+        | (Face::Front | Face::Right | Face::Back | Face::Left, Face::Up) => !toward_positive,
         _ => unreachable!(),
     };
     (face, clockwise)
