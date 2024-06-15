@@ -125,10 +125,11 @@ impl MouseControl {
                             clockwise: false,
                         } => cube.rotate_face_90_degrees_anticlockwise(face),
                         DecidedMove::InnerRow { .. } => {
-                            warn!("Moves that rotate only inner rows/cols are not yet supported")
+                            warn!("Moves that rotate only inner rows/cols are not yet supported");
                         }
+
                         DecidedMove::InnerCol { .. } => {
-                            warn!("Moves that rotate only inner rows/cols are not yet supported")
+                            warn!("Moves that rotate only inner rows/cols are not yet supported");
                         }
                     }
 
