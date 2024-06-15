@@ -28,7 +28,6 @@ struct FaceDrag {
 }
 
 #[allow(dead_code)]
-#[derive(Debug)]
 enum DecidedMove {
     WholeFace {
         face: Face,
@@ -110,28 +109,29 @@ impl MouseControl {
                     let Some(pick) = pick(ctx, camera, *position, inner_cube) else {
                         continue;
                     };
-                    if let Some(decided_move) =
+                    let Some(decided_move) =
                         displacement_to_move(side_length, *start_pick, pick, *face)
-                    {
-                        dbg!(&decided_move);
-                        updated_cube = true;
-                        match decided_move {
-                            DecidedMove::WholeFace {
-                                face,
-                                clockwise: true,
-                            } => {
-                                cube.rotate_face_90_degrees_clockwise(face);
-                            }
-                            DecidedMove::WholeFace {
-                                face,
-                                clockwise: false,
-                            } => {
-                                cube.rotate_face_90_degrees_anticlockwise(face);
-                            }
-                            DecidedMove::InnerRow { .. } => todo!(),
-                            DecidedMove::InnerCol { .. } => todo!(),
+                    else {
+                        continue;
+                    };
+                    updated_cube = true;
+                    match decided_move {
+                        DecidedMove::WholeFace {
+                            face,
+                            clockwise: true,
+                        } => cube.rotate_face_90_degrees_clockwise(face),
+                        DecidedMove::WholeFace {
+                            face,
+                            clockwise: false,
+                        } => cube.rotate_face_90_degrees_anticlockwise(face),
+                        DecidedMove::InnerRow { .. } => {
+                            warn!("Moves that rotate only inner rows/cols are not yet supported")
+                        }
+                        DecidedMove::InnerCol { .. } => {
+                            warn!("Moves that rotate only inner rows/cols are not yet supported")
                         }
                     }
+
                     *handled = true;
                 }
                 _ => {}
@@ -169,8 +169,9 @@ fn displacement_to_move(
     end_pick: Vector3<f32>,
     dragged_face: Face,
 ) -> Option<DecidedMove> {
-    let (move_along_x, toward_positive) =
-        validate_straight_dir(start_pick, end_pick, dragged_face)?;
+    let start_pick = unrotate(start_pick, dragged_face);
+    let end_pick = unrotate(end_pick, dragged_face);
+    let (move_along_x, toward_positive) = validate_straight_dir(start_pick, end_pick)?;
 
     let (face, clockwise) = if move_along_x {
         let row_0_to_1 = (start_pick.y + 1.) / 2.;
@@ -198,20 +199,27 @@ fn displacement_to_move(
     Some(DecidedMove::WholeFace { face, clockwise })
 }
 
-fn validate_straight_dir(
-    start_pick: Vector3<f32>,
-    end_pick: Vector3<f32>,
-    dragged_face: Face,
-) -> Option<(bool, bool)> {
-    let unrotate_about_origin = move_face_into_place(dragged_face).inverse_transform()?;
-    let end_pick_unrotated = unrotate_about_origin * end_pick.extend(1.);
-    let start_pick_unrotated = unrotate_about_origin * start_pick.extend(1.);
-    let unrotated_displacement = (end_pick_unrotated - start_pick_unrotated).truncate();
+fn unrotate(pick: Vector3<f32>, face: Face) -> Vector3<f32> {
+    let unrotate_mat = move_face_into_place(face)
+        .inverse_transform()
+        .expect("All faces rotations must be invertible");
+    (unrotate_mat * pick.extend(1.)).truncate()
+}
 
-    let angle_to_x = unrotated_displacement.angle(Vector3::unit_x()).0.abs();
-    let angle_to_neg_x = unrotated_displacement.angle(-Vector3::unit_x()).0.abs();
-    let angle_to_y = unrotated_displacement.angle(Vector3::unit_y()).0.abs();
-    let angle_to_neg_y = unrotated_displacement.angle(-Vector3::unit_y()).0.abs();
+fn validate_straight_dir(
+    unrotated_start_pick: Vector3<f32>,
+    unrotated_end_pick: Vector3<f32>,
+) -> Option<(bool, bool)> {
+    let displacement = unrotated_end_pick - unrotated_start_pick;
+    if displacement.magnitude() < 0.3 {
+        warn!("Move was too small, skipping...");
+        return None;
+    }
+
+    let angle_to_x = displacement.angle(Vector3::unit_x()).0.abs();
+    let angle_to_neg_x = displacement.angle(-Vector3::unit_x()).0.abs();
+    let angle_to_y = displacement.angle(Vector3::unit_y()).0.abs();
+    let angle_to_neg_y = displacement.angle(-Vector3::unit_y()).0.abs();
 
     let mut angles = [angle_to_x, angle_to_neg_x, angle_to_y, angle_to_neg_y];
     angles.sort_by(|a, b| a.partial_cmp(b).expect("No NaNs here"));
@@ -232,14 +240,12 @@ fn validate_straight_dir(
 fn translate_vertical_drag(col: usize, dragged_face: Face, toward_positive: bool) -> (Face, bool) {
     let col_0 = col == 0;
     let face = match (dragged_face, col_0) {
-        // todo check all - very likely some are wrong
         (Face::Up | Face::Down | Face::Front, true) | (Face::Back, false) => Face::Left,
         (Face::Up | Face::Down | Face::Front, false) | (Face::Back, true) => Face::Right,
         (Face::Right, true) | (Face::Left, false) => Face::Front,
         (Face::Right, false) | (Face::Left, true) => Face::Back,
     };
     let clockwise = match (dragged_face, face) {
-        // todo check all - very likely some are wrong
         (Face::Up | Face::Down | Face::Front, Face::Left)
         | (Face::Right, Face::Front)
         | (Face::Back, Face::Right)
@@ -260,14 +266,12 @@ fn translate_horizontal_drag(
 ) -> (Face, bool) {
     let row_0 = row == 0;
     let face = match (dragged_face, row_0) {
-        // todo check all - very likely some are wrong
         (Face::Up, true) | (Face::Down, false) => Face::Front,
         (Face::Up, false) | (Face::Down, true) => Face::Back,
         (Face::Front | Face::Right | Face::Back | Face::Left, true) => Face::Down,
         (Face::Front | Face::Right | Face::Back | Face::Left, false) => Face::Up,
     };
     let clockwise = match (dragged_face, face) {
-        // todo check all - very likely some are wrong
         (Face::Up, Face::Front)
         | (Face::Down, Face::Back)
         | (Face::Front | Face::Right | Face::Back | Face::Left, Face::Down) => toward_positive,
@@ -281,5 +285,5 @@ fn translate_horizontal_drag(
 
 #[cfg(test)]
 mod tests {
-    // todo write tests to get it working and keep it working!
+    // todo write tests to keep it working!
 }
