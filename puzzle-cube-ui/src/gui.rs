@@ -15,8 +15,8 @@ use crate::gui::{
 use mouse_control::MouseControlOutput;
 use rusty_puzzle_cube::{cube::Cube, known_transforms::cube_in_cube_in_cube};
 use three_d::{
-    Axes, ColorMaterial, Context, CpuMesh, Cull, FrameOutput, Gm, InstancedMesh, Mesh, Object,
-    RenderStates, Srgba, Viewport, GUI,
+    egui::ScrollArea, Axes, ColorMaterial, Context, CpuMesh, Cull, FrameOutput, Gm, InstancedMesh,
+    Mesh, Object, RenderStates, Srgba, Viewport, GUI,
 };
 use tracing::{debug, error, info};
 
@@ -55,31 +55,33 @@ pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
             |gui_ctx| {
                 use three_d::egui::SidePanel;
                 SidePanel::left("side_panel").show(gui_ctx, |ui| {
-                    side_panel::header(ui);
-                    side_panel::initialise_cube(
-                        ui,
-                        &mut unreasonable_mode,
-                        &mut side_length,
-                        &mut cube,
-                        &mut tiles,
-                    );
-                    side_panel::control_cube(ui, &mut cube, &mut tiles);
-                    side_panel::control_camera(
-                        ui,
-                        &mut camera,
-                        frame_input.viewport,
-                        &mut render_axes,
-                    );
-                    #[cfg(not(target_arch = "wasm32"))]
-                    side_panel::debug(
-                        ui,
-                        &cube,
-                        &ctx,
-                        frame_input.viewport,
-                        &camera,
-                        &tiles,
-                        &inner_cube,
-                    );
+                    ScrollArea::vertical().show(ui, |ui| {
+                        side_panel::header(ui);
+                        side_panel::initialise_cube(
+                            ui,
+                            &mut unreasonable_mode,
+                            &mut side_length,
+                            &mut cube,
+                            &mut tiles,
+                        );
+                        side_panel::control_cube(ui, &mut cube, &mut tiles);
+                        side_panel::control_camera(
+                            ui,
+                            &mut camera,
+                            frame_input.viewport,
+                            &mut render_axes,
+                        );
+                        #[cfg(not(target_arch = "wasm32"))]
+                        side_panel::debug(
+                            ui,
+                            &cube,
+                            &ctx,
+                            frame_input.viewport,
+                            &camera,
+                            &tiles,
+                            &inner_cube,
+                        );
+                    })
                 });
                 panel_width = gui_ctx.used_rect().width();
             },
