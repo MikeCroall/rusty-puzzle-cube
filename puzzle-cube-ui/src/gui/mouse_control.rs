@@ -9,6 +9,7 @@ use tracing::warn;
 
 use crate::gui::transforms::move_face_into_place;
 
+const MOVE_TOO_SMALL_THRESHOLD: f32 = 0.3;
 const DIAGONAL_MOVE_THRESHOLD: Rad<f32> = radians(0.125 * PI);
 const EPSILON: f32 = 0.0001;
 
@@ -43,6 +44,22 @@ enum DecidedMove {
         col: usize,
         toward_positive: bool,
     },
+}
+
+impl DecidedMove {
+    fn apply(self, cube: &mut Cube) {
+        match self {
+            DecidedMove::WholeFace {
+                face,
+                clockwise: true,
+            } => cube.rotate_face_90_degrees_clockwise(face),
+            DecidedMove::WholeFace {
+                face,
+                clockwise: false,
+            } => cube.rotate_face_90_degrees_anticlockwise(face),
+            _ => warn!("Moves that rotate only inner rows/cols are not yet supported"),
+        }
+    }
 }
 
 impl MouseControl {
@@ -106,34 +123,16 @@ impl MouseControl {
                     let Some(FaceDrag { start_pick, face }) = &self.drag else {
                         continue;
                     };
-                    let Some(pick) = pick(ctx, camera, *position, inner_cube) else {
+                    let Some(end_pick) = pick(ctx, camera, *position, inner_cube) else {
                         continue;
                     };
-                    let Some(decided_move) =
-                        displacement_to_move(side_length, *start_pick, pick, *face)
-                    else {
-                        continue;
+                    if let Some(decided_move) =
+                        picks_to_move(side_length, *start_pick, end_pick, *face)
+                    {
+                        decided_move.apply(cube);
+                        updated_cube = true;
+                        *handled = true;
                     };
-                    updated_cube = true;
-                    match decided_move {
-                        DecidedMove::WholeFace {
-                            face,
-                            clockwise: true,
-                        } => cube.rotate_face_90_degrees_clockwise(face),
-                        DecidedMove::WholeFace {
-                            face,
-                            clockwise: false,
-                        } => cube.rotate_face_90_degrees_anticlockwise(face),
-                        DecidedMove::InnerRow { .. } => {
-                            warn!("Moves that rotate only inner rows/cols are not yet supported");
-                        }
-
-                        DecidedMove::InnerCol { .. } => {
-                            warn!("Moves that rotate only inner rows/cols are not yet supported");
-                        }
-                    }
-
-                    *handled = true;
                 }
                 _ => {}
             }
@@ -164,14 +163,18 @@ fn pick_to_face(pick: Vector3<f32>) -> Face {
     }
 }
 
-fn displacement_to_move(
+#[allow(
+    clippy::cast_precision_loss,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
+fn picks_to_move(
     side_length: usize,
     start_pick: Vector3<f32>,
     end_pick: Vector3<f32>,
     dragged_face: Face,
 ) -> Option<DecidedMove> {
-    let start_pick = unrotate(start_pick, dragged_face);
-    let end_pick = unrotate(end_pick, dragged_face);
+    let (start_pick, end_pick) = unrotate_picks(start_pick, end_pick, dragged_face);
     let (move_along_x, toward_positive) = validate_straight_dir(start_pick, end_pick)?;
 
     let (face, clockwise) = if move_along_x {
@@ -200,11 +203,17 @@ fn displacement_to_move(
     Some(DecidedMove::WholeFace { face, clockwise })
 }
 
-fn unrotate(pick: Vector3<f32>, face: Face) -> Vector3<f32> {
+fn unrotate_picks(
+    start_pick: Vector3<f32>,
+    end_pick: Vector3<f32>,
+    face: Face,
+) -> (Vector3<f32>, Vector3<f32>) {
     let unrotate_mat = move_face_into_place(face)
         .inverse_transform()
         .expect("All faces rotations must be invertible");
-    (unrotate_mat * pick.extend(1.)).truncate()
+    let start_pick = (unrotate_mat * start_pick.extend(1.)).truncate();
+    let end_pick = (unrotate_mat * end_pick.extend(1.)).truncate();
+    (start_pick, end_pick)
 }
 
 fn validate_straight_dir(
@@ -212,7 +221,7 @@ fn validate_straight_dir(
     unrotated_end_pick: Vector3<f32>,
 ) -> Option<(bool, bool)> {
     let displacement = unrotated_end_pick - unrotated_start_pick;
-    if displacement.magnitude() < 0.3 {
+    if displacement.magnitude() < MOVE_TOO_SMALL_THRESHOLD {
         warn!("Move was too small, skipping...");
         return None;
     }
@@ -231,10 +240,11 @@ fn validate_straight_dir(
     }
 
     let smallest = angles[0];
-    let move_along_x =
-        (smallest - angle_to_x).abs() < EPSILON || (smallest - angle_to_neg_x).abs() < EPSILON;
-    let toward_positive =
-        (smallest - angle_to_x).abs() < EPSILON || (smallest - angle_to_y).abs() < EPSILON;
+    let positive_horizontal = (smallest - angle_to_x).abs() < EPSILON;
+    let negative_horizontal = (smallest - angle_to_neg_x).abs() < EPSILON;
+    let positive_vertical = (smallest - angle_to_y).abs() < EPSILON;
+    let move_along_x = positive_horizontal || negative_horizontal;
+    let toward_positive = positive_horizontal || positive_vertical;
     Some((move_along_x, toward_positive))
 }
 
