@@ -18,6 +18,10 @@ Experimental, still a work in progress, etc.
 
 #### Controls
 
+Click and drag along the edge of a face to perform a rotation
+
+Rotations are currently only supported for the outer edges of the cube
+
 Unreasonable mode simply changes the maximum cube size from 100 to 2000
 
 Some controls are removed on the WASM target
