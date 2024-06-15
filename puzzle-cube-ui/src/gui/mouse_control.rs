@@ -93,7 +93,7 @@ impl MouseControl {
                     let new_face = pick_to_face(pick);
                     if face != new_face {
                         self.drag = None;
-                        warn!("Moved face from {face:?} to {new_face:?}, cancelling drag");
+                        warn!("Dragged from face {face:?} to {new_face:?}, skipping...");
                     }
                     *handled = true;
                 }
