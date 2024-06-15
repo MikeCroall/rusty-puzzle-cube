@@ -34,10 +34,9 @@ pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
 
     let ctx = window.gl();
     let mut gui = GUI::new(&ctx);
-    // todo mouse control cube, or camera if cube itself not interacted
+
     let mut tiles = initial_instances(&ctx, &cube);
 
-    // todo could make inner cube instances for each (external facing) cubie to make rotation animations less funky, when I actually add them...
     let inner_cube = inner_cube(&ctx);
 
     let mut render_axes = false;
