@@ -55,7 +55,7 @@ pub(super) fn translate_away() -> Matrix4<f32> {
 
 pub(super) fn scale_down(side_length: f32) -> Matrix4<f32> {
     let scale = 0.9 / side_length;
-    Mat4::from_nonuniform_scale(scale, scale, 0.015)
+    Mat4::from_nonuniform_scale(scale, scale, 0.015 * 3. / side_length)
 }
 
 pub(super) fn position_from_origin_centered_to(side_length: f32, x: f32, y: f32) -> Matrix4<f32> {
@@ -288,18 +288,33 @@ mod tests {
     }
 
     #[test]
-    fn test_scale_down() {
+    fn test_scale_down_small_side_length() {
         let actual = scale_down(2.);
 
         #[rustfmt::skip]
         let expected = Matrix4::new(
             0.45, 0., 0., 0.,
             0., 0.45, 0., 0.,
-            0., 0., 0.015, 0.,
+            0., 0., 0.0225, 0.,
             0., 0., 0., 1.,
         );
 
-        assert_eq!(expected, actual);
+        assert_mat_eq_with_tolerance(expected, actual);
+    }
+
+    #[test]
+    fn test_scale_down_large_side_length() {
+        let actual = scale_down(30.);
+
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            0.03, 0., 0., 0.,
+            0., 0.03, 0., 0.,
+            0., 0., 0.0015, 0.,
+            0., 0., 0., 1.,
+        );
+
+        assert_mat_eq_with_tolerance(expected, actual);
     }
 
     #[test]
