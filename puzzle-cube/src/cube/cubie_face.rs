@@ -4,17 +4,27 @@ use CubieFace as CF;
 
 const DEFAULT_CUBIE_CHAR: char = '■';
 
+/// Representing a single tile on a single side of a cube.
+///
+/// Optionally contains a `char` that will be used instead of the default square char when rendering as text.
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum CubieFace {
+    /// Blue CubieFace is the default for the front face.
     Blue(Option<char>),
+    /// Green CubieFace is the default for the back face.
     Green(Option<char>),
+    /// Orange CubieFace is the default for the right face.
     Orange(Option<char>),
+    /// Red CubieFace is the default for the left face.
     Red(Option<char>),
+    /// White CubieFace is the default for the up face.
     White(Option<char>),
+    /// Yellow CubieFace is the default for the down face.
     Yellow(Option<char>),
 }
 
 impl CubieFace {
+    /// Creates a `ColoredString` that can be terminal printed, using this `CubieFace`s custom display `char` if present, or the default square `char` if not.
     #[must_use]
     pub fn get_coloured_display_char(self) -> ColoredString {
         match self {

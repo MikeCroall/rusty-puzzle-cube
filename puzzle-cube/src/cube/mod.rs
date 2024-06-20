@@ -9,16 +9,24 @@ use self::cubie_face::CubieFace;
 use self::face::{Face as F, IndexAlignment as IA};
 use self::helpers::get_clockwise_slice_of_side;
 
+/// An enum representing an individual cubie within one side of the cube, hence it only represents one face of the cubie.
 pub mod cubie_face;
+
+/// An enum representing the faces of a cube, and providing a mapping for 'adjacents' and `IndexAlignment` that are used to perform rotations of a face.
 pub mod face;
+
 pub(crate) mod helpers;
+
+/// Macros that aid in creating custom cube states for test cases.
 pub mod macros;
 
+/// A type representing a mapping between a face of the cube and the type that holds the cubies currently on that face.
 pub type SideMap = EnumMap<F, Box<Side>>;
 type Side = Vec<Vec<CubieFace>>;
 
 const HORIZONTAL_PADDING: &str = " ";
 
+/// A representation of a cube that can be manipulated via making pre-defined rotations.
 #[derive(PartialEq)]
 pub struct Cube {
     side_length: usize,
@@ -26,6 +34,11 @@ pub struct Cube {
 }
 
 impl Cube {
+    /// Create a new `Cube` instance with `side_length` cubies along each edge.
+    /// ```no_run
+    /// # use rusty_puzzle_cube::cube::Cube;
+    /// let cube = Cube::create(5);
+    /// ```
     #[must_use]
     pub fn create(side_length: usize) -> Self {
         Self {
@@ -41,6 +54,11 @@ impl Cube {
         }
     }
 
+    /// Create a new `Cube` instance with `side_length` cubies along each edge, where each cubie of a given colour has a unique character to represent it.
+    ///
+    /// This can be useful for printing out the cube to terminal to check that moves being made are exactly as expect, not just the same colours as we expect.
+    ///
+    /// The provided `side_length` here must be >=1 and <=8 to allow for unique, visible characters per cubie in the basic ascii range.
     #[must_use]
     pub fn create_with_unique_characters(side_length: usize) -> Self {
         Self {
@@ -56,21 +74,35 @@ impl Cube {
         }
     }
 
+    /// Returns the amount of cubies along each edge of this cube.
     #[must_use]
     pub fn side_length(&self) -> usize {
         self.side_length
     }
 
+    /// Returns the mapping of faces of the cube to the data structure of cubies on those faces to allow fully custom rendering of the cube.
     #[must_use]
     pub fn side_map(&self) -> &SideMap {
         &self.side_map
     }
 
+    /// Rotate the given face 90° clockwise from the perspective of looking directly at that face from outside the cube.
+    /// ```no_run
+    /// # use rusty_puzzle_cube::cube::{Cube, face::Face};
+    /// let mut cube = Cube::default();
+    /// cube.rotate_face_90_degrees_clockwise(Face::Front);
+    /// ```
     pub fn rotate_face_90_degrees_clockwise(&mut self, face: F) {
         self.rotate_face_90_degrees_clockwise_without_adjacents(face);
         self.rotate_face_90_degrees_clockwise_only_adjacents(face);
     }
 
+    /// Rotate the given face 90° anticlockwise from the perspective of looking directly at that face from outside the cube.
+    /// ```no_run
+    /// # use rusty_puzzle_cube::cube::{Cube, face::Face};
+    /// let mut cube = Cube::default();
+    /// cube.rotate_face_90_degrees_anticlockwise(Face::Front);
+    /// ```
     pub fn rotate_face_90_degrees_anticlockwise(&mut self, face: F) {
         self.rotate_face_90_degrees_clockwise(face);
         self.rotate_face_90_degrees_clockwise(face);

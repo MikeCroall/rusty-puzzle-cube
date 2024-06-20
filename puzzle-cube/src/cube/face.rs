@@ -2,13 +2,20 @@ use enum_map::Enum;
 use Face as F;
 use IndexAlignment as IA;
 
+/// An enum representing the six sides of the cube.
 #[derive(Debug, Clone, Copy, Enum, PartialEq)]
 pub enum Face {
+    /// The Up face starts as white cubies
     Up,
+    /// The Down face starts as yellow cubies
     Down,
+    /// The Front face starts as blue cubies
     Front,
+    /// The Right face starts as orange cubies
     Right,
+    /// The Back face starts as green cubies
     Back,
+    /// The Left face starts as red cubies
     Left,
 }
 

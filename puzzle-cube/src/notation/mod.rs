@@ -5,6 +5,7 @@ const CHAR_FOR_TURN_TWICE: char = '2';
 
 // todo support 4x4 notation (needs new cube methods), such as cube_in_cube_etc: B' M2 U2 M2 B F2 R U' R U R2 U R2 F' U F' Uw Lw Uw' Fw2 Dw Rw' Uw Fw Dw2 Rw2
 
+/// Perform a sequence of moves on a provided Cube instance.
 /// # Errors
 /// Will return an Err variant when the input `token_sequence` is malformed
 pub fn perform_3x3_sequence(token_sequence: &str, cube: &mut Cube) -> Result<(), String> {
