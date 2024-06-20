@@ -5,7 +5,7 @@ use three_d::{
     pick, radians, Camera, ColorMaterial, Context, Event, Gm, InnerSpace, Mesh, MouseButton,
     OrbitControl, Rad, Transform, Vec3, Vector3,
 };
-use tracing::warn;
+use tracing::{error, warn};
 
 use crate::gui::transforms::move_face_into_place;
 
@@ -91,7 +91,9 @@ impl MouseControl {
                     let Some(start_pick) = pick(ctx, camera, *position, inner_cube) else {
                         continue;
                     };
-                    let face = pick_to_face(start_pick);
+                    let Some(face) = pick_to_face(start_pick) else {
+                        continue;
+                    };
                     self.drag = Some(FaceDrag { start_pick, face });
                     *handled = true;
                 }
@@ -107,7 +109,9 @@ impl MouseControl {
                     let Some(pick) = pick(ctx, camera, *position, inner_cube) else {
                         continue;
                     };
-                    let new_face = pick_to_face(pick);
+                    let Some(new_face) = pick_to_face(pick) else {
+                        continue;
+                    };
                     if face != new_face {
                         self.drag = None;
                         warn!("Dragged from face {face:?} to {new_face:?}, skipping...");
@@ -145,21 +149,22 @@ impl MouseControl {
     }
 }
 
-fn pick_to_face(pick: Vector3<f32>) -> Face {
+fn pick_to_face(pick: Vector3<f32>) -> Option<Face> {
     if (pick.x - 1.).abs() < EPSILON {
-        Face::Right
+        Some(Face::Right)
     } else if (pick.x + 1.).abs() < EPSILON {
-        Face::Left
+        Some(Face::Left)
     } else if (pick.y - 1.).abs() < EPSILON {
-        Face::Up
+        Some(Face::Up)
     } else if (pick.y + 1.).abs() < EPSILON {
-        Face::Down
+        Some(Face::Down)
     } else if (pick.z - 1.).abs() < EPSILON {
-        Face::Front
+        Some(Face::Front)
     } else if (pick.z + 1.).abs() < EPSILON {
-        Face::Back
+        Some(Face::Back)
     } else {
-        panic!("pick_to_face interaction found no valid face from pick. This should never happen with inner cube.");
+        error!("pick_to_face interaction found no valid face from pick. This should never happen with inner cube.");
+        None
     }
 }
 
