@@ -26,7 +26,7 @@ fn demo_simple_turns() {
 
     let start_time = Instant::now();
 
-    let mut cube = Cube::create(3);
+    let mut cube = Cube::create(3.try_into().expect("known good value"));
     print!("{cube}");
     cube.rotate_face_90_degrees_clockwise(Face::Front);
     println!();
@@ -56,7 +56,10 @@ fn demo_simple_turns_big_cube() {
 
     let start_time = Instant::now();
 
-    let mut cube = Cube::create_with_unique_characters(8);
+    let mut cube = Cube::create_with_unique_characters(
+        8.try_into()
+            .expect("8 is a known good value for side length with unique chars"),
+    );
     print!("{cube}");
     cube.rotate_face_90_degrees_clockwise(Face::Front);
     println!();
@@ -86,7 +89,10 @@ fn demo_checkerboard() {
 
     let start_time = Instant::now();
 
-    let mut cube = Cube::create(3);
+    let mut cube = Cube::create(
+        3.try_into()
+            .expect("3 is a known good value for side length"),
+    );
     println!("Cube before:\n{cube}");
 
     let start_time_transform_only = Instant::now();
@@ -104,7 +110,10 @@ fn demo_cube_in_cube_in_cube() {
 
     let start_time = Instant::now();
 
-    let mut cube = Cube::create(3);
+    let mut cube = Cube::create(
+        3.try_into()
+            .expect("3 is a known good value for side length"),
+    );
     println!("Cube before:\n{cube}");
 
     let start_time_transform_only = Instant::now();

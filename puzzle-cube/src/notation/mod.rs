@@ -69,7 +69,7 @@ mod tests {
     #[should_panic]
     fn test_apply_token_invalid_input() {
         let invalid_token = "M";
-        let mut cube = Cube::create(3);
+        let mut cube = Cube::create(3.try_into().expect("known good value"));
         apply_token(invalid_token, &mut cube).unwrap();
     }
 
@@ -78,7 +78,7 @@ mod tests {
             $(
                 #[test]
                 fn $name() {
-                    let mut cube = Cube::create(3);
+                    let mut cube = Cube::create(3.try_into().expect("known good value"));
                     let expected_error_msg = format!("Unsupported token in notation string: [{}]", $value);
                     assert_eq!(Err(expected_error_msg), perform_3x3_sequence($value, &mut cube));
                 }
@@ -91,7 +91,7 @@ mod tests {
             $(
                 #[test]
                 fn $name() {
-                    let mut cube = Cube::create(3);
+                    let mut cube = Cube::create(3.try_into().expect("known good value"));
                     let expected_error_msg = format!("Unsupported token in notation string: [{}]", $err_token);
                     assert_eq!(Err(expected_error_msg), perform_3x3_sequence($value, &mut cube));
                 }
@@ -126,8 +126,8 @@ mod tests {
 
     #[test]
     fn test_perform_3x3_sequence() {
-        let mut cube_under_test = Cube::create(3);
-        let mut control_cube = Cube::create(3);
+        let mut cube_under_test = Cube::create(3.try_into().expect("known good value"));
+        let mut control_cube = Cube::create(3.try_into().expect("known good value"));
 
         perform_3x3_sequence("F2 R U' F", &mut cube_under_test)
             .expect("Sequence in test should be valid");
@@ -144,7 +144,7 @@ mod tests {
     #[test]
     fn test_perform_3x3_sequence_every_token_once() {
         let sequence = "F R U L B D F2 R2 U2 L2 B2 D2 F' R' U' L' B' D'";
-        let mut cube_under_test = Cube::create(3);
+        let mut cube_under_test = Cube::create(3.try_into().expect("known good value"));
 
         perform_3x3_sequence(sequence, &mut cube_under_test)
             .expect("Sequence in test should be valid");

@@ -2,6 +2,7 @@ use std::{fmt, mem};
 
 use enum_map::{enum_map, EnumMap};
 use itertools::izip;
+use side_lengths::{SideLength, UniqueCharsSideLength};
 
 use crate::cube::helpers::{create_side, create_side_with_unique_characters};
 
@@ -20,6 +21,9 @@ pub(crate) mod helpers;
 /// Macros that aid in creating custom cube states for test cases.
 pub mod macros;
 
+/// Structs that ensure cubes are constructed with only valid values for side length, depending on the type of cube.
+pub mod side_lengths;
+
 /// A type representing a mapping between a face of the cube and the type that holds the cubies currently on that face.
 pub type SideMap = EnumMap<F, Box<Side>>;
 type Side = Vec<Vec<CubieFace>>;
@@ -37,12 +41,15 @@ impl Cube {
     /// Create a new `Cube` instance with `side_length` cubies along each edge.
     /// ```no_run
     /// # use rusty_puzzle_cube::cube::Cube;
-    /// let cube = Cube::create(5);
+    /// # use rusty_puzzle_cube::cube::side_lengths::SideLength;
+    /// let side_length = SideLength::try_from(5)?;
+    /// let cube = Cube::create(side_length);
+    /// # Ok::<(), anyhow::Error>(())
     /// ```
     #[must_use]
-    pub fn create(side_length: usize) -> Self {
+    pub fn create(side_length: SideLength) -> Self {
         Self {
-            side_length,
+            side_length: side_length.into(),
             side_map: enum_map! {
                 F::Up => Box::new(create_side(side_length, &CubieFace::White)),
                 F::Down => Box::new(create_side(side_length, &CubieFace::Yellow)),
@@ -57,12 +64,10 @@ impl Cube {
     /// Create a new `Cube` instance with `side_length` cubies along each edge, where each cubie of a given colour has a unique character to represent it.
     ///
     /// This can be useful for printing out the cube to terminal to check that moves being made are exactly as expect, not just the same colours as we expect.
-    ///
-    /// The provided `side_length` here must be >=1 and <=8 to allow for unique, visible characters per cubie in the basic ascii range.
     #[must_use]
-    pub fn create_with_unique_characters(side_length: usize) -> Self {
+    pub fn create_with_unique_characters(side_length: UniqueCharsSideLength) -> Self {
         Self {
-            side_length,
+            side_length: side_length.into(),
             side_map: enum_map! {
                 F::Up => Box::new(create_side_with_unique_characters(side_length, &CubieFace::White)),
                 F::Down => Box::new(create_side_with_unique_characters(side_length, &CubieFace::Yellow)),
@@ -241,7 +246,10 @@ impl Cube {
 
 impl Default for Cube {
     fn default() -> Self {
-        Self::create(3)
+        Self::create(
+            3.try_into()
+                .expect("3 is a known good value for side length"),
+        )
     }
 }
 
@@ -347,7 +355,7 @@ mod tests {
 
     #[test]
     fn test_unique_chars_3x3_cube() {
-        let cube = Cube::create_with_unique_characters(3);
+        let cube = Cube::create_with_unique_characters(3.try_into().expect("known good value"));
 
         let expected_cube = create_cube_from_sides!(
             top: vec![

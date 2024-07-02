@@ -20,10 +20,10 @@ use three_d::{
 };
 use tracing::{debug, error, info};
 
-pub(super) fn start_gui() -> Result<(), three_d::WindowError> {
+pub(super) fn start_gui() -> anyhow::Result<()> {
     info!("Initialising default cube");
     let mut side_length = 3;
-    let mut cube = Cube::create(side_length);
+    let mut cube = Cube::create(side_length.try_into()?);
     cube_in_cube_in_cube(&mut cube);
 
     info!("Initialising GUI");

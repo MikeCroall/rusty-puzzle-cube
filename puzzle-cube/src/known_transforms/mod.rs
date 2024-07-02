@@ -30,7 +30,7 @@ mod tests {
 
     #[test]
     fn test_checkerboard_corners() {
-        let mut cube = Cube::create(3);
+        let mut cube = Cube::create(3.try_into().expect("known good value"));
 
         checkerboard_corners(&mut cube);
 
@@ -72,7 +72,7 @@ mod tests {
 
     #[test]
     fn test_cube_in_cube_in_cube() {
-        let mut cube = Cube::create(3);
+        let mut cube = Cube::create(3.try_into().expect("known good value"));
 
         cube_in_cube_in_cube(&mut cube);
 

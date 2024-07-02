@@ -1,4 +1,4 @@
-use rusty_puzzle_cube::cube::{face::Face, Cube};
+use rusty_puzzle_cube::cube::{face::Face, side_lengths::SideLength, Cube};
 use three_d::{
     egui::{epaint, special_emojis::GITHUB, Checkbox, FontId, Rgba, Slider, TextStyle, Ui},
     Camera, ColorMaterial, Context, Gm, InstancedMesh, Mesh, Viewport,
@@ -80,7 +80,9 @@ pub(super) fn initialise_cube(
         *side_length = MAX_CUBE_SIZE;
     };
     if ui.button("Apply").clicked() {
-        *cube = Cube::create(*side_length);
+        let side_length = SideLength::try_from(*side_length)
+            .expect("UI is configured to only allow selecting valid side length values");
+        *cube = Cube::create(side_length);
         instanced_square.set_instances(&cube.to_instances());
     }
     ui.add_space(EXTRA_SPACING);

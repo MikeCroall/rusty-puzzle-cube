@@ -61,6 +61,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc7eb209b1518d6bb87b283c20095f5228ecda460da70b44f0802523dea6da04"
 
 [[package]]
+name = "anyhow"
+version = "1.0.86"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b3d1d046238990b9cf5bcde22a3fb3584ee5cf65fb2765f454ed428c7a0063da"
+
+[[package]]
 name = "approx"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1060,8 +1066,9 @@ dependencies = [
 
 [[package]]
 name = "rusty-puzzle-cube"
-version = "0.3.3"
+version = "0.3.4"
 dependencies = [
+ "anyhow",
  "colored",
  "enum-map",
  "itertools",
@@ -1071,8 +1078,9 @@ dependencies = [
 
 [[package]]
 name = "rusty-puzzle-cube-ui"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
+ "anyhow",
  "console_error_panic_hook",
  "console_log",
  "log",

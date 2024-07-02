@@ -1,11 +1,15 @@
-use super::{cubie_face::CubieFace, Side};
+use super::{
+    cubie_face::CubieFace,
+    side_lengths::{SideLength, UniqueCharsSideLength},
+    Side,
+};
 use crate::cube::IA;
 
 pub(super) fn create_side(
-    side_length: usize,
+    side_length: SideLength,
     colour_variant_creator: &dyn Fn(Option<char>) -> CubieFace,
 ) -> Side {
-    assert!(side_length > 0, "create_side must have 1 <= side_length");
+    let side_length = side_length.into();
     let mut side = vec![];
     for _outer in 0..side_length {
         let inner_vec = vec![colour_variant_creator(None); side_length];
@@ -15,13 +19,10 @@ pub(super) fn create_side(
 }
 
 pub(super) fn create_side_with_unique_characters(
-    side_length: usize,
+    side_length: UniqueCharsSideLength,
     colour_variant_creator: &dyn Fn(Option<char>) -> CubieFace,
 ) -> Side {
-    assert!(
-        (1..=8).contains(&side_length),
-        "create_side_with_unique_characters must have 1 <= side_length <= 8"
-    );
+    let side_length = side_length.into();
     let mut side = vec![];
     for outer in 0..side_length {
         let mut inner_vec = vec![];
