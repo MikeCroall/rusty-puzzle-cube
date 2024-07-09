@@ -21,6 +21,9 @@ pub(crate) mod helpers;
 /// Macros that aid in creating custom cube states for test cases.
 pub mod macros;
 
+/// Module adding types/methods to support rotation of non-edge cubies
+pub mod cube_slice;
+
 /// Structs that ensure cubes are constructed with only valid values for side length, depending on the type of cube.
 pub mod side_lengths;
 
