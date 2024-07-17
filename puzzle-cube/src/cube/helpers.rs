@@ -1,3 +1,7 @@
+use std::vec;
+
+use anyhow::Context;
+
 use super::{
     cubie_face::CubieFace,
     side_lengths::{SideLength, UniqueCharsSideLength},
@@ -55,4 +59,45 @@ pub(super) fn get_clockwise_slice_of_side(side: &Side, index_alignment: &IA) -> 
         }
         IA::InnerLast => side.last().expect("Side had no inner").to_owned(),
     }
+}
+
+pub(super) fn get_clockwise_slice_of_side_setback(
+    side: &Side,
+    index_alignment: &IA,
+    layers_back: usize,
+) -> anyhow::Result<Vec<CubieFace>> {
+    Ok(match index_alignment {
+        IA::OuterStart => side
+            .iter()
+            .map(|inner| -> anyhow::Result<CubieFace> {
+                Ok(inner
+                    .get(layers_back - 1)
+                    .with_context(|| "Side did not have requested layer")?
+                    .to_owned())
+            })
+            .rev()
+            .collect::<anyhow::Result<Vec<CubieFace>>>()?,
+        IA::OuterEnd => side
+            .iter()
+            .map(|inner| -> anyhow::Result<CubieFace> {
+                Ok(inner
+                    .get(inner.len() - layers_back + 1)
+                    .with_context(|| "Side did not have requested layer")?
+                    .to_owned())
+            })
+            .rev()
+            .collect::<anyhow::Result<Vec<CubieFace>>>()?,
+        IA::InnerFirst => {
+            let mut inner_first_vec = side
+                .get(layers_back - 1)
+                .with_context(|| "Side did not have requested layer")?
+                .to_owned();
+            inner_first_vec.reverse();
+            inner_first_vec
+        }
+        IA::InnerLast => side
+            .get(side.len() - layers_back + 1)
+            .with_context(|| "Side did not have requested layer")?
+            .to_owned(),
+    })
 }

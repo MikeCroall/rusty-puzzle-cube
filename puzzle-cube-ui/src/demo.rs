@@ -3,7 +3,7 @@ use crate::gui::start_gui;
 use std::time::Instant;
 
 use rusty_puzzle_cube::{
-    cube::{face::Face, Cube},
+    cube::{cube_slice::CubeSliceTwist, face::Face, Cube},
     known_transforms::{checkerboard_corners, cube_in_cube_in_cube},
 };
 use tracing::error;
@@ -18,6 +18,8 @@ pub fn run() {
         demo_simple_turns_big_cube();
         demo_checkerboard();
         demo_cube_in_cube_in_cube();
+        demo_inner_rotation();
+        demo_inner_rotation_recreate_checkerboard();
     }
 }
 
@@ -26,7 +28,7 @@ fn demo_simple_turns() {
 
     let start_time = Instant::now();
 
-    let mut cube = Cube::create(3.try_into().expect("known good value"));
+    let mut cube = Cube::default();
     print!("{cube}");
     cube.rotate_face_90_degrees_clockwise(Face::Front);
     println!();
@@ -56,10 +58,7 @@ fn demo_simple_turns_big_cube() {
 
     let start_time = Instant::now();
 
-    let mut cube = Cube::create_with_unique_characters(
-        8.try_into()
-            .expect("8 is a known good value for side length with unique chars"),
-    );
+    let mut cube = Cube::default();
     print!("{cube}");
     cube.rotate_face_90_degrees_clockwise(Face::Front);
     println!();
@@ -84,44 +83,94 @@ fn demo_simple_turns_big_cube() {
     println!("Overall (printing included) this demo took {elapsed:?}\n");
 }
 
+macro_rules! demo_timing {
+    ($title:literal, $closure:tt) => {
+        println!($title);
+
+        let start_time = Instant::now();
+
+        let mut cube = Cube::default();
+        println!("Cube before:\n{cube}");
+
+        let start_time_transform_only = Instant::now();
+        $closure(&mut cube);
+        let elapsed_transform_only = start_time_transform_only.elapsed();
+
+        println!("Cube after:\n{cube}");
+
+        let elapsed = start_time.elapsed();
+        println!("Overall (printing included) this demo took {elapsed:?} (transform only took {elapsed_transform_only:?})\n");
+    };
+}
+
 fn demo_checkerboard() {
-    println!("Demo of checkerboard pattern");
-
-    let start_time = Instant::now();
-
-    let mut cube = Cube::create(
-        3.try_into()
-            .expect("3 is a known good value for side length"),
+    demo_timing!(
+        "Demo of checkerboard pattern",
+        (|cube| { checkerboard_corners(cube) })
     );
-    println!("Cube before:\n{cube}");
-
-    let start_time_transform_only = Instant::now();
-    checkerboard_corners(&mut cube);
-    let elapsed_transform_only = start_time_transform_only.elapsed();
-
-    println!("Cube after:\n{cube}");
-
-    let elapsed = start_time.elapsed();
-    println!("Overall (printing included) this demo took {elapsed:?} (transform only took {elapsed_transform_only:?})\n");
 }
 
 fn demo_cube_in_cube_in_cube() {
-    println!("Demo of cube in cube in cube");
-
-    let start_time = Instant::now();
-
-    let mut cube = Cube::create(
-        3.try_into()
-            .expect("3 is a known good value for side length"),
+    demo_timing!(
+        "Demo of cube in cube in cube",
+        (|cube| { cube_in_cube_in_cube(cube) })
     );
-    println!("Cube before:\n{cube}");
+}
 
-    let start_time_transform_only = Instant::now();
-    cube_in_cube_in_cube(&mut cube);
-    let elapsed_transform_only = start_time_transform_only.elapsed();
+fn demo_inner_rotation() {
+    demo_timing!(
+        "Demo of rotating inner slice",
+        (|cube: &mut Cube| {
+            cube.rotate_inner_slice(CubeSliceTwist {
+                relative_to: Face::Front,
+                layer: 2,
+                clockwise: true,
+            })
+            .expect("Demo is known to be valid");
+            cube.rotate_inner_slice(CubeSliceTwist {
+                relative_to: Face::Up,
+                layer: 2,
+                clockwise: true,
+            })
+            .expect("Demo is known to be valid");
+        })
+    );
+}
 
-    println!("Cube after:\n{cube}");
+fn demo_inner_rotation_recreate_checkerboard() {
+    demo_timing!(
+        "Demo of rotating inner slice",
+        (|cube: &mut Cube| {
+            let axis1 = CubeSliceTwist {
+                relative_to: Face::Front,
+                layer: 2,
+                clockwise: true,
+            };
+            cube.rotate_inner_slice(axis1)
+                .expect("Demo is known to be valid");
+            cube.rotate_inner_slice(axis1)
+                .expect("Demo is known to be valid");
 
-    let elapsed = start_time.elapsed();
-    println!("Overall (printing included) this demo took {elapsed:?} (transform only took {elapsed_transform_only:?})\n");
+            let axis2 = CubeSliceTwist {
+                relative_to: Face::Right,
+                layer: 2,
+                clockwise: true,
+            };
+            cube.rotate_inner_slice(axis2)
+                .expect("Demo is known to be valid");
+            cube.rotate_inner_slice(axis2)
+                .expect("Demo is known to be valid");
+
+            let axis3 = CubeSliceTwist {
+                relative_to: Face::Up,
+                layer: 2,
+                clockwise: true,
+            };
+            cube.rotate_inner_slice(axis3)
+                .expect("Demo is known to be valid");
+            cube.rotate_inner_slice(axis3)
+                .expect("Demo is known to be valid");
+        })
+    );
+    todo!("This is showing that not every angle works yet!");
 }
