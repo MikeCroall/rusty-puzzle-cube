@@ -1,14 +1,14 @@
-use crate::cube::{face::Face, Cube};
+use crate::cube::{face::Face, rotation::Rotation, Cube};
 
 const CHAR_FOR_ANTICLOCKWISE: char = '\'';
 const CHAR_FOR_TURN_TWICE: char = '2';
 
-// todo support 4x4 notation (needs new cube methods), such as cube_in_cube_etc: B' M2 U2 M2 B F2 R U' R U R2 U R2 F' U F' Uw Lw Uw' Fw2 Dw Rw' Uw Fw Dw2 Rw2
+// todo support 4x4 notation, such as cube_in_cube_etc: B' M2 U2 M2 B F2 R U' R U R2 U R2 F' U F' Uw Lw Uw' Fw2 Dw Rw' Uw Fw Dw2 Rw2
 
 /// Perform a sequence of moves on a provided Cube instance.
 /// # Errors
 /// Will return an Err variant when the input `token_sequence` is malformed
-pub fn perform_3x3_sequence(token_sequence: &str, cube: &mut Cube) -> Result<(), String> {
+pub fn perform_3x3_sequence(token_sequence: &str, cube: &mut Cube) -> anyhow::Result<()> {
     let token_sequence = token_sequence.trim();
 
     token_sequence
@@ -19,7 +19,7 @@ pub fn perform_3x3_sequence(token_sequence: &str, cube: &mut Cube) -> Result<(),
     Ok(())
 }
 
-fn apply_token(token: &str, cube: &mut Cube) -> Result<(), String> {
+fn apply_token(token: &str, cube: &mut Cube) -> anyhow::Result<()> {
     let base_token = get_base_token_if_valid(token);
 
     let face = match base_token {
@@ -29,18 +29,20 @@ fn apply_token(token: &str, cube: &mut Cube) -> Result<(), String> {
         Some('L') => Ok(Face::Left),
         Some('B') => Ok(Face::Back),
         Some('D') => Ok(Face::Down),
-        _ => Err(format!("Unsupported token in notation string: [{token}]")),
+        _ => Err(anyhow::Error::msg(format!(
+            "Unsupported token in notation string: [{token}]"
+        ))),
     }?;
 
-    let fn_to_apply = if token.ends_with(CHAR_FOR_ANTICLOCKWISE) {
-        Cube::rotate_face_90_degrees_anticlockwise
+    let rotation = if token.ends_with(CHAR_FOR_ANTICLOCKWISE) {
+        Rotation::anticlockwise(face)
     } else {
-        Cube::rotate_face_90_degrees_clockwise
+        Rotation::clockwise(face)
     };
 
-    fn_to_apply(cube, face);
+    cube.rotate(rotation)?;
     if token.ends_with(CHAR_FOR_TURN_TWICE) {
-        fn_to_apply(cube, face);
+        cube.rotate(rotation)?;
     }
 
     Ok(())
@@ -80,7 +82,8 @@ mod tests {
                 fn $name() {
                     let mut cube = Cube::create(3.try_into().expect("known good value"));
                     let expected_error_msg = format!("Unsupported token in notation string: [{}]", $value);
-                    assert_eq!(Err(expected_error_msg), perform_3x3_sequence($value, &mut cube));
+                    let error = perform_3x3_sequence($value, &mut cube).unwrap_err();
+                    assert_eq!(expected_error_msg, format!("{}", error));
                 }
             )*
         }
@@ -93,7 +96,8 @@ mod tests {
                 fn $name() {
                     let mut cube = Cube::create(3.try_into().expect("known good value"));
                     let expected_error_msg = format!("Unsupported token in notation string: [{}]", $err_token);
-                    assert_eq!(Err(expected_error_msg), perform_3x3_sequence($value, &mut cube));
+                    let error = perform_3x3_sequence($value, &mut cube).unwrap_err();
+                    assert_eq!(expected_error_msg, format!("{}", error));
                 }
             )*
         }
@@ -125,20 +129,21 @@ mod tests {
     );
 
     #[test]
-    fn test_perform_3x3_sequence() {
+    fn test_perform_3x3_sequence() -> anyhow::Result<()> {
         let mut cube_under_test = Cube::create(3.try_into().expect("known good value"));
         let mut control_cube = Cube::create(3.try_into().expect("known good value"));
 
         perform_3x3_sequence("F2 R U' F", &mut cube_under_test)
             .expect("Sequence in test should be valid");
 
-        control_cube.rotate_face_90_degrees_clockwise(Face::Front);
-        control_cube.rotate_face_90_degrees_clockwise(Face::Front);
-        control_cube.rotate_face_90_degrees_clockwise(Face::Right);
-        control_cube.rotate_face_90_degrees_anticlockwise(Face::Up);
-        control_cube.rotate_face_90_degrees_clockwise(Face::Front);
+        control_cube.rotate(Rotation::clockwise(Face::Front))?;
+        control_cube.rotate(Rotation::clockwise(Face::Front))?;
+        control_cube.rotate(Rotation::clockwise(Face::Right))?;
+        control_cube.rotate(Rotation::anticlockwise(Face::Up))?;
+        control_cube.rotate(Rotation::clockwise(Face::Front))?;
 
         assert_eq!(control_cube, cube_under_test);
+        Ok(())
     }
 
     #[test]

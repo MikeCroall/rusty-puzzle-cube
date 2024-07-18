@@ -1,3 +1,5 @@
+use std::ops::Not;
+
 use enum_map::Enum;
 use Face as F;
 use IndexAlignment as IA;
@@ -17,6 +19,21 @@ pub enum Face {
     Back,
     /// The Left face starts as red cubies
     Left,
+}
+
+impl Not for Face {
+    type Output = Self;
+
+    fn not(self) -> Self::Output {
+        match self {
+            Face::Up => Face::Down,
+            Face::Down => Face::Up,
+            Face::Front => Face::Back,
+            Face::Right => Face::Left,
+            Face::Back => Face::Front,
+            Face::Left => Face::Right,
+        }
+    }
 }
 
 impl Face {

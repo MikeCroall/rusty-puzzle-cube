@@ -41,26 +41,6 @@ pub(super) fn create_side_with_unique_characters(
     side
 }
 
-pub(super) fn get_clockwise_slice_of_side(side: &Side, index_alignment: &IA) -> Vec<CubieFace> {
-    match index_alignment {
-        IA::OuterStart => side
-            .iter()
-            .map(|inner| inner.first().expect("Side inner had no member").to_owned())
-            .collect::<Vec<CubieFace>>(),
-        IA::OuterEnd => side
-            .iter()
-            .map(|inner| inner.last().expect("Side inner had no member").to_owned())
-            .rev()
-            .collect::<Vec<CubieFace>>(),
-        IA::InnerFirst => {
-            let mut inner_first_vec = side.first().expect("Side had no inner").to_owned();
-            inner_first_vec.reverse();
-            inner_first_vec
-        }
-        IA::InnerLast => side.last().expect("Side had no inner").to_owned(),
-    }
-}
-
 pub(super) fn get_clockwise_slice_of_side_setback(
     side: &Side,
     index_alignment: &IA,
@@ -71,17 +51,16 @@ pub(super) fn get_clockwise_slice_of_side_setback(
             .iter()
             .map(|inner| -> anyhow::Result<CubieFace> {
                 Ok(inner
-                    .get(layers_back - 1)
+                    .get(layers_back)
                     .with_context(|| "Side did not have requested layer")?
                     .to_owned())
             })
-            .rev()
             .collect::<anyhow::Result<Vec<CubieFace>>>()?,
         IA::OuterEnd => side
             .iter()
             .map(|inner| -> anyhow::Result<CubieFace> {
                 Ok(inner
-                    .get(inner.len() - layers_back + 1)
+                    .get(inner.len() - layers_back - 1)
                     .with_context(|| "Side did not have requested layer")?
                     .to_owned())
             })
@@ -89,14 +68,14 @@ pub(super) fn get_clockwise_slice_of_side_setback(
             .collect::<anyhow::Result<Vec<CubieFace>>>()?,
         IA::InnerFirst => {
             let mut inner_first_vec = side
-                .get(layers_back - 1)
+                .get(layers_back)
                 .with_context(|| "Side did not have requested layer")?
                 .to_owned();
             inner_first_vec.reverse();
             inner_first_vec
         }
         IA::InnerLast => side
-            .get(side.len() - layers_back + 1)
+            .get(side.len() - layers_back - 1)
             .with_context(|| "Side did not have requested layer")?
             .to_owned(),
     })

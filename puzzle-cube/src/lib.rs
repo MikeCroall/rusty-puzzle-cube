@@ -1,4 +1,4 @@
-// #![warn(missing_docs)] // todo uncomment
+#![warn(missing_docs)]
 //! Crate providing a puzzle cube implementation, with the ability to apply string-encoded sequences of moves.
 
 /// Module providing the core cube implementation.

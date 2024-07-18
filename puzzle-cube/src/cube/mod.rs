@@ -1,14 +1,17 @@
 use std::{fmt, mem};
 
+use anyhow::Context;
 use enum_map::{enum_map, EnumMap};
 use itertools::izip;
-use side_lengths::{SideLength, UniqueCharsSideLength};
-
-use crate::cube::helpers::{create_side, create_side_with_unique_characters};
 
 use self::cubie_face::CubieFace;
+use self::direction::Direction;
 use self::face::{Face as F, IndexAlignment as IA};
-use self::helpers::get_clockwise_slice_of_side;
+use self::helpers::{
+    create_side, create_side_with_unique_characters, get_clockwise_slice_of_side_setback,
+};
+use self::rotation::Rotation;
+use self::side_lengths::{SideLength, UniqueCharsSideLength};
 
 /// An enum representing an individual cubie within one side of the cube, hence it only represents one face of the cubie.
 pub mod cubie_face;
@@ -21,8 +24,9 @@ pub(crate) mod helpers;
 /// Macros that aid in creating custom cube states for test cases.
 pub mod macros;
 
-/// Module adding types/methods to support rotation of non-edge cubies
-pub mod cube_slice;
+mod direction;
+/// Module defining the Rotation type that represents a single 90° rotation of some part of a cube.
+pub mod rotation;
 
 /// Structs that ensure cubes are constructed with only valid values for side length, depending on the type of cube.
 pub mod side_lengths;
@@ -100,9 +104,11 @@ impl Cube {
     /// let mut cube = Cube::default();
     /// cube.rotate_face_90_degrees_clockwise(Face::Front);
     /// ```
+    /// # Panics
+    /// If, and only if, the implementation of `self.rotate` is broken such that a rotation of the face itself (layer = 0) is invalid.
     pub fn rotate_face_90_degrees_clockwise(&mut self, face: F) {
-        self.rotate_face_90_degrees_clockwise_without_adjacents(face);
-        self.rotate_face_90_degrees_clockwise_only_adjacents(face);
+        self.rotate(Rotation::clockwise(face))
+            .expect("face rotations are always valid");
     }
 
     /// Rotate the given face 90° anticlockwise from the perspective of looking directly at that face from outside the cube.
@@ -111,10 +117,50 @@ impl Cube {
     /// let mut cube = Cube::default();
     /// cube.rotate_face_90_degrees_anticlockwise(Face::Front);
     /// ```
+    /// # Panics
+    /// If, and only if, the implementation of `self.rotate` is broken such that a rotation of the face itself (layer = 0) is invalid.
     pub fn rotate_face_90_degrees_anticlockwise(&mut self, face: F) {
-        self.rotate_face_90_degrees_clockwise(face);
-        self.rotate_face_90_degrees_clockwise(face);
-        self.rotate_face_90_degrees_clockwise(face);
+        self.rotate(Rotation::anticlockwise(face))
+            .expect("face rotations are always valid");
+    }
+
+    /// Perform the given 90° rotation once. More flexible than the other rotate methods available, but may be given an invalid rotation in which case an Err is returned.
+    /// ```no_run
+    /// # use rusty_puzzle_cube::cube::{Cube, face::Face, rotation::Rotation};
+    /// let mut cube = Cube::default();
+    /// cube.rotate(Rotation::clockwise(Face::Front));
+    /// ```
+    /// # Errors
+    /// Err can only be returned if the given rotation is invalid for this cube.
+    pub fn rotate(&mut self, rotation: Rotation) -> anyhow::Result<()> {
+        let side_length = self.side_length;
+
+        let furthest_layer = side_length - 1;
+        if rotation.layer == furthest_layer {
+            self.rotate(rotation.as_layer_0_of_opposite_face())?;
+            return Ok(());
+        }
+
+        match rotation {
+            Rotation {
+                direction: Direction::Anticlockwise,
+                ..
+            } => {
+                let reversed = rotation.reverse_direction();
+                self.rotate(reversed)?;
+                self.rotate(reversed)?;
+                self.rotate(reversed)?;
+            }
+            Rotation {
+                relative_to, layer, ..
+            } => {
+                if layer == 0 {
+                    self.rotate_face_90_degrees_clockwise_without_adjacents(relative_to);
+                }
+                self.rotate_adjacents_90_deg_clockwise_setback(relative_to, layer)?;
+            }
+        };
+        Ok(())
     }
 
     fn rotate_face_90_degrees_clockwise_without_adjacents(&mut self, face: F) {
@@ -128,12 +174,32 @@ impl Cube {
         }
     }
 
-    fn rotate_face_90_degrees_clockwise_only_adjacents(&mut self, face: F) {
+    fn rotate_adjacents_90_deg_clockwise_setback(
+        &mut self,
+        face: F,
+        layers_back: usize,
+    ) -> anyhow::Result<()> {
         let adjacents = face.adjacent_faces_clockwise();
-        let slice_0 = get_clockwise_slice_of_side(&self.side_map[adjacents[0].0], &adjacents[0].1);
-        let slice_1 = get_clockwise_slice_of_side(&self.side_map[adjacents[1].0], &adjacents[1].1);
-        let slice_2 = get_clockwise_slice_of_side(&self.side_map[adjacents[2].0], &adjacents[2].1);
-        let slice_3 = get_clockwise_slice_of_side(&self.side_map[adjacents[3].0], &adjacents[3].1);
+        let slice_0 = get_clockwise_slice_of_side_setback(
+            &self.side_map[adjacents[0].0],
+            &adjacents[0].1,
+            layers_back,
+        )?;
+        let slice_1 = get_clockwise_slice_of_side_setback(
+            &self.side_map[adjacents[1].0],
+            &adjacents[1].1,
+            layers_back,
+        )?;
+        let slice_2 = get_clockwise_slice_of_side_setback(
+            &self.side_map[adjacents[2].0],
+            &adjacents[2].1,
+            layers_back,
+        )?;
+        let slice_3 = get_clockwise_slice_of_side_setback(
+            &self.side_map[adjacents[3].0],
+            &adjacents[3].1,
+            layers_back,
+        )?;
 
         let final_order = {
             let mut preliminary_order = adjacents.iter();
@@ -143,17 +209,20 @@ impl Cube {
                 .collect::<Vec<&(F, IA)>>()
         };
 
-        self.copy_adjacent_over(final_order[0], slice_0);
-        self.copy_adjacent_over(final_order[1], slice_1);
-        self.copy_adjacent_over(final_order[2], slice_2);
-        self.copy_adjacent_over(final_order[3], slice_3);
+        self.copy_setback_adjacent_over(final_order[0], slice_0, layers_back)?;
+        self.copy_setback_adjacent_over(final_order[1], slice_1, layers_back)?;
+        self.copy_setback_adjacent_over(final_order[2], slice_2, layers_back)?;
+        self.copy_setback_adjacent_over(final_order[3], slice_3, layers_back)?;
+
+        Ok(())
     }
 
-    fn copy_adjacent_over(
+    fn copy_setback_adjacent_over(
         &mut self,
         (target_face, target_alignment): &(F, IA),
         unadjusted_values: Vec<CubieFace>,
-    ) {
+        layers_back: usize,
+    ) -> anyhow::Result<()> {
         let values = if target_alignment == &IA::InnerFirst || target_alignment == &IA::OuterEnd {
             let mut new_values = unadjusted_values.clone();
             new_values.reverse();
@@ -166,8 +235,8 @@ impl Cube {
         match target_alignment {
             IA::OuterStart | IA::OuterEnd => {
                 let inner_index = match target_alignment {
-                    IA::OuterStart => 0,
-                    IA::OuterEnd => self.side_length - 1,
+                    IA::OuterStart => layers_back,
+                    IA::OuterEnd => self.side_length - layers_back - 1,
                     _ => unreachable!("outer match guard clauses this one to only allow IA::OuterStart and IA::OuterEnd"),
                 };
                 for (i, value) in values.iter().enumerate() {
@@ -175,16 +244,18 @@ impl Cube {
                 }
             }
             IA::InnerFirst => {
-                side.first_mut()
-                    .expect("Side had no inner")
+                side.get_mut(layers_back)
+                    .with_context(|| "Side did not have requested layer")?
                     .clone_from_slice(&values);
             }
             IA::InnerLast => {
-                side.last_mut()
-                    .expect("Side had no inner")
+                side.get_mut(self.side_length - layers_back - 1)
+                    .with_context(|| "Side did not have requested layer")?
                     .clone_from_slice(&values);
             }
-        }
+        };
+
+        Ok(())
     }
 
     fn write_indented_single_side(&self, f: &mut fmt::Formatter, face: F) -> fmt::Result {

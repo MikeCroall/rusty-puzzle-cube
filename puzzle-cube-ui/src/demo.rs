@@ -3,7 +3,7 @@ use crate::gui::start_gui;
 use std::time::Instant;
 
 use rusty_puzzle_cube::{
-    cube::{cube_slice::CubeSliceTwist, face::Face, Cube},
+    cube::{face::Face, rotation::Rotation, Cube},
     known_transforms::{checkerboard_corners, cube_in_cube_in_cube},
 };
 use tracing::error;
@@ -14,163 +14,200 @@ pub fn run() {
 
     if let Err(e) = start_gui() {
         error!("Could not start gui, defaulting to terminal demo: {}", e);
-        demo_simple_turns();
-        demo_simple_turns_big_cube();
-        demo_checkerboard();
-        demo_cube_in_cube_in_cube();
-        demo_inner_rotation();
-        demo_inner_rotation_recreate_checkerboard();
+        terminal_demos().expect("demos are known to be valid");
     }
 }
 
-fn demo_simple_turns() {
+fn terminal_demos() -> anyhow::Result<()> {
+    demo_simple_turns()?;
+    demo_simple_turns_big_cube()?;
+    demo_checkerboard()?;
+    demo_cube_in_cube_in_cube()?;
+    demo_inner_rotation()?;
+    demo_inner_rotation_recreate_checkerboard()?;
+    demo_simple_inner_rotation_medium_cube()?;
+    demo_inner_rotation_large_cube()?;
+    Ok(())
+}
+
+fn demo_simple_turns() -> anyhow::Result<()> {
     println!("Demo of simple turns and their inverse");
 
     let start_time = Instant::now();
 
     let mut cube = Cube::default();
     print!("{cube}");
-    cube.rotate_face_90_degrees_clockwise(Face::Front);
+    cube.rotate(Rotation::clockwise(Face::Front))?;
     println!();
     print!("{cube}");
-    cube.rotate_face_90_degrees_clockwise(Face::Right);
+    cube.rotate(Rotation::clockwise(Face::Right))?;
     println!();
     print!("{cube}");
-    cube.rotate_face_90_degrees_clockwise(Face::Back);
+    cube.rotate(Rotation::clockwise(Face::Back))?;
     println!();
     print!("{cube}");
-    cube.rotate_face_90_degrees_anticlockwise(Face::Back);
+    cube.rotate(Rotation::anticlockwise(Face::Back))?;
     println!();
     print!("{cube}");
-    cube.rotate_face_90_degrees_anticlockwise(Face::Right);
+    cube.rotate(Rotation::anticlockwise(Face::Right))?;
     println!();
     print!("{cube}");
-    cube.rotate_face_90_degrees_anticlockwise(Face::Front);
+    cube.rotate(Rotation::anticlockwise(Face::Front))?;
     println!();
     print!("{cube}");
 
     let elapsed = start_time.elapsed();
     println!("Overall (printing included) this demo took {elapsed:?}\n");
+    Ok(())
 }
 
-fn demo_simple_turns_big_cube() {
+fn demo_simple_turns_big_cube() -> anyhow::Result<()> {
     println!("Demo of simple turns and their inverse on a big cube");
 
     let start_time = Instant::now();
 
-    let mut cube = Cube::default();
+    let mut cube = Cube::create_with_unique_characters(8.try_into()?);
     print!("{cube}");
-    cube.rotate_face_90_degrees_clockwise(Face::Front);
+    cube.rotate(Rotation::clockwise(Face::Front))?;
     println!();
     print!("{cube}");
-    cube.rotate_face_90_degrees_clockwise(Face::Right);
+    cube.rotate(Rotation::clockwise(Face::Right))?;
     println!();
     print!("{cube}");
-    cube.rotate_face_90_degrees_clockwise(Face::Back);
+    cube.rotate(Rotation::clockwise(Face::Back))?;
     println!();
     print!("{cube}");
-    cube.rotate_face_90_degrees_anticlockwise(Face::Back);
+    cube.rotate(Rotation::anticlockwise(Face::Back))?;
     println!();
     print!("{cube}");
-    cube.rotate_face_90_degrees_anticlockwise(Face::Right);
+    cube.rotate(Rotation::anticlockwise(Face::Right))?;
     println!();
     print!("{cube}");
-    cube.rotate_face_90_degrees_anticlockwise(Face::Front);
+    cube.rotate(Rotation::anticlockwise(Face::Front))?;
     println!();
     print!("{cube}");
 
     let elapsed = start_time.elapsed();
     println!("Overall (printing included) this demo took {elapsed:?}\n");
+    Ok(())
 }
 
 macro_rules! demo_timing {
     ($title:literal, $closure:tt) => {
+        demo_timing!($title, (|| Cube::default()), $closure)
+    };
+    ($title:literal, $create_cube_closure:tt, $perform_moves_closure:tt) => {{
         println!($title);
 
         let start_time = Instant::now();
 
-        let mut cube = Cube::default();
+        let mut cube = $create_cube_closure();
         println!("Cube before:\n{cube}");
 
         let start_time_transform_only = Instant::now();
-        $closure(&mut cube);
+        $perform_moves_closure(&mut cube)?;
         let elapsed_transform_only = start_time_transform_only.elapsed();
 
         println!("Cube after:\n{cube}");
 
         let elapsed = start_time.elapsed();
         println!("Overall (printing included) this demo took {elapsed:?} (transform only took {elapsed_transform_only:?})\n");
-    };
+        Ok(())
+    }};
 }
 
-fn demo_checkerboard() {
+fn demo_checkerboard() -> anyhow::Result<()> {
     demo_timing!(
         "Demo of checkerboard pattern",
-        (|cube| { checkerboard_corners(cube) })
-    );
+        (|cube| -> anyhow::Result<()> {
+            checkerboard_corners(cube);
+            Ok(())
+        })
+    )
 }
 
-fn demo_cube_in_cube_in_cube() {
+fn demo_cube_in_cube_in_cube() -> anyhow::Result<()> {
     demo_timing!(
         "Demo of cube in cube in cube",
-        (|cube| { cube_in_cube_in_cube(cube) })
-    );
+        (|cube| -> anyhow::Result<()> {
+            cube_in_cube_in_cube(cube);
+            Ok(())
+        })
+    )
 }
 
-fn demo_inner_rotation() {
+fn demo_inner_rotation() -> anyhow::Result<()> {
     demo_timing!(
         "Demo of rotating inner slice",
-        (|cube: &mut Cube| {
-            cube.rotate_inner_slice(CubeSliceTwist {
-                relative_to: Face::Front,
-                layer: 2,
-                clockwise: true,
-            })
-            .expect("Demo is known to be valid");
-            cube.rotate_inner_slice(CubeSliceTwist {
-                relative_to: Face::Up,
-                layer: 2,
-                clockwise: true,
-            })
-            .expect("Demo is known to be valid");
+        (|cube: &mut Cube| -> anyhow::Result<()> {
+            cube.rotate(Rotation::clockwise_setback_from(Face::Front, 1))?;
+            cube.rotate(Rotation::clockwise_setback_from(Face::Up, 1))?;
+            Ok(())
         })
-    );
+    )
 }
 
-fn demo_inner_rotation_recreate_checkerboard() {
+fn demo_inner_rotation_recreate_checkerboard() -> anyhow::Result<()> {
     demo_timing!(
         "Demo of rotating inner slice",
-        (|cube: &mut Cube| {
-            let axis1 = CubeSliceTwist {
-                relative_to: Face::Front,
-                layer: 2,
-                clockwise: true,
-            };
-            cube.rotate_inner_slice(axis1)
-                .expect("Demo is known to be valid");
-            cube.rotate_inner_slice(axis1)
-                .expect("Demo is known to be valid");
+        (|cube: &mut Cube| -> anyhow::Result<()> {
+            let axis1 = Rotation::clockwise_setback_from(Face::Front, 1);
+            cube.rotate(axis1)?;
+            cube.rotate(axis1)?;
 
-            let axis2 = CubeSliceTwist {
-                relative_to: Face::Right,
-                layer: 2,
-                clockwise: true,
-            };
-            cube.rotate_inner_slice(axis2)
-                .expect("Demo is known to be valid");
-            cube.rotate_inner_slice(axis2)
-                .expect("Demo is known to be valid");
+            let axis2 = Rotation::clockwise_setback_from(Face::Right, 1);
+            cube.rotate(axis2)?;
+            cube.rotate(axis2)?;
 
-            let axis3 = CubeSliceTwist {
-                relative_to: Face::Up,
-                layer: 2,
-                clockwise: true,
-            };
-            cube.rotate_inner_slice(axis3)
-                .expect("Demo is known to be valid");
-            cube.rotate_inner_slice(axis3)
-                .expect("Demo is known to be valid");
+            let axis3 = Rotation::clockwise_setback_from(Face::Up, 1);
+            cube.rotate(axis3)?;
+            cube.rotate(axis3)?;
+            Ok(())
         })
-    );
-    todo!("This is showing that not every angle works yet!");
+    )
+}
+
+fn demo_simple_inner_rotation_medium_cube() -> anyhow::Result<()> {
+    let side_length = 5;
+    demo_timing!(
+        "Demo of rotating inner slice on large cube",
+        (|| Cube::create_with_unique_characters(
+            side_length
+                .try_into()
+                .expect("known valid side length for unique chars")
+        )),
+        (|cube: &mut Cube| -> anyhow::Result<()> {
+            cube.rotate(Rotation::clockwise_setback_from(Face::Front, 1))?;
+            cube.rotate(Rotation::anticlockwise_setback_from(Face::Front, 3))?;
+            cube.rotate(Rotation::anticlockwise_setback_from(Face::Right, 2))?;
+            Ok(())
+        })
+    )
+}
+
+fn demo_inner_rotation_large_cube() -> anyhow::Result<()> {
+    let side_length = 9;
+    demo_timing!(
+        "Demo of rotating inner slice on large cube",
+        (|| Cube::create(
+            side_length
+                .try_into()
+                .expect("known valid side length if not unique chars")
+        )),
+        (|cube: &mut Cube| -> anyhow::Result<()> {
+            for layer in (0..side_length).step_by(2) {
+                cube.rotate(Rotation::clockwise_setback_from(Face::Front, layer))?;
+            }
+            for layer in (0..side_length).step_by(2) {
+                cube.rotate(Rotation::clockwise_setback_from(Face::Right, layer))?;
+            }
+            for layer in (0..side_length).step_by(2) {
+                cube.rotate(Rotation::clockwise_setback_from(Face::Up, layer))?;
+            }
+            for layer in (0..side_length).step_by(2) {
+                cube.rotate(Rotation::clockwise_setback_from(Face::Front, layer))?;
+            }
+            Ok(())
+        })
+    )
 }
