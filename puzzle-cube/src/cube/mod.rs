@@ -152,7 +152,9 @@ impl Cube {
                 self.rotate(reversed)?;
             }
             Rotation {
-                relative_to, layer, ..
+                relative_to,
+                layer,
+                direction: Direction::Clockwise,
             } => {
                 if layer == 0 {
                     self.rotate_face_90_degrees_clockwise_without_adjacents(relative_to);
