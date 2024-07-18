@@ -1,6 +1,7 @@
 use colored::ColoredString;
 use colored::Colorize;
-use CubieFace as CF;
+
+use self::CubieFace as CF;
 
 const DEFAULT_CUBIE_CHAR: char = '■';
 

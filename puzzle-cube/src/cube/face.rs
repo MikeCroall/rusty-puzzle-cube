@@ -1,8 +1,8 @@
 use std::ops::Not;
 
 use enum_map::Enum;
-use Face as F;
-use IndexAlignment as IA;
+
+use self::{Face as F, IndexAlignment as IA};
 
 /// An enum representing the six sides of the cube.
 #[derive(Debug, Clone, Copy, Enum, PartialEq)]

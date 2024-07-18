@@ -1,4 +1,4 @@
-use crate::cube::{face::Face, rotation::Rotation, Cube};
+use super::cube::{face::Face, rotation::Rotation, Cube};
 
 const CHAR_FOR_ANTICLOCKWISE: char = '\'';
 const CHAR_FOR_TURN_TWICE: char = '2';

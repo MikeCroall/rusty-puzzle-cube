@@ -1,4 +1,4 @@
-use crate::{cube::Cube, notation::perform_3x3_sequence};
+use super::{cube::Cube, notation::perform_3x3_sequence};
 
 /// Apply a sequence to the provided cube that will turn a 3x3 cube into a checkerboard.
 ///

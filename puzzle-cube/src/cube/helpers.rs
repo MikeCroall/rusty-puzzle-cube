@@ -4,10 +4,10 @@ use anyhow::Context;
 
 use super::{
     cubie_face::CubieFace,
+    face::IndexAlignment as IA,
     side_lengths::{SideLength, UniqueCharsSideLength},
     Side,
 };
-use crate::cube::IA;
 
 pub(super) fn create_side(
     side_length: SideLength,
