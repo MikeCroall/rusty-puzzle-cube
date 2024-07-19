@@ -98,33 +98,7 @@ impl Cube {
         &self.side_map
     }
 
-    /// Rotate the given face 90° clockwise from the perspective of looking directly at that face from outside the cube.
-    /// ```no_run
-    /// # use rusty_puzzle_cube::cube::{Cube, face::Face};
-    /// let mut cube = Cube::default();
-    /// cube.rotate_face_90_degrees_clockwise(Face::Front);
-    /// ```
-    /// # Panics
-    /// If, and only if, the implementation of `self.rotate` is broken such that a rotation of the face itself (layer = 0) is invalid.
-    pub fn rotate_face_90_degrees_clockwise(&mut self, face: F) {
-        self.rotate(Rotation::clockwise(face))
-            .expect("face rotations are always valid");
-    }
-
-    /// Rotate the given face 90° anticlockwise from the perspective of looking directly at that face from outside the cube.
-    /// ```no_run
-    /// # use rusty_puzzle_cube::cube::{Cube, face::Face};
-    /// let mut cube = Cube::default();
-    /// cube.rotate_face_90_degrees_anticlockwise(Face::Front);
-    /// ```
-    /// # Panics
-    /// If, and only if, the implementation of `self.rotate` is broken such that a rotation of the face itself (layer = 0) is invalid.
-    pub fn rotate_face_90_degrees_anticlockwise(&mut self, face: F) {
-        self.rotate(Rotation::anticlockwise(face))
-            .expect("face rotations are always valid");
-    }
-
-    /// Perform the given 90° rotation once. More flexible than the other rotate methods available, but may be given an invalid rotation in which case an Err is returned.
+    /// Perform the given 90° rotation once.
     /// ```no_run
     /// # use rusty_puzzle_cube::cube::{Cube, face::Face, rotation::Rotation};
     /// let mut cube = Cube::default();

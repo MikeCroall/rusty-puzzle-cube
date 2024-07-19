@@ -1,4 +1,4 @@
-use rusty_puzzle_cube::cube::{face::Face, side_lengths::SideLength, Cube};
+use rusty_puzzle_cube::cube::{face::Face, rotation::Rotation, side_lengths::SideLength, Cube};
 use three_d::{
     egui::{epaint, special_emojis::GITHUB, Checkbox, FontId, Rgba, Slider, TextStyle, Ui},
     Camera, ColorMaterial, Context, Gm, InstancedMesh, Mesh, Viewport,
@@ -30,11 +30,15 @@ macro_rules! rotate_buttons {
                 FontId::new(24.0, epaint::FontFamily::Proportional),
             );
             if ui.button($text).clicked() {
-                $cube.rotate_face_90_degrees_clockwise(Face::$face);
+                $cube
+                    .rotate(Rotation::clockwise(Face::$face))
+                    .expect("face rotations are always valid");
                 $instanced_square.set_instances(&$cube.to_instances());
             }
             if ui.button(format!("{}'", $text)).clicked() {
-                $cube.rotate_face_90_degrees_anticlockwise(Face::$face);
+                $cube
+                    .rotate(Rotation::anticlockwise(Face::$face))
+                    .expect("face rotations are always valid");
                 $instanced_square.set_instances(&$cube.to_instances());
             }
         });

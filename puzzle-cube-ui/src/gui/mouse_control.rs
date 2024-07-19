@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use rusty_puzzle_cube::cube::{face::Face, Cube};
+use rusty_puzzle_cube::cube::{face::Face, rotation::Rotation, Cube};
 use three_d::{
     pick, radians, Camera, ColorMaterial, Context, Event, Gm, InnerSpace, Mesh, MouseButton,
     OrbitControl, Rad, Transform, Vec3, Vector3,
@@ -28,7 +28,7 @@ struct FaceDrag {
     face: Face,
 }
 
-#[allow(dead_code)]
+#[allow(dead_code)] // todo remove allow dead code
 enum DecidedMove {
     WholeFace {
         face: Face,
@@ -47,17 +47,28 @@ enum DecidedMove {
 }
 
 impl DecidedMove {
+    fn as_rotation(&self) -> Rotation {
+        if let DecidedMove::WholeFace { face, clockwise } = *self {
+            if clockwise {
+                Rotation::clockwise(face)
+            } else {
+                Rotation::anticlockwise(face)
+            }
+        } else {
+            todo!("as_rotation for Inner*")
+        }
+    }
+
     fn apply(self, cube: &mut Cube) {
-        match self {
-            DecidedMove::WholeFace {
-                face,
-                clockwise: true,
-            } => cube.rotate_face_90_degrees_clockwise(face),
-            DecidedMove::WholeFace {
-                face,
-                clockwise: false,
-            } => cube.rotate_face_90_degrees_anticlockwise(face),
-            _ => warn!("Moves that rotate only inner rows/cols are not yet supported"),
+        let rotate_result = match self {
+            DecidedMove::WholeFace { .. } => cube.rotate(self.as_rotation()),
+            _ => {
+                warn!("Moves that rotate only inner rows/cols are not yet supported");
+                Ok(())
+            }
+        };
+        if rotate_result.is_err() {
+            error!("Invalid rotation was provided to cube. {rotate_result:?}");
         }
     }
 }
