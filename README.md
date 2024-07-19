@@ -20,8 +20,6 @@ Experimental, still a work in progress, etc.
 
 Click and drag along the edge of a face to perform a rotation
 
-Rotations are currently only supported for the outer edges of the cube
-
 Unreasonable mode simply changes the maximum cube size from 100 to 2000
 
 Some controls are removed on the WASM target
@@ -77,11 +75,10 @@ Large cubes can be created by providing a larger side length, and cubies can eac
 Note that side length is limited to a maximum of 8 when using unique characters to avoid leaving the basic ASCII range (and trying to use the DEL control code in a cubie)
 
 ```rust
-let mut cube = Cube::create_with_unique_characters(8);
+let mut cube = Cube::create_with_unique_characters(8.try_into()?);
 print!("{cube}");
 ```
 
 ![Big Cube and Unique Cubie output screenshot](img/big-cube-unique-cubie.png)
 
-Note that large cubes do not currently support any moves that a 3x3 does not support.
-For example, rotating only the center column of a 5x5, or the 2nd column of a 4x4 is currently impossible
+Note that notation currently only supports 3x3-applicable moves. For example, rotating only the center column of a 5x5, or the 2nd column of a 4x4 is currently impossible with notation.
