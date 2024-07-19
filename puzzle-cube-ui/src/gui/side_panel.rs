@@ -1,6 +1,6 @@
-use rusty_puzzle_cube::cube::{face::Face, rotation::Rotation, side_lengths::SideLength, Cube};
+use rusty_puzzle_cube::cube::{side_lengths::SideLength, Cube};
 use three_d::{
-    egui::{epaint, special_emojis::GITHUB, Checkbox, FontId, Rgba, Slider, TextStyle, Ui},
+    egui::{special_emojis::GITHUB, Checkbox, Rgba, Slider, Ui},
     Camera, ColorMaterial, Context, Gm, InstancedMesh, Mesh, Viewport,
 };
 use tracing::{error, info};
@@ -13,37 +13,6 @@ const MIN_CUBE_SIZE: usize = 1;
 const MAX_CUBE_SIZE: usize = 100;
 const UNREASONABLE_MAX_CUBE_SIZE: usize = 2000;
 const EXTRA_SPACING: f32 = 10.;
-
-macro_rules! rotate_buttons {
-    ($ui:ident, $cube:ident, $instanced_square:ident) => {
-        rotate_buttons!($ui, $cube, $instanced_square, "F", Front);
-        rotate_buttons!($ui, $cube, $instanced_square, "R", Right);
-        rotate_buttons!($ui, $cube, $instanced_square, "U", Up);
-        rotate_buttons!($ui, $cube, $instanced_square, "B", Back);
-        rotate_buttons!($ui, $cube, $instanced_square, "L", Left);
-        rotate_buttons!($ui, $cube, $instanced_square, "D", Down);
-    };
-    ($ui:ident, $cube:ident, $instanced_square:ident, $text:literal, $face:ident) => {
-        $ui.horizontal(|ui| {
-            ui.style_mut().text_styles.insert(
-                TextStyle::Button,
-                FontId::new(24.0, epaint::FontFamily::Proportional),
-            );
-            if ui.button($text).clicked() {
-                $cube
-                    .rotate(Rotation::clockwise(Face::$face))
-                    .expect("face rotations are always valid");
-                $instanced_square.set_instances(&$cube.to_instances());
-            }
-            if ui.button(format!("{}'", $text)).clicked() {
-                $cube
-                    .rotate(Rotation::anticlockwise(Face::$face))
-                    .expect("face rotations are always valid");
-                $instanced_square.set_instances(&$cube.to_instances());
-            }
-        });
-    };
-}
 
 pub(super) fn header(ui: &mut Ui) {
     ui.heading("Rusty Puzzle Cube");
@@ -93,11 +62,7 @@ pub(super) fn initialise_cube(
     ui.separator();
 }
 
-pub(super) fn control_cube(
-    ui: &mut Ui,
-    cube: &mut Cube,
-    instanced_square: &mut Gm<InstancedMesh, ColorMaterial>,
-) {
+pub(super) fn control_cube(ui: &mut Ui) {
     ui.add_space(EXTRA_SPACING);
     ui.heading("Control Cube");
     ui.label("Click and drag directly on the cube to make a rotation");
@@ -106,11 +71,7 @@ pub(super) fn control_cube(
         "Dragging to another face, diagonally, or for a very small distance will be cancelled",
     );
     ui.add_space(EXTRA_SPACING);
-    ui.label("Alternatively, use the buttons below");
-    rotate_buttons!(ui, cube, instanced_square);
-    ui.add_space(EXTRA_SPACING);
-    ui.label("Moves of inner rows or columns are not currently supported");
-    ui.add_space(EXTRA_SPACING);
+    // todo!("add shuffle button")
     ui.separator();
 }
 

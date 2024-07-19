@@ -64,7 +64,7 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
                             &mut cube,
                             &mut tiles,
                         );
-                        side_panel::control_cube(ui, &mut cube, &mut tiles);
+                        side_panel::control_cube(ui);
                         side_panel::control_camera(
                             ui,
                             &mut camera,
