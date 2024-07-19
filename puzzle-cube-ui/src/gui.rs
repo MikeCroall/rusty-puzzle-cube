@@ -1,5 +1,6 @@
 mod colours;
 mod cube_ext;
+mod decided_move;
 mod defaults;
 #[cfg(not(target_arch = "wasm32"))]
 mod file_io;

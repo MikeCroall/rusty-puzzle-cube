@@ -1,13 +1,13 @@
 use std::f32::consts::PI;
 
-use rusty_puzzle_cube::cube::{face::Face, rotation::Rotation, Cube};
+use rusty_puzzle_cube::cube::{face::Face, Cube};
 use three_d::{
     pick, radians, Camera, ColorMaterial, Context, Event, Gm, InnerSpace, Mesh, MouseButton,
     OrbitControl, Rad, Transform, Vec3, Vector3,
 };
 use tracing::{error, warn};
 
-use crate::gui::transforms::move_face_into_place;
+use crate::gui::{decided_move::DecidedMove, transforms::move_face_into_place};
 
 const MOVE_TOO_SMALL_THRESHOLD: f32 = 0.3;
 const DIAGONAL_MOVE_THRESHOLD: Rad<f32> = radians(0.125 * PI);
@@ -26,51 +26,6 @@ pub(super) struct MouseControlOutput {
 struct FaceDrag {
     start_pick: Vector3<f32>,
     face: Face,
-}
-
-#[allow(dead_code)] // todo remove allow dead code
-enum DecidedMove {
-    WholeFace {
-        face: Face,
-        clockwise: bool,
-    },
-    InnerRow {
-        face: Face,
-        row: usize,
-        toward_positive: bool,
-    },
-    InnerCol {
-        face: Face,
-        col: usize,
-        toward_positive: bool,
-    },
-}
-
-impl DecidedMove {
-    fn as_rotation(&self) -> Rotation {
-        if let DecidedMove::WholeFace { face, clockwise } = *self {
-            if clockwise {
-                Rotation::clockwise(face)
-            } else {
-                Rotation::anticlockwise(face)
-            }
-        } else {
-            todo!("as_rotation for Inner*")
-        }
-    }
-
-    fn apply(self, cube: &mut Cube) {
-        let rotate_result = match self {
-            DecidedMove::WholeFace { .. } => cube.rotate(self.as_rotation()),
-            _ => {
-                warn!("Moves that rotate only inner rows/cols are not yet supported");
-                Ok(())
-            }
-        };
-        if rotate_result.is_err() {
-            error!("Invalid rotation was provided to cube. {rotate_result:?}");
-        }
-    }
 }
 
 impl MouseControl {
