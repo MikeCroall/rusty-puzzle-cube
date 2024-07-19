@@ -146,7 +146,7 @@ impl Cube {
                 direction: Direction::Anticlockwise,
                 ..
             } => {
-                let reversed = rotation.reverse_direction();
+                let reversed = !rotation;
                 self.rotate(reversed)?;
                 self.rotate(reversed)?;
                 self.rotate(reversed)?;

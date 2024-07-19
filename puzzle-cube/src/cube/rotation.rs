@@ -1,3 +1,5 @@
+use std::ops::Not;
+
 use super::{direction::Direction, face::Face};
 
 /// A struct representing the rotation of a 'slice' of cube.
@@ -60,18 +62,22 @@ impl Rotation {
         }
     }
 
-    pub(crate) fn reverse_direction(self) -> Rotation {
-        Rotation {
-            direction: !self.direction,
-            ..self
-        }
-    }
-
     pub(crate) fn as_layer_0_of_opposite_face(self) -> Rotation {
         Rotation {
             relative_to: !self.relative_to,
             layer: 0,
             direction: !self.direction,
+        }
+    }
+}
+
+impl Not for Rotation {
+    type Output = Self;
+
+    fn not(self) -> Self::Output {
+        Rotation {
+            direction: !self.direction,
+            ..self
         }
     }
 }
