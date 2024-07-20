@@ -9,7 +9,7 @@ use tracing::{error, warn};
 
 use crate::gui::{decided_move::DecidedMove, transforms::move_face_into_place};
 
-const MOVE_TOO_SMALL_THRESHOLD: f32 = 0.3;
+const MOVE_TOO_SMALL_THRESHOLD: f32 = 0.15;
 const DIAGONAL_MOVE_THRESHOLD: Rad<f32> = radians(0.125 * PI);
 const EPSILON: f32 = 0.0001;
 
