@@ -41,8 +41,9 @@ pub(super) fn initialise_cube(
     };
     let prev_side_length = *side_length;
     ui.add(
-        Slider::new(side_length, MIN_CUBE_SIZE..=slider_max_value)
-            .text(format!("{prev_side_length}x{prev_side_length} Cube")),
+        Slider::new(side_length, MIN_CUBE_SIZE..=slider_max_value).text(format!(
+            "{prev_side_length}x{prev_side_length}x{prev_side_length} Cube"
+        )),
     );
     if ui
         .checkbox(unreasonable_mode, "Unreasonable mode")
@@ -62,7 +63,11 @@ pub(super) fn initialise_cube(
     ui.separator();
 }
 
-pub(super) fn control_cube(ui: &mut Ui) {
+pub(super) fn control_cube(
+    ui: &mut Ui,
+    cube: &mut Cube,
+    instanced_square: &mut Gm<InstancedMesh, ColorMaterial>,
+) {
     ui.add_space(EXTRA_SPACING);
     ui.heading("Control Cube");
     ui.label("Click and drag directly on the cube to make a rotation");
@@ -71,7 +76,15 @@ pub(super) fn control_cube(ui: &mut Ui) {
         "Dragging to another face, diagonally, or for a very small distance will be cancelled",
     );
     ui.add_space(EXTRA_SPACING);
-    // todo!("add shuffle button")
+
+    let shuffle_moves = cube.side_length() * 10;
+    if ui
+        .button(format!("Shuffle ({shuffle_moves} moves)"))
+        .clicked()
+    {
+        cube.shuffle(shuffle_moves);
+        instanced_square.set_instances(&cube.to_instances());
+    }
     ui.separator();
 }
 
