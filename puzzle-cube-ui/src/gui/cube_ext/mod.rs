@@ -130,8 +130,8 @@ mod tests {
         assert_eq!(
             cubie_face_to_colour(CubieFace::Orange(None)),
             Srgba {
-                r: 224,
-                g: 112,
+                r: 255,
+                g: 125,
                 b: 0,
                 a: 255
             }
