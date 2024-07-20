@@ -27,7 +27,7 @@ Shuffle will make `10n` moves on an `n` x `n` x `n` cube
 
 Some controls are removed on the WASM target
 
-![Controls for the 3D renderer](img/controls-3D.png)
+![Controls for the 3D renderer](img/gui-controls-3D.png)
 
 ### Building Puzzle Cube GUI Crate for web
 
