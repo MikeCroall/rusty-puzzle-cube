@@ -44,10 +44,7 @@ impl DecidedMove {
                 let face_where_toward_positive_eq_clockwise = match face {
                     Face::Up => Face::Front,
                     Face::Down => Face::Back,
-                    Face::Front => Face::Down,
-                    Face::Right => Face::Down,
-                    Face::Back => Face::Down,
-                    Face::Left => Face::Down,
+                    Face::Front | Face::Right | Face::Back | Face::Left => Face::Down,
                 };
                 if clockwise {
                     Rotation::clockwise_setback_from(face_where_toward_positive_eq_clockwise, row)
@@ -64,9 +61,7 @@ impl DecidedMove {
                 toward_positive: anticlockwise,
             } => {
                 let face_where_toward_positive_eq_anticlockwise = match face {
-                    Face::Up => Face::Left,
-                    Face::Down => Face::Left,
-                    Face::Front => Face::Left,
+                    Face::Up | Face::Down | Face::Front => Face::Left,
                     Face::Right => Face::Front,
                     Face::Back => Face::Right,
                     Face::Left => Face::Back,
