@@ -95,7 +95,7 @@ impl Face {
 
 /// This enum describes an edge of the 2d side, where a side is a `Vec<Vec<CubieFace>>`.
 ///
-/// For example, given a 3x3 side with numbers representing `CubieFace` instances:
+/// For example, given a 3x3x3 side with numbers representing `CubieFace` instances:
 ///```text
 /// [
 ///     [0, 1, 2],

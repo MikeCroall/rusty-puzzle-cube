@@ -3,7 +3,7 @@ use super::cube::{face::Face, rotation::Rotation, Cube};
 const CHAR_FOR_ANTICLOCKWISE: char = '\'';
 const CHAR_FOR_TURN_TWICE: char = '2';
 
-// todo support 4x4 notation, such as cube_in_cube_etc: B' M2 U2 M2 B F2 R U' R U R2 U R2 F' U F' Uw Lw Uw' Fw2 Dw Rw' Uw Fw Dw2 Rw2
+// todo support 4x4x4 notation, such as cube_in_cube_etc: B' M2 U2 M2 B F2 R U' R U R2 U R2 F' U F' Uw Lw Uw' Fw2 Dw Rw' Uw Fw Dw2 Rw2
 
 /// Perform a sequence of moves on a provided Cube instance.
 /// # Errors
