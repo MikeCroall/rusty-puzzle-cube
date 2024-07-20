@@ -13,18 +13,18 @@ use self::helpers::{
 use self::rotation::Rotation;
 use self::side_lengths::{SideLength, UniqueCharsSideLength};
 
+mod direction;
+mod helpers;
+
 /// An enum representing an individual cubie within one side of the cube, hence it only represents one face of the cubie.
 pub mod cubie_face;
 
 /// An enum representing the faces of a cube, and providing a mapping for 'adjacents' and `IndexAlignment` that are used to perform rotations of a face.
 pub mod face;
 
-pub(crate) mod helpers;
-
 /// Macros that aid in creating custom cube states for test cases.
 pub mod macros;
 
-mod direction;
 /// Module defining the Rotation type that represents a single 90° rotation of some part of a cube.
 pub mod rotation;
 
@@ -218,9 +218,9 @@ impl Cube {
                 };
                 for (outer_index, value) in values.iter().enumerate() {
                     side.get_mut(outer_index)
-                        .with_context(|| format!("Side did not have requested layer ({outer_index} of outer vec of side)"))?
+                        .with_context(|| format!("side did not have requested layer ({outer_index} of outer vec of side)"))?
                         .get_mut(inner_index)
-                        .with_context(|| format!("Side did not have requested layer ({inner_index} of inner vec of side)"))?
+                        .with_context(|| format!("side did not have requested layer ({inner_index} of inner vec of side)"))?
                         .clone_from(value);
                 }
             }
@@ -233,13 +233,12 @@ impl Cube {
                 side.get_mut(outer_index)
                     .with_context(|| {
                         format!(
-                            "Side did not have requested layer ({outer_index} outer vec of side)"
+                            "side did not have requested layer ({outer_index} outer vec of side)"
                         )
                     })?
                     .clone_from_slice(&values);
             }
         };
-
         Ok(())
     }
 
@@ -384,6 +383,7 @@ mod impl_for_tests_only {
 mod tests {
     use crate::{create_cube_from_sides, create_cube_side};
 
+    use super::face::Face;
     use super::*;
     use pretty_assertions::assert_eq;
 
@@ -483,5 +483,114 @@ mod tests {
 
         assert_eq!(expected_output, display_output);
         assert_eq!(expected_output, debug_output);
+    }
+
+    #[test]
+    fn rotate_face() -> anyhow::Result<()> {
+        let mut cube = Cube::create_with_unique_characters(2.try_into()?);
+        cube.rotate(Rotation::anticlockwise(Face::Back))?;
+
+        let expected_cube = create_cube_from_sides!(
+            top: vec![
+                vec![CubieFace::Red(Some('2')), CubieFace::Red(Some('0'))],
+                vec![CubieFace::White(Some('2')), CubieFace::White(Some('3'))],
+            ],
+            bottom: vec![
+                vec![CubieFace::Yellow(Some('0')), CubieFace::Yellow(Some('1'))],
+                vec![CubieFace::Orange(Some('3')), CubieFace::Orange(Some('1'))],
+            ],
+            front: vec![
+                vec![CubieFace::Blue(Some('0')), CubieFace::Blue(Some('1'))],
+                vec![CubieFace::Blue(Some('2')), CubieFace::Blue(Some('3'))],
+            ],
+            right: vec![
+                vec![CubieFace::Orange(Some('0')), CubieFace::White(Some('0'))],
+                vec![CubieFace::Orange(Some('2')), CubieFace::White(Some('1'))],
+            ],
+            back: vec![
+                vec![CubieFace::Green(Some('1')), CubieFace::Green(Some('3'))],
+                vec![CubieFace::Green(Some('0')), CubieFace::Green(Some('2'))],
+            ],
+            left: vec![
+                vec![CubieFace::Yellow(Some('2')), CubieFace::Red(Some('1'))],
+                vec![CubieFace::Yellow(Some('3')), CubieFace::Red(Some('3'))],
+            ],
+        );
+        assert_eq!(expected_cube, cube);
+        Ok(())
+    }
+
+    #[test]
+    fn rotate_inner() -> anyhow::Result<()> {
+        let mut cube = Cube::create_with_unique_characters(3.try_into()?);
+        cube.rotate(Rotation::clockwise_setback_from(Face::Front, 1))?;
+
+        let expected_cube = create_cube_from_sides!(
+            top: vec![
+                vec![CubieFace::White(Some('0')), CubieFace::White(Some('1')), CubieFace::White(Some('2'))],
+                vec![CubieFace::Red(Some('7')), CubieFace::Red(Some('4')), CubieFace::Red(Some('1'))],
+                vec![CubieFace::White(Some('6')), CubieFace::White(Some('7')), CubieFace::White(Some('8'))],
+            ],
+            bottom: vec![
+                vec![CubieFace::Yellow(Some('0')), CubieFace::Yellow(Some('1')), CubieFace::Yellow(Some('2'))],
+                vec![CubieFace::Orange(Some('7')), CubieFace::Orange(Some('4')), CubieFace::Orange(Some('1'))],
+                vec![CubieFace::Yellow(Some('6')), CubieFace::Yellow(Some('7')), CubieFace::Yellow(Some('8'))],
+            ],
+            front: vec![
+                vec![CubieFace::Blue(Some('0')), CubieFace::Blue(Some('1')), CubieFace::Blue(Some('2'))],
+                vec![CubieFace::Blue(Some('3')), CubieFace::Blue(Some('4')), CubieFace::Blue(Some('5'))],
+                vec![CubieFace::Blue(Some('6')), CubieFace::Blue(Some('7')), CubieFace::Blue(Some('8'))],
+            ],
+            right: vec![
+                vec![CubieFace::Orange(Some('0')), CubieFace::White(Some('3')), CubieFace::Orange(Some('2'))],
+                vec![CubieFace::Orange(Some('3')), CubieFace::White(Some('4')), CubieFace::Orange(Some('5'))],
+                vec![CubieFace::Orange(Some('6')), CubieFace::White(Some('5')), CubieFace::Orange(Some('8'))],
+            ],
+            back: vec![
+                vec![CubieFace::Green(Some('0')), CubieFace::Green(Some('1')), CubieFace::Green(Some('2'))],
+                vec![CubieFace::Green(Some('3')), CubieFace::Green(Some('4')), CubieFace::Green(Some('5'))],
+                vec![CubieFace::Green(Some('6')), CubieFace::Green(Some('7')), CubieFace::Green(Some('8'))],
+            ],
+            left: vec![
+                vec![CubieFace::Red(Some('0')), CubieFace::Yellow(Some('3')), CubieFace::Red(Some('2'))],
+                vec![CubieFace::Red(Some('3')), CubieFace::Yellow(Some('4')), CubieFace::Red(Some('5'))],
+                vec![CubieFace::Red(Some('6')), CubieFace::Yellow(Some('5')), CubieFace::Red(Some('8'))],
+            ],
+        );
+        assert_eq!(expected_cube, cube);
+        Ok(())
+    }
+
+    #[test]
+    fn rotate_far_opposite_face_as_if_it_were_inner() -> anyhow::Result<()> {
+        let side_length = 5;
+
+        let mut cube_under_test = Cube::create_with_unique_characters(side_length.try_into()?);
+        cube_under_test.rotate(Rotation::clockwise_setback_from(
+            Face::Right,
+            side_length - 1,
+        ))?;
+
+        let mut expected_cube = Cube::create_with_unique_characters(side_length.try_into()?);
+        expected_cube.rotate(Rotation::anticlockwise(Face::Left))?;
+
+        assert_eq!(expected_cube, cube_under_test);
+        Ok(())
+    }
+
+    #[test]
+    fn rotate_with_invalid_layer() -> anyhow::Result<()> {
+        let side_length = 4;
+        let mut cube = Cube::create(side_length.try_into()?);
+
+        let invalid_layer_index = side_length;
+        let rotation = Rotation::clockwise_setback_from(Face::Up, invalid_layer_index);
+        let result = cube.rotate(rotation);
+
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(format!("{err:?}")
+            .starts_with("side did not have required layer (4 of outer vec of side)"));
+        Ok(())
     }
 }

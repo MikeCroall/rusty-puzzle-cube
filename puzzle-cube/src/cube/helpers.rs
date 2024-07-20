@@ -46,22 +46,24 @@ pub(super) fn get_clockwise_slice_of_side_setback(
     index_alignment: &IA,
     layers_back: usize,
 ) -> anyhow::Result<Vec<CubieFace>> {
-    Ok(match index_alignment {
+    let vec = match index_alignment {
         IA::OuterStart => side
             .iter()
             .map(|inner| -> anyhow::Result<CubieFace> {
                 Ok(inner
                     .get(layers_back)
-                    .with_context(|| format!("Side did not have requested layer ({layers_back} of inner vec of side)"))?
+                    .with_context(|| format!("side did not have required layer ({layers_back} of inner vec of side)"))?
                     .to_owned())
             })
             .collect::<anyhow::Result<Vec<CubieFace>>>()?,
         IA::OuterEnd => side
             .iter()
             .map(|inner| -> anyhow::Result<CubieFace> {
+                let required_index = inner.len().checked_sub(layers_back + 1)
+                    .with_context(|| format!("requested layer index {layers_back} caused underflow"))?;
                 Ok(inner
-                    .get(inner.len() - layers_back - 1)
-                    .with_context(|| format!("Side did not have requested layer ({} of inner vec of side)", inner.len() - layers_back - 1))?
+                    .get(required_index)
+                    .with_context(|| format!("side did not have required layer ({required_index} of inner vec of side)"))?
                     .to_owned())
             })
             .rev()
@@ -69,14 +71,19 @@ pub(super) fn get_clockwise_slice_of_side_setback(
         IA::InnerFirst => {
             let mut inner_first_vec = side
                 .get(layers_back)
-                .with_context(|| format!("Side did not have requested layer ({layers_back} of outer vec of side)"))?
+                .with_context(|| format!("side did not have required layer ({layers_back} of outer vec of side)"))?
                 .to_owned();
             inner_first_vec.reverse();
             inner_first_vec
         }
-        IA::InnerLast => side
-            .get(side.len() - layers_back - 1)
-            .with_context(|| format!("Side did not have requested layer ({} of outer vec of side)", side.len() - layers_back - 1))?
-            .to_owned(),
-    })
+        IA::InnerLast => {
+            let required_index = side.len().checked_sub(layers_back + 1)
+                .with_context(|| format!("requested layer index {layers_back} caused underflow"))?;
+            side
+                .get(required_index)
+                .with_context(|| format!("side did not have required layer ({required_index} of outer vec of side)"))?
+                .to_owned()
+        }
+    };
+    Ok(vec)
 }
