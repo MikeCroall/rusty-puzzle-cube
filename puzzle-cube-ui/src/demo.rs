@@ -27,6 +27,7 @@ fn terminal_demos() -> anyhow::Result<()> {
     demo_inner_rotation_recreate_checkerboard()?;
     demo_simple_inner_rotation_medium_cube()?;
     demo_inner_rotation_large_cube()?;
+    demo_shuffle()?;
     Ok(())
 }
 
@@ -207,6 +208,20 @@ fn demo_inner_rotation_large_cube() -> anyhow::Result<()> {
             for layer in (0..side_length).step_by(2) {
                 cube.rotate(Rotation::clockwise_setback_from(Face::Front, layer))?;
             }
+            Ok(())
+        })
+    )
+}
+
+fn demo_shuffle() -> anyhow::Result<()> {
+    demo_timing!(
+        "Demo of 100-move shuffling a 9x9x9 cube",
+        (|| Cube::create(
+            9.try_into()
+                .expect("known valid side length if not unique chars")
+        )),
+        (|cube: &mut Cube| -> anyhow::Result<()> {
+            cube.shuffle(100);
             Ok(())
         })
     )

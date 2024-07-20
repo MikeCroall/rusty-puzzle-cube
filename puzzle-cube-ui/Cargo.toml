@@ -1,6 +1,6 @@
 [package]
 name = "rusty-puzzle-cube-ui"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2021"
 authors = ["Mike Croall"]
 
