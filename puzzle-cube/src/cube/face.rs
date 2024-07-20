@@ -5,7 +5,7 @@ use enum_map::Enum;
 use self::{Face as F, IndexAlignment as IA};
 
 /// An enum representing the six sides of the cube.
-#[derive(Debug, Clone, Copy, Enum, PartialEq)]
+#[derive(Debug, Copy, Clone, Enum, PartialEq, Eq)]
 pub enum Face {
     /// The Up face starts as white cubies
     Up,
@@ -102,4 +102,40 @@ pub(crate) enum IndexAlignment {
     OuterEnd,
     InnerFirst,
     InnerLast,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use pretty_assertions::assert_eq;
+
+    #[test]
+    fn up_inverted() {
+        assert_eq!(Face::Down, !Face::Up);
+    }
+
+    #[test]
+    fn down_inverted() {
+        assert_eq!(Face::Up, !Face::Down);
+    }
+
+    #[test]
+    fn front_inverted() {
+        assert_eq!(Face::Back, !Face::Front);
+    }
+
+    #[test]
+    fn back_inverted() {
+        assert_eq!(Face::Front, !Face::Back);
+    }
+
+    #[test]
+    fn left_inverted() {
+        assert_eq!(Face::Right, !Face::Left);
+    }
+
+    #[test]
+    fn right_inverted() {
+        assert_eq!(Face::Left, !Face::Right);
+    }
 }

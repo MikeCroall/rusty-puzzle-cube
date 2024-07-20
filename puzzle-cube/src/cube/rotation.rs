@@ -4,7 +4,7 @@ use super::{direction::Direction, face::Face};
 
 /// A struct representing the rotation of a 'slice' of cube.
 /// That is, a rotation of a set of cubies where none of the cubies lie on the edges of the cube.
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Rotation {
     /// The face from which the reference frame is anchored.
     /// `layer` will determine how many layers 'behind' this face the desired slice to rotate is.
@@ -79,5 +79,87 @@ impl Not for Rotation {
             direction: !self.direction,
             ..self
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use pretty_assertions::assert_eq;
+
+    #[test]
+    fn clockwise() {
+        let cw = Rotation::clockwise(Face::Back);
+        let expected_output = Rotation {
+            relative_to: Face::Back,
+            layer: 0,
+            direction: Direction::Clockwise,
+        };
+        assert_eq!(expected_output, cw);
+    }
+
+    #[test]
+    fn anticlockwise() {
+        let acw = Rotation::anticlockwise(Face::Right);
+        let expected_output = Rotation {
+            relative_to: Face::Right,
+            layer: 0,
+            direction: Direction::Anticlockwise,
+        };
+        assert_eq!(expected_output, acw);
+    }
+
+    #[test]
+    fn clockwise_setback_from() {
+        let cwsb = Rotation::clockwise_setback_from(Face::Down, 3);
+        let expected_output = Rotation {
+            relative_to: Face::Down,
+            layer: 3,
+            direction: Direction::Clockwise,
+        };
+        assert_eq!(expected_output, cwsb);
+    }
+
+    #[test]
+    fn anticlockwise_setback_from() {
+        let acwsb = Rotation::anticlockwise_setback_from(Face::Front, 4);
+        let expected_output = Rotation {
+            relative_to: Face::Front,
+            layer: 4,
+            direction: Direction::Anticlockwise,
+        };
+        assert_eq!(expected_output, acwsb);
+    }
+
+    #[test]
+    fn as_layer_0_of_opposite_face() {
+        let input = Rotation {
+            relative_to: Face::Up,
+            layer: 7,
+            direction: Direction::Clockwise,
+        };
+        let expected_output = Rotation {
+            relative_to: Face::Down,
+            layer: 0,
+            direction: Direction::Anticlockwise,
+        };
+        assert_eq!(expected_output, input.as_layer_0_of_opposite_face());
+    }
+
+    #[test]
+    fn invert_only_changes_direction() {
+        let relative_to = Face::Left;
+        let layer = 4;
+        let input = Rotation {
+            relative_to,
+            layer,
+            direction: Direction::Anticlockwise,
+        };
+        let expected_output = Rotation {
+            relative_to,
+            layer,
+            direction: Direction::Clockwise,
+        };
+        assert_eq!(expected_output, !input);
     }
 }
