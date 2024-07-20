@@ -199,12 +199,13 @@ impl Cube {
         unadjusted_values: Vec<CubieFace>,
         layers_back: usize,
     ) -> anyhow::Result<()> {
-        let values = if target_alignment == &IA::InnerFirst || target_alignment == &IA::OuterEnd {
-            let mut new_values = unadjusted_values.clone();
-            new_values.reverse();
-            new_values
-        } else {
-            unadjusted_values
+        let values = match target_alignment {
+            IA::OuterEnd | IA::InnerFirst => {
+                let mut new_values = unadjusted_values.clone();
+                new_values.reverse();
+                new_values
+            }
+            IA::OuterStart | IA::InnerLast => unadjusted_values,
         };
 
         let side = &mut self.side_map[*target_face];
@@ -215,18 +216,26 @@ impl Cube {
                     IA::OuterEnd => self.side_length - layers_back - 1,
                     _ => unreachable!("outer match guard clauses this one to only allow IA::OuterStart and IA::OuterEnd"),
                 };
-                for (i, value) in values.iter().enumerate() {
-                    value.clone_into(&mut side[i][inner_index]);
+                for (outer_index, value) in values.iter().enumerate() {
+                    side.get_mut(outer_index)
+                        .with_context(|| format!("Side did not have requested layer ({outer_index} of outer vec of side)"))?
+                        .get_mut(inner_index)
+                        .with_context(|| format!("Side did not have requested layer ({inner_index} of inner vec of side)"))?
+                        .clone_from(value);
                 }
             }
-            IA::InnerFirst => {
-                side.get_mut(layers_back)
-                    .with_context(|| "Side did not have requested layer")?
-                    .clone_from_slice(&values);
-            }
-            IA::InnerLast => {
-                side.get_mut(self.side_length - layers_back - 1)
-                    .with_context(|| "Side did not have requested layer")?
+            IA::InnerFirst | IA::InnerLast => {
+                let outer_index = match target_alignment {
+                    IA::InnerFirst => layers_back,
+                    IA::InnerLast => self.side_length - layers_back - 1,
+                    _ => unreachable!("outer match guard clauses this one to only allow IA::InnerFirst and IA::InnerLast"),
+                };
+                side.get_mut(outer_index)
+                    .with_context(|| {
+                        format!(
+                            "Side did not have requested layer ({outer_index} outer vec of side)"
+                        )
+                    })?
                     .clone_from_slice(&values);
             }
         };
