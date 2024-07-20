@@ -318,52 +318,55 @@ impl fmt::Display for Cube {
 }
 
 #[cfg(test)]
-macro_rules! assert_side_lengths {
-    ($side_length:expr, $($side:expr),* $(,)?) => {
-        $(
-            assert_eq!($side_length, $side.len(),
-                "{} had outer length {} but was expected to have length {}",
-                stringify!($side), $side.len(), $side_length);
-            $side
-                .iter()
-                .enumerate()
-                .for_each(|(index, inner)|
-                    assert_eq!($side_length, inner.len(),
-                        "{} had inner (index {}) length {} but was expected to have length {}",
-                        stringify!($side), index, inner.len(), $side_length));
-        )*
-    };
-}
+mod impl_for_tests_only {
+    use super::*;
 
-#[cfg(test)]
-impl Cube {
-    pub fn create_from_sides(
-        top: Side,
-        bottom: Side,
-        front: Side,
-        right: Side,
-        back: Side,
-        left: Side,
-    ) -> Self {
-        let side_length = top.len();
-        assert_side_lengths!(side_length, top, bottom, front, right, back, left);
+    macro_rules! assert_side_lengths {
+        ($side_length:expr, $($side:expr),* $(,)?) => {
+            $(
+                assert_eq!($side_length, $side.len(),
+                    "{} had outer length {} but was expected to have length {}",
+                    stringify!($side), $side.len(), $side_length);
+                $side
+                    .iter()
+                    .enumerate()
+                    .for_each(|(index, inner)|
+                        assert_eq!($side_length, inner.len(),
+                            "{} had inner (index {}) length {} but was expected to have length {}",
+                            stringify!($side), index, inner.len(), $side_length));
+            )*
+        };
+    }
 
-        let boxed_top = Box::new(top);
-        let boxed_bottom = Box::new(bottom);
-        let boxed_front = Box::new(front);
-        let boxed_right = Box::new(right);
-        let boxed_back = Box::new(back);
-        let boxed_left = Box::new(left);
-        Self {
-            side_length,
-            side_map: enum_map! {
-                F::Up => boxed_top.clone(),
-                F::Down => boxed_bottom.clone(),
-                F::Front => boxed_front.clone(),
-                F::Right => boxed_right.clone(),
-                F::Back => boxed_back.clone(),
-                F::Left => boxed_left.clone(),
-            },
+    impl Cube {
+        pub fn create_from_sides(
+            top: Side,
+            bottom: Side,
+            front: Side,
+            right: Side,
+            back: Side,
+            left: Side,
+        ) -> Self {
+            let side_length = top.len();
+            assert_side_lengths!(side_length, top, bottom, front, right, back, left);
+
+            let boxed_top = Box::new(top);
+            let boxed_bottom = Box::new(bottom);
+            let boxed_front = Box::new(front);
+            let boxed_right = Box::new(right);
+            let boxed_back = Box::new(back);
+            let boxed_left = Box::new(left);
+            Self {
+                side_length,
+                side_map: enum_map! {
+                    F::Up => boxed_top.clone(),
+                    F::Down => boxed_bottom.clone(),
+                    F::Front => boxed_front.clone(),
+                    F::Right => boxed_right.clone(),
+                    F::Back => boxed_back.clone(),
+                    F::Left => boxed_left.clone(),
+                },
+            }
         }
     }
 }
