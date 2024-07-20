@@ -118,7 +118,7 @@ impl Cube {
         let side_length = self.side_length;
 
         let furthest_layer = side_length - 1;
-        if rotation.layer == furthest_layer {
+        if rotation.layer == furthest_layer && side_length > 1 {
             self.rotate(rotation.as_layer_0_of_opposite_face())?;
             return Ok(());
         }
