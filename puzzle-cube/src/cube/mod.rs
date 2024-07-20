@@ -98,6 +98,14 @@ impl Cube {
         &self.side_map
     }
 
+    /// Perform `moves` random single-slice rotations on the cube.
+    pub fn shuffle(&mut self, moves: usize) {
+        for _ in 0..moves {
+            self.rotate(Rotation::random(self.side_length))
+                .expect("random rotations must be valid if given correct side_length");
+        }
+    }
+
     /// Perform the given 90° rotation once.
     /// ```no_run
     /// # use rusty_puzzle_cube::cube::{Cube, face::Face, rotation::Rotation};
@@ -385,7 +393,7 @@ mod tests {
 
     use super::face::Face;
     use super::*;
-    use pretty_assertions::assert_eq;
+    use pretty_assertions::{assert_eq, assert_ne};
 
     #[test]
     fn test_side_length_getter() {
@@ -483,6 +491,19 @@ mod tests {
 
         assert_eq!(expected_output, display_output);
         assert_eq!(expected_output, debug_output);
+    }
+
+    #[test]
+    fn shuffle() {
+        let mut cube = Cube::default();
+        let original_cube = Cube::default();
+        assert_eq!(
+            original_cube, cube,
+            "Test only works if cubes start out the same"
+        );
+
+        cube.shuffle(25);
+        assert_ne!(original_cube, cube);
     }
 
     #[test]

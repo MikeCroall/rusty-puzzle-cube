@@ -1,5 +1,7 @@
 use std::ops::Not;
 
+use rand::Rng;
+
 use super::{direction::Direction, face::Face};
 
 /// A struct representing the rotation of a 'slice' of cube.
@@ -59,6 +61,25 @@ impl Rotation {
             relative_to,
             layer: layers_back,
             direction: Direction::Anticlockwise,
+        }
+    }
+
+    /// Construct a randomly generated `Rotation`. The `Rotation` will be valid for a `Cube` of at least `side_length` cubies wide.
+    /// This `Rotation` is expected to be used via `rotate` on a `Cube`, meaning it makes no attempt to avoid unusual edge cases such as picking the furthest layer away from `relative_to`.
+    #[must_use]
+    pub fn random(side_length: usize) -> Rotation {
+        let mut rng = rand::thread_rng();
+        let relative_to: Face = rand::random();
+        let layer = rng.gen_range(0..side_length);
+        let direction = if rng.gen_bool(0.5) {
+            Direction::Clockwise
+        } else {
+            Direction::Anticlockwise
+        };
+        Rotation {
+            relative_to,
+            layer,
+            direction,
         }
     }
 
@@ -161,5 +182,15 @@ mod tests {
             direction: Direction::Clockwise,
         };
         assert_eq!(expected_output, !input);
+    }
+
+    #[test]
+    fn random_picks_layer_within_bounds() {
+        let side_length = 5;
+
+        for _ in 0..25 {
+            let rotation = Rotation::random(side_length);
+            assert!(rotation.layer < side_length);
+        }
     }
 }

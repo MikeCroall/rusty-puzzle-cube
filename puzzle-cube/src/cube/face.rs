@@ -1,6 +1,7 @@
 use std::ops::Not;
 
 use enum_map::Enum;
+use rand::distributions::{Distribution, Standard};
 
 use self::{Face as F, IndexAlignment as IA};
 
@@ -32,6 +33,19 @@ impl Not for Face {
             Face::Right => Face::Left,
             Face::Back => Face::Front,
             Face::Left => Face::Right,
+        }
+    }
+}
+
+impl Distribution<Face> for Standard {
+    fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> Face {
+        match rng.gen_range(0..6) {
+            0 => Face::Up,
+            1 => Face::Down,
+            2 => Face::Front,
+            3 => Face::Right,
+            4 => Face::Back,
+            _ => Face::Left,
         }
     }
 }
