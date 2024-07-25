@@ -43,6 +43,8 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
     let mut render_axes = false;
     let axes = Axes::new(&ctx, 0.05, 2.);
 
+    let mut save_non_fxaa_img = false;
+
     window.render_loop(move |mut frame_input| {
         let mut redraw = frame_input.first_frame;
 
@@ -80,6 +82,7 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
                             &camera,
                             &tiles,
                             &inner_cube,
+                            &mut save_non_fxaa_img,
                         );
                     })
                 });

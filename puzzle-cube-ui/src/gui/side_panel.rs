@@ -112,6 +112,7 @@ pub(super) fn control_camera(
 }
 
 #[cfg(not(target_arch = "wasm32"))]
+#[allow(clippy::too_many_arguments)]
 pub(super) fn debug(
     ui: &mut Ui,
     cube: &Cube,
@@ -120,6 +121,7 @@ pub(super) fn debug(
     camera: &Camera,
     tiles: &Gm<InstancedMesh, ColorMaterial>,
     inner_cube: &Gm<Mesh, ColorMaterial>,
+    save_non_fxaa_img: &mut bool,
 ) {
     ui.add_space(EXTRA_SPACING);
     ui.heading("Debug");
@@ -127,8 +129,10 @@ pub(super) fn debug(
         info!("\n{cube}");
     }
 
+    ui.checkbox(save_non_fxaa_img, "Save non-fxaa version too");
     if ui.button("Save as image").clicked() {
-        if let Err(e) = save_as_image(ctx, viewport, camera, tiles, inner_cube) {
+        if let Err(e) = save_as_image(ctx, viewport, camera, tiles, inner_cube, *save_non_fxaa_img)
+        {
             error!("Could not save image file: {}", e);
         }
     }
