@@ -18,6 +18,8 @@ pub(super) fn save_as_image(
     inner_cube: &Gm<Mesh, ColorMaterial>,
     save_non_fxaa_too: bool,
 ) -> Result<(), Error> {
+    // todo currently cube is off-centered as if egui side panel was still present - use the pre-adjusted viewport?
+
     let file_id = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .expect("Time went backwards")
