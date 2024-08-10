@@ -14,7 +14,7 @@ use crate::gui::{
     mouse_control::MouseControl,
 };
 use mouse_control::MouseControlOutput;
-use rusty_puzzle_cube::{cube::Cube, known_transforms::cube_in_cube_in_cube};
+use rusty_puzzle_cube::{cube::Cube, known_transforms::cube_in_cube_in_cube_in_cube};
 use three_d::{
     egui::ScrollArea, Axes, ColorMaterial, Context, CpuMesh, Cull, FrameOutput, Gm, InstancedMesh,
     Mesh, Object, RenderStates, Srgba, Viewport, GUI,
@@ -23,9 +23,9 @@ use tracing::{debug, error, info};
 
 pub(super) fn start_gui() -> anyhow::Result<()> {
     info!("Initialising default cube");
-    let mut side_length = 3;
+    let mut side_length = 4;
     let mut cube = Cube::create(side_length.try_into()?);
-    cube_in_cube_in_cube(&mut cube);
+    cube_in_cube_in_cube_in_cube(&mut cube);
 
     info!("Initialising GUI");
     let window = initial_window()?;
