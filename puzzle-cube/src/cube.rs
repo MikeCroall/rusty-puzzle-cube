@@ -101,8 +101,7 @@ impl Cube {
     /// Perform `moves` random single-slice rotations on the cube.
     pub fn shuffle(&mut self, moves: usize) {
         for _ in 0..moves {
-            self.rotate(Rotation::random(self.side_length))
-                .expect("random rotations must be valid if given correct side_length");
+            let _ = self.rotate(Rotation::random(self.side_length));
         }
     }
 
