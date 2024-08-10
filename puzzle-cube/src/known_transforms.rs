@@ -22,7 +22,7 @@ pub fn cube_in_cube_in_cube(cube: &mut Cube) {
 
 /// Apply a sequence to the provided cube that will turn a 4x4x4 cube into a cube within a cube within a cube pattern.
 ///
-/// Can be used on cubes larger than 4x4x4, but only the outer layers will be rotated.
+/// Will not produce the desired result on cubes larger than 4x4x4. Stick to the 3x3x3 version for larger cubes, as that is compatible.
 /// # Panics
 /// Will panic if local variable `sequence` contains a malformed sequence. This would be considered a bug.
 pub fn cube_in_cube_in_cube_in_cube(cube: &mut Cube) {
