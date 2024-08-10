@@ -47,14 +47,14 @@ Then visit `http://localhost:8080`
 
 ### Puzzle Cube Lib Crate Demo
 
-Demos of basic 3x3x3 notation being parsed and applied to a newly created cube
+Demos of basic notation being parsed and applied to a newly created cube
 
 #### Cube in Cube in Cube
 
 ```rust
 let mut cube = Cube::create(3);
 let sequence = "F R' U' F' U L' B U' B2 U' F' R' B R2 F U L U";
-perform_3x3_sequence(sequence, &mut cube).unwrap();
+perform_sequence(sequence, &mut cube).unwrap();
 print!("{cube}");
 ```
 
@@ -65,7 +65,7 @@ print!("{cube}");
 ```rust
 let mut cube = Cube::create(3);
 let sequence = "R2 L2 F2 B2 U2 D2";
-perform_3x3_sequence(sequence, &mut cube).unwrap();
+perform_sequence(sequence, &mut cube).unwrap();
 print!("{cube}");
 ```
 
@@ -83,5 +83,3 @@ print!("{cube}");
 ```
 
 ![Big Cube and Unique Cubie output screenshot](img/big-cube-unique-cubie.png)
-
-Note that notation currently only supports 3x3x3-applicable moves. For example, rotating only the center column of a 5x5x5, or the 2nd column of a 4x4x4 is currently impossible with notation.

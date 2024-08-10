@@ -1,61 +1,105 @@
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 use itertools::Itertools;
 
 use super::cube::{face::Face, rotation::Rotation, Cube};
 
 const CHAR_FOR_ANTICLOCKWISE: char = '\'';
 const CHAR_FOR_TURN_TWICE: char = '2';
+const CHAR_FOR_MULTI_LAYER: char = 'w';
 
 /// Perform a sequence of moves on a provided Cube instance.
+///
 /// # Errors
-/// Will return an Err variant when the input `token_sequence` is malformed
-pub fn perform_3x3_sequence(token_sequence: &str, cube: &mut Cube) -> anyhow::Result<()> {
+/// Will return an Err variant when the input `token_sequence` is malformed or references layers of the cube that the given cube does not have e.g. 4Uw on a 3x3x3 cube.
+pub fn perform_sequence(token_sequence: &str, cube: &mut Cube) -> anyhow::Result<()> {
     token_sequence
-        .trim()
-        .split(' ')
+        .split_whitespace()
         .map(parse_token)
         .flatten_ok()
         .try_for_each(|rotation_result| cube.rotate(rotation_result?))
 }
 
-fn parse_token(token: &str) -> anyhow::Result<Vec<Rotation>> {
-    // todo support more than just 3x3x3 moves (hence Vec<_> signature)
-    //  eg support 4x4x4 notation, such as cube_in_cube_etc: B' M2 U2 M2 B F2 R U' R U R2 U R2 F' U F' Uw Lw Uw' Fw2 Dw Rw' Uw Fw Dw2 Rw2
-    //  and bigger cube notation, such as 3Bw2 3Rw' 3Fw
+fn parse_token(original_token: &str) -> anyhow::Result<Vec<Rotation>> {
+    let token = original_token.trim();
 
-    let base_token = get_base_token_if_valid(token);
+    let (token, anticlockwise) = strip_suffix(token, CHAR_FOR_ANTICLOCKWISE);
+    let (token, turn_twice) = strip_suffix(token, CHAR_FOR_TURN_TWICE);
+    if anticlockwise && turn_twice {
+        return Err(anyhow!("Failed parsing token: [{original_token}] as 'turn twice' should not be used as well as 'anticlockwise'"));
+    }
+    let (token, multi_layer) = strip_suffix(token, CHAR_FOR_MULTI_LAYER);
 
-    let face = match base_token {
+    let (token, face) = strip_face_suffix(token)
+        .with_context(|| format!("Failed parsing token: [{original_token}]"))?;
+
+    let multi_layer_count = parse_multi_layer_count(token)
+        .with_context(|| format!("Failed parsing token: [{original_token}]"))?
+        .or(if multi_layer { Some(2) } else { None });
+
+    let mut rotations = vec![rotation(face, anticlockwise)];
+
+    if let Some(multi_layer_limit) = multi_layer_count {
+        for layer in 1..multi_layer_limit {
+            rotations.push(rotation_inner(face, anticlockwise, layer));
+        }
+    }
+
+    if turn_twice {
+        rotations.extend_from_within(..);
+    }
+
+    Ok(rotations)
+}
+
+fn strip_suffix(string: &str, suffix: char) -> (&str, bool) {
+    if let Some(remainder) = string.strip_suffix(suffix) {
+        return (remainder, true);
+    }
+    (string, false)
+}
+
+fn strip_face_suffix(string: &str) -> anyhow::Result<(&str, Face)> {
+    if string.is_empty() {
+        return Err(anyhow!("Missing face character"));
+    }
+
+    let face = match string.chars().last() {
         Some('F') => Face::Front,
         Some('R') => Face::Right,
         Some('U') => Face::Up,
         Some('L') => Face::Left,
         Some('B') => Face::Back,
         Some('D') => Face::Down,
-        _ => return Err(anyhow!("Unsupported token in notation string: [{token}]")),
+        Some(c) => return Err(anyhow!("Invalid face character: [{c}]")),
+        _ => unreachable!("Already established `string` is not empty, so a last char must exist"),
     };
 
-    let rotation = if token.ends_with(CHAR_FOR_ANTICLOCKWISE) {
-        Rotation::anticlockwise(face)
-    } else {
-        Rotation::clockwise(face)
-    };
+    Ok((&string[..(string.len() - 1)], face))
+}
 
-    if token.ends_with(CHAR_FOR_TURN_TWICE) {
-        Ok(vec![rotation; 2])
+fn parse_multi_layer_count(string: &str) -> anyhow::Result<Option<usize>> {
+    if string.is_empty() {
+        Ok(None)
     } else {
-        Ok(vec![rotation])
+        Ok(Some(string.parse::<usize>().with_context(|| {
+            format!("Invalid multi-layer count: [{string}]")
+        })?))
     }
 }
 
-fn get_base_token_if_valid(token: &str) -> Option<char> {
-    let is_valid_2_char_token = token.len() == 2
-        && (token.ends_with(CHAR_FOR_ANTICLOCKWISE) || token.ends_with(CHAR_FOR_TURN_TWICE));
-
-    if token.len() == 1 || is_valid_2_char_token {
-        token.chars().next()
+fn rotation(face: Face, anticlockwise: bool) -> Rotation {
+    if anticlockwise {
+        Rotation::anticlockwise(face)
     } else {
-        None
+        Rotation::clockwise(face)
+    }
+}
+
+fn rotation_inner(face: Face, anticlockwise: bool, layer: usize) -> Rotation {
+    if anticlockwise {
+        Rotation::anticlockwise_setback_from(face, layer)
+    } else {
+        Rotation::clockwise_setback_from(face, layer)
     }
 }
 
@@ -68,56 +112,124 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     macro_rules! test_invalid_token {
-        ($($name:ident: $value:expr),* $(,)?) => {
+        ($($name:ident: $value:expr, $err_text:expr),* $(,)?) => {
             $(
                 #[test]
                 fn $name() {
-                    let expected_error_msg = format!("Unsupported token in notation string: [{}]", $value);
                     let error = parse_token($value).unwrap_err();
-                    assert_eq!(expected_error_msg, format!("{}", error));
+                    assert!(format!("{:?}", error).starts_with($err_text));
                 }
             )*
         }
     }
 
     macro_rules! test_invalid_sequence {
-        ($($name:ident: $value:expr, $err_token:expr),* $(,)?) => {
+        ($($name:ident: $value:expr, $err_text:expr),* $(,)?) => {
             $(
                 #[test]
                 fn $name() {
                     let mut cube = Cube::create(3.try_into().expect("known good value"));
-                    let expected_error_msg = format!("Unsupported token in notation string: [{}]", $err_token);
-                    let error = perform_3x3_sequence($value, &mut cube).unwrap_err();
-                    assert_eq!(expected_error_msg, format!("{}", error));
+                    let error = perform_sequence($value, &mut cube).unwrap_err();
+                    assert!(format!("{:?}", error).starts_with($err_text));
                 }
             )*
         }
     }
 
     test_invalid_token!(
-        test_invalid_token_m: "M",
-        test_invalid_token_f_0: "F0",
-        test_invalid_token_f_1: "F1",
-        test_invalid_token_f_1_prime: "F1'",
-        test_invalid_token_f_2_prime: "F2'",
-        test_invalid_token_f_prime_1: "F'1",
-        test_invalid_token_f_prime_2: "F'2",
-        test_invalid_token_f_3: "F3",
-        test_invalid_token_f_f: "FF",
-        test_invalid_token_f_f_1: "FF1",
-        test_invalid_token_f_f_2: "FF2",
-        test_invalid_token_f_2_2: "F22",
-        test_invalid_token_1: "1",
-        test_invalid_token_2: "2",
-        test_invalid_token_3: "3",
+        test_invalid_token_m: "M", "\
+Failed parsing token: [M]
+
+Caused by:
+    Invalid face character: [M]",
+        test_invalid_token_f_0: "F0", "\
+Failed parsing token: [F0]
+
+Caused by:
+    Invalid face character: [0]",
+        test_invalid_token_f_1: "F1", "\
+Failed parsing token: [F1]
+
+Caused by:
+    Invalid face character: [1]",
+        test_invalid_token_f_1_prime: "F1'", "\
+Failed parsing token: [F1']
+
+Caused by:
+    Invalid face character: [1]",
+        test_invalid_token_f_2_prime: "F2'", "Failed parsing token: [F2'] as 'turn twice' should not be used as well as 'anticlockwise'",
+        test_invalid_token_f_prime_1: "F'1", "\
+Failed parsing token: [F'1]
+
+Caused by:
+    Invalid face character: [1]",
+        test_invalid_token_f_prime_2: "F'2", "\
+Failed parsing token: [F'2]
+
+Caused by:
+    Invalid face character: [']",
+        test_invalid_token_f_3: "F3", "\
+Failed parsing token: [F3]
+
+Caused by:
+    Invalid face character: [3]",
+        test_invalid_token_f_f: "FF", "\
+Failed parsing token: [FF]
+
+Caused by:
+    0: Invalid multi-layer count: [F]
+    1: invalid digit found in string",
+        test_invalid_token_f_f_1: "FF1", "\
+Failed parsing token: [FF1]
+
+Caused by:
+    Invalid face character: [1]",
+        test_invalid_token_f_f_2: "FF2", "\
+Failed parsing token: [FF2]
+
+Caused by:
+    0: Invalid multi-layer count: [F]
+    1: invalid digit found in string",
+        test_invalid_token_f_2_2: "F22", "\
+Failed parsing token: [F22]
+
+Caused by:
+    Invalid face character: [2]",
+        test_invalid_token_1: "1", "\
+Failed parsing token: [1]
+
+Caused by:
+    Invalid face character: [1]",
+        test_invalid_token_2: "2", "\
+Failed parsing token: [2]
+
+Caused by:
+    Missing face character",
+        test_invalid_token_3: "3", "\
+Failed parsing token: [3]
+
+Caused by:
+    Invalid face character: [3]",
     );
 
     test_invalid_sequence!(
-        test_invalid_sequence_too_many_spaces: "F  R U", "",
-        test_invalid_sequence_not_enough_spaces: "FR U", "FR",
-        test_invalid_sequence_multiple_individual_tokens: "F2' R'' UU", "F2'",
-        test_invalid_sequence_invalid_single_char_token: "F2 R G U", "G",
-        test_invalid_sequence_invalid_multi_char_token: "F2 R@ U", "R@",
+        test_invalid_sequence_not_enough_spaces: "FR U", "\
+Failed parsing token: [FR]
+
+Caused by:
+    0: Invalid multi-layer count: [F]
+    1: invalid digit found in string",
+        test_invalid_sequence_multiple_individual_tokens: "F2' R'' UU", "Failed parsing token: [F2'] as 'turn twice' should not be used as well as 'anticlockwise'",
+        test_invalid_sequence_invalid_single_char_token: "F2 R G U", "\
+Failed parsing token: [G]
+
+Caused by:
+    Invalid face character: [G]",
+        test_invalid_sequence_invalid_multi_char_token: "F2 R@ U", "\
+Failed parsing token: [R@]
+
+Caused by:
+    Invalid face character: [@]",
     );
 
     #[test]
@@ -125,7 +237,7 @@ mod tests {
         let mut cube_under_test = Cube::create(3.try_into().expect("known good value"));
         let mut control_cube = Cube::create(3.try_into().expect("known good value"));
 
-        perform_3x3_sequence("F2 R U' F", &mut cube_under_test)
+        perform_sequence("F2 R U' F", &mut cube_under_test)
             .expect("Sequence in test should be valid");
 
         control_cube.rotate(Rotation::clockwise(Face::Front))?;
@@ -143,8 +255,7 @@ mod tests {
         let sequence = "F R U L B D F2 R2 U2 L2 B2 D2 F' R' U' L' B' D'";
         let mut cube_under_test = Cube::create(3.try_into().expect("known good value"));
 
-        perform_3x3_sequence(sequence, &mut cube_under_test)
-            .expect("Sequence in test should be valid");
+        perform_sequence(sequence, &mut cube_under_test).expect("Sequence in test should be valid");
 
         let expected_cube = create_cube_from_sides!(
             top: create_cube_side!(
@@ -180,5 +291,82 @@ mod tests {
         );
 
         assert_eq!(expected_cube, cube_under_test);
+    }
+
+    #[test]
+    fn test_perform_sequence_cube_too_small() {
+        let sequence = "4Uw";
+        let mut cube = Cube::create(3.try_into().expect("known good value"));
+
+        let error = perform_sequence(sequence, &mut cube).unwrap_err();
+
+        assert!(format!("{:?}", error)
+            .starts_with("side did not have required layer (3 of outer vec of side)"));
+    }
+
+    #[test]
+    fn parse_token_large_cubes_uw() -> anyhow::Result<()> {
+        let rotations = parse_token("Uw")?;
+
+        assert_eq!(
+            vec![
+                Rotation::clockwise(Face::Up),
+                Rotation::clockwise_setback_from(Face::Up, 1),
+            ],
+            rotations
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn parse_token_large_cubes_3_fw() -> anyhow::Result<()> {
+        let rotations = parse_token("3Fw")?;
+
+        assert_eq!(
+            vec![
+                Rotation::clockwise(Face::Front),
+                Rotation::clockwise_setback_from(Face::Front, 1),
+                Rotation::clockwise_setback_from(Face::Front, 2),
+            ],
+            rotations
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn parse_token_large_cubes_3_rw_prime() -> anyhow::Result<()> {
+        let rotations = parse_token("3Rw'")?;
+
+        assert_eq!(
+            vec![
+                Rotation::anticlockwise(Face::Right),
+                Rotation::anticlockwise_setback_from(Face::Right, 1),
+                Rotation::anticlockwise_setback_from(Face::Right, 2),
+            ],
+            rotations
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn parse_token_large_cubes_3_bw_2() -> anyhow::Result<()> {
+        let rotations = parse_token("3Bw2")?;
+
+        assert_eq!(
+            vec![
+                Rotation::clockwise(Face::Back),
+                Rotation::clockwise_setback_from(Face::Back, 1),
+                Rotation::clockwise_setback_from(Face::Back, 2),
+                Rotation::clockwise(Face::Back),
+                Rotation::clockwise_setback_from(Face::Back, 1),
+                Rotation::clockwise_setback_from(Face::Back, 2),
+            ],
+            rotations
+        );
+
+        Ok(())
     }
 }
