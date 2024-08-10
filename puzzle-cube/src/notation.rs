@@ -1,38 +1,39 @@
+use anyhow::anyhow;
+use itertools::Itertools;
+
 use super::cube::{face::Face, rotation::Rotation, Cube};
 
 const CHAR_FOR_ANTICLOCKWISE: char = '\'';
 const CHAR_FOR_TURN_TWICE: char = '2';
 
-// todo support 4x4x4 notation, such as cube_in_cube_etc: B' M2 U2 M2 B F2 R U' R U R2 U R2 F' U F' Uw Lw Uw' Fw2 Dw Rw' Uw Fw Dw2 Rw2
-
 /// Perform a sequence of moves on a provided Cube instance.
 /// # Errors
 /// Will return an Err variant when the input `token_sequence` is malformed
 pub fn perform_3x3_sequence(token_sequence: &str, cube: &mut Cube) -> anyhow::Result<()> {
-    let token_sequence = token_sequence.trim();
-
     token_sequence
         .trim()
         .split(' ')
-        .try_for_each(|token| apply_token(token.trim(), cube))?;
-
-    Ok(())
+        .map(parse_token)
+        .flatten_ok()
+        .try_for_each(|rotation_result| cube.rotate(rotation_result?))
 }
 
-fn apply_token(token: &str, cube: &mut Cube) -> anyhow::Result<()> {
+fn parse_token(token: &str) -> anyhow::Result<Vec<Rotation>> {
+    // todo support more than just 3x3x3 moves (hence Vec<_> signature)
+    //  eg support 4x4x4 notation, such as cube_in_cube_etc: B' M2 U2 M2 B F2 R U' R U R2 U R2 F' U F' Uw Lw Uw' Fw2 Dw Rw' Uw Fw Dw2 Rw2
+    //  and bigger cube notation, such as 3Bw2 3Rw' 3Fw
+
     let base_token = get_base_token_if_valid(token);
 
     let face = match base_token {
-        Some('F') => Ok(Face::Front),
-        Some('R') => Ok(Face::Right),
-        Some('U') => Ok(Face::Up),
-        Some('L') => Ok(Face::Left),
-        Some('B') => Ok(Face::Back),
-        Some('D') => Ok(Face::Down),
-        _ => Err(anyhow::Error::msg(format!(
-            "Unsupported token in notation string: [{token}]"
-        ))),
-    }?;
+        Some('F') => Face::Front,
+        Some('R') => Face::Right,
+        Some('U') => Face::Up,
+        Some('L') => Face::Left,
+        Some('B') => Face::Back,
+        Some('D') => Face::Down,
+        _ => return Err(anyhow!("Unsupported token in notation string: [{token}]")),
+    };
 
     let rotation = if token.ends_with(CHAR_FOR_ANTICLOCKWISE) {
         Rotation::anticlockwise(face)
@@ -40,12 +41,11 @@ fn apply_token(token: &str, cube: &mut Cube) -> anyhow::Result<()> {
         Rotation::clockwise(face)
     };
 
-    cube.rotate(rotation)?;
     if token.ends_with(CHAR_FOR_TURN_TWICE) {
-        cube.rotate(rotation)?;
+        Ok(vec![rotation; 2])
+    } else {
+        Ok(vec![rotation])
     }
-
-    Ok(())
 }
 
 fn get_base_token_if_valid(token: &str) -> Option<char> {
@@ -67,22 +67,13 @@ mod tests {
     use super::*;
     use pretty_assertions::assert_eq;
 
-    #[test]
-    #[should_panic]
-    fn test_apply_token_invalid_input() {
-        let invalid_token = "M";
-        let mut cube = Cube::create(3.try_into().expect("known good value"));
-        apply_token(invalid_token, &mut cube).unwrap();
-    }
-
     macro_rules! test_invalid_token {
         ($($name:ident: $value:expr),* $(,)?) => {
             $(
                 #[test]
                 fn $name() {
-                    let mut cube = Cube::create(3.try_into().expect("known good value"));
                     let expected_error_msg = format!("Unsupported token in notation string: [{}]", $value);
-                    let error = perform_3x3_sequence($value, &mut cube).unwrap_err();
+                    let error = parse_token($value).unwrap_err();
                     assert_eq!(expected_error_msg, format!("{}", error));
                 }
             )*
@@ -104,6 +95,7 @@ mod tests {
     }
 
     test_invalid_token!(
+        test_invalid_token_m: "M",
         test_invalid_token_f_0: "F0",
         test_invalid_token_f_1: "F1",
         test_invalid_token_f_1_prime: "F1'",
