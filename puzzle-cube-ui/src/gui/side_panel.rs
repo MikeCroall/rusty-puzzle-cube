@@ -7,7 +7,7 @@ use tracing::{error, info};
 
 #[cfg(not(target_arch = "wasm32"))]
 use super::file_io::save_as_image;
-use super::{cube_ext::ToInstances, defaults::initial_camera};
+use super::{cube_ext::AsInstances, defaults::initial_camera};
 
 const MIN_CUBE_SIZE: usize = 1;
 const MAX_CUBE_SIZE: usize = 100;
@@ -57,7 +57,7 @@ pub(super) fn initialise_cube(
         let side_length = SideLength::try_from(*side_length)
             .expect("UI is configured to only allow selecting valid side length values");
         *cube = Cube::create(side_length);
-        instanced_square.set_instances(&cube.to_instances());
+        instanced_square.set_instances(&cube.as_instances());
     }
     ui.add_space(EXTRA_SPACING);
     ui.separator();
@@ -83,7 +83,7 @@ pub(super) fn control_cube(
         .clicked()
     {
         cube.shuffle(shuffle_moves);
-        instanced_square.set_instances(&cube.to_instances());
+        instanced_square.set_instances(&cube.as_instances());
     }
     ui.separator();
 }

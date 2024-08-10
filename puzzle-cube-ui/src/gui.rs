@@ -9,7 +9,7 @@ mod side_panel;
 mod transforms;
 
 use crate::gui::{
-    cube_ext::ToInstances,
+    cube_ext::AsInstances,
     defaults::{clear_state, initial_camera, initial_window},
     mouse_control::MouseControl,
 };
@@ -106,7 +106,7 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
             &mut cube,
         );
         if updated_cube {
-            tiles.set_instances(&cube.to_instances());
+            tiles.set_instances(&cube.as_instances());
         }
         redraw |= needs_redraw;
 
@@ -137,7 +137,7 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
 }
 
 fn initial_instances(ctx: &Context, cube: &Cube) -> Gm<InstancedMesh, ColorMaterial> {
-    let instanced_square_mesh = InstancedMesh::new(ctx, &cube.to_instances(), &CpuMesh::cube());
+    let instanced_square_mesh = InstancedMesh::new(ctx, &cube.as_instances(), &CpuMesh::cube());
     let material = ColorMaterial {
         color: Srgba::WHITE,
         render_states: RenderStates {

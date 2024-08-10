@@ -6,8 +6,8 @@ use super::{
     transforms::cubie_face_to_transformation,
 };
 
-pub(crate) trait ToInstances {
-    fn to_instances(&self) -> Instances;
+pub(crate) trait AsInstances {
+    fn as_instances(&self) -> Instances;
 }
 
 macro_rules! all_faces_to_instances {
@@ -44,8 +44,8 @@ macro_rules! all_faces_to_instances {
     }};
 }
 
-impl ToInstances for Cube {
-    fn to_instances(&self) -> Instances {
+impl AsInstances for Cube {
+    fn as_instances(&self) -> Instances {
         let side_length = self.side_length();
         let side_map = self.side_map();
         let (transformations, colours) = all_faces_to_instances!(side_map, side_length);
