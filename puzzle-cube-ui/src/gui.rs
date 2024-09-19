@@ -159,7 +159,7 @@ fn inner_cube(ctx: &Context) -> Gm<Mesh, ColorMaterial> {
     )
 }
 
-#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+#[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 fn calc_viewport(panel_width: f32, viewport: Viewport, device_pixel_ratio: f32) -> Viewport {
     if viewport.width == 0 {
         viewport

@@ -79,7 +79,7 @@ pub(super) fn move_face_into_place(face: Face) -> Matrix4<f32> {
     }
 }
 
-#[allow(clippy::cast_precision_loss)]
+#[expect(clippy::cast_precision_loss)]
 pub(super) fn cubie_face_to_transformation(
     side_length: usize,
     face: Face,

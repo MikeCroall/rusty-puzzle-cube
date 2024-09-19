@@ -134,7 +134,7 @@ fn pick_to_face(pick: Vector3<f32>) -> Option<Face> {
     }
 }
 
-#[allow(
+#[expect(
     clippy::cast_precision_loss,
     clippy::cast_possible_truncation,
     clippy::cast_sign_loss

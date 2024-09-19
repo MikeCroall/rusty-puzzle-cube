@@ -14,3 +14,6 @@ rand = "0.8.5"
 [dev-dependencies]
 paste = "1.0.14"
 pretty_assertions = "1.4.0"
+
+[lints.clippy]
+allow_attributes = "deny"
