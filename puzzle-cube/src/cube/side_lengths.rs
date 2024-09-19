@@ -1,7 +1,7 @@
 /// A valid side length for a `Cube` that has no unique display chars.
 ///
 /// The provided `side_length` here must be >= 1.
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct SideLength(usize);
 
 impl TryFrom<usize> for SideLength {
@@ -27,7 +27,7 @@ impl From<SideLength> for usize {
 /// A valid side length for a `Cube` that has unique display chars.
 ///
 /// The provided `side_length` here must be >=1 and <=8 to allow for unique, visible characters per cubie in the basic ascii range.
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct UniqueCharsSideLength(usize);
 
 impl TryFrom<usize> for UniqueCharsSideLength {
