@@ -1,6 +1,5 @@
 /target
-lcov.info
-*.profraw
+/coverage
 
 # for web/wasm version
 node_modules/

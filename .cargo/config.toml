@@ -16,4 +16,4 @@ live = [
     "-x",
     "run",
 ]
-testcov = "tarpaulin --out lcov --exclude-files puzzle-cube-ui/src/main.rs"
+testcov = "llvm-cov nextest --lcov --output-path coverage/lcov.info --no-cfg-coverage"

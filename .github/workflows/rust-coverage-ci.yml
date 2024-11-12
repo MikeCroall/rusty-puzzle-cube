@@ -13,6 +13,8 @@ jobs:
     coverage-lib:
         runs-on: ubuntu-latest
         steps:
+            - name: Update Rust
+              run: rustup update stable
             - name: Checkout code
               uses: actions/checkout@v4
             - name: Use dependencies cache
@@ -26,21 +28,25 @@ jobs:
                       target/
                   key: ${{ runner.os }}-cargo-coverage-${{ hashFiles('**/Cargo.lock') }}
                   restore-keys: ${{ runner.os }}-cargo-coverage-
-            - name: Install cargo-tarpaulin
-              run: cargo install cargo-tarpaulin
-              continue-on-error: true
-            - name: Run Tarpaulin on Lib
-              run: cargo tarpaulin --out lcov --exclude-files "puzzle-cube-ui/*" && mv lcov.info lcovlib.info
+            - name: Install cargo-llvm-cov
+              uses: taiki-e/install-action@cargo-llvm-cov
+            - name: Install cargo-nextest
+              uses: taiki-e/install-action@nextest
+            - name: Generate code coverage
+              run: cargo llvm-cov nextest --all-features --workspace --codecov --output-path codecov-lib.json --no-cfg-coverage --ignore-filename-regex ".*/puzzle-cube-ui/.*"
             - name: Coverage Upload for Lib
               uses: codecov/codecov-action@v4
               with:
                   token: ${{ secrets.CODECOV_TOKEN }}
-                  files: ./lcovlib.info
+                  files: ./codecov-lib.json
                   flags: lib
+                  fail_ci_if_error: true
 
     coverage-ui:
         runs-on: ubuntu-latest
         steps:
+            - name: Update Rust
+              run: rustup update stable
             - name: Checkout code
               uses: actions/checkout@v4
             - name: Use dependencies cache
@@ -54,14 +60,16 @@ jobs:
                       target/
                   key: ${{ runner.os }}-cargo-coverage-${{ hashFiles('**/Cargo.lock') }}
                   restore-keys: ${{ runner.os }}-cargo-coverage-
-            - name: Install cargo-tarpaulin
-              run: cargo install cargo-tarpaulin
-              continue-on-error: true
-            - name: Run Tarpaulin on UI
-              run: cargo tarpaulin --out lcov --exclude-files "puzzle-cube/*" && mv lcov.info lcovui.info
+            - name: Install cargo-llvm-cov
+              uses: taiki-e/install-action@cargo-llvm-cov
+            - name: Install cargo-nextest
+              uses: taiki-e/install-action@nextest
+            - name: Generate code coverage
+              run: cargo llvm-cov nextest --all-features --workspace --codecov --output-path codecov-ui.json --no-cfg-coverage --ignore-filename-regex ".*/puzzle-cube/.*"
             - name: Coverage Upload for UI
               uses: codecov/codecov-action@v4
               with:
                   token: ${{ secrets.CODECOV_TOKEN }}
-                  files: ./lcovui.info
+                  files: ./codecov-ui.json
                   flags: ui
+                  fail_ci_if_error: true
