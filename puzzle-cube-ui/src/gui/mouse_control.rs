@@ -11,7 +11,7 @@ use crate::gui::{decided_move::DecidedMove, transforms::move_face_into_place};
 
 const MOVE_TOO_SMALL_THRESHOLD: f32 = 0.15;
 const DIAGONAL_MOVE_THRESHOLD: Rad<f32> = radians(0.125 * PI);
-const EPSILON: f32 = 0.0001;
+const EPSILON: f32 = 0.01;
 
 pub(super) struct MouseControl {
     orbit: OrbitControl,
@@ -57,10 +57,13 @@ impl MouseControl {
                     let Some(start_pick) = pick(ctx, camera, *position, inner_cube) else {
                         continue;
                     };
-                    let Some(face) = pick_to_face(start_pick) else {
+                    let Some(face) = pick_to_face(start_pick.position) else {
                         continue;
                     };
-                    self.drag = Some(FaceDrag { start_pick, face });
+                    self.drag = Some(FaceDrag {
+                        start_pick: start_pick.position,
+                        face,
+                    });
                     *handled = true;
                 }
                 Event::MouseMotion {
@@ -75,7 +78,7 @@ impl MouseControl {
                     let Some(pick) = pick(ctx, camera, *position, inner_cube) else {
                         continue;
                     };
-                    let Some(new_face) = pick_to_face(pick) else {
+                    let Some(new_face) = pick_to_face(pick.position) else {
                         continue;
                     };
                     if face != new_face {
@@ -97,7 +100,7 @@ impl MouseControl {
                         continue;
                     };
                     if let Some(decided_move) =
-                        picks_to_move(side_length, *start_pick, end_pick, *face)
+                        picks_to_move(side_length, *start_pick, end_pick.position, *face)
                     {
                         decided_move.apply(cube);
                         updated_cube = true;

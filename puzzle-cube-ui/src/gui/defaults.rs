@@ -40,7 +40,7 @@ mod tests {
             height: 50,
         });
 
-        assert_eq!(camera.target(), &Vector3::new(0., 0., 0.));
+        assert_eq!(camera.target(), Vector3::new(0., 0., 0.));
     }
 
     #[test]

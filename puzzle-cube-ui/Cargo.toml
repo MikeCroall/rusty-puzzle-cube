@@ -7,8 +7,8 @@ authors = ["Mike Croall"]
 [dependencies]
 anyhow = "1.0.89"
 rusty-puzzle-cube = { path = "../puzzle-cube" }
-three-d = { version = "0.17.0", features = ["egui-gui"] }
-three-d-asset = { version = "0.7.0", features = ["png"] }
+three-d = { version = "0.18.0", features = ["egui-gui"] }
+three-d-asset = { version = "0.9.2", features = ["png"] }
 tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
 
