@@ -354,6 +354,7 @@ mod impl_for_tests_only {
     }
 
     impl Cube {
+        /// Create a new `Cube` instance with pre-made `Side` instances, specifically for easily defining test cases
         pub fn create_from_sides(
             top: Side,
             bottom: Side,
