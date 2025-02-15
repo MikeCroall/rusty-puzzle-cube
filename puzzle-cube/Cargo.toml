@@ -10,6 +10,7 @@ colored = "3.0.0"
 enum-map = "2.7.3"
 itertools = "0.14.0"
 rand = "0.9.0"
+getrandom = { version = "0.3", features = ["wasm_js"] }
 
 [dev-dependencies]
 paste = "1.0.15"

@@ -69,7 +69,7 @@ jobs:
 
             - name: Build wasm page
               run: |
-                  npx wasm-pack build "puzzle-cube-ui" --target web --out-name web --out-dir ../web/pkg
+                  RUSTFLAGS='--cfg getrandom_backend="wasm_js"' npx wasm-pack build "puzzle-cube-ui" --target web --out-name web --out-dir ../web/pkg
                   cd web
                   npm install
                   npm run build
