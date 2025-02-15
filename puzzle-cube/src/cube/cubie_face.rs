@@ -106,7 +106,7 @@ mod tests {
                 fn $test_name() {
                     let cubie = CubieFace::$cubie_constructor(Some('?'));
                     let display_char = cubie.get_coloured_display_char();
-                    let colour_opt = display_char.fgcolor();
+                    let colour_opt = display_char.fgcolor;
                     assert!(colour_opt.is_some());
                     let colour = colour_opt.unwrap();
 
