@@ -35,6 +35,8 @@ jobs:
               run: cargo nextest run --verbose
             - name: Clippy
               run: cargo clippy --verbose -- -D warnings
+            - name: Check fmt
+              run: cargo fmt --all -- --check
             - name: Audit
               run: cargo audit
 
