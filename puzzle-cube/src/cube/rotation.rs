@@ -68,10 +68,10 @@ impl Rotation {
     /// This `Rotation` is expected to be used via `rotate` on a `Cube`, meaning it makes no attempt to avoid unusual edge cases such as picking the furthest layer away from `relative_to`.
     #[must_use]
     pub fn random(side_length: usize) -> Rotation {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let relative_to: Face = rand::random();
-        let layer = rng.gen_range(0..side_length);
-        let direction = if rng.gen_bool(0.5) {
+        let layer = rng.random_range(0..side_length);
+        let direction = if rng.random_bool(0.5) {
             Direction::Clockwise
         } else {
             Direction::Anticlockwise
