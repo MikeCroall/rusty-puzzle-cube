@@ -1,4 +1,4 @@
-use three_d::{degrees, vec3, Camera, ClearState, Viewport, Window, WindowSettings};
+use three_d::{Camera, ClearState, Viewport, Window, WindowSettings, degrees, vec3};
 
 pub(super) fn initial_window() -> Result<Window, three_d::WindowError> {
     Window::new(WindowSettings {

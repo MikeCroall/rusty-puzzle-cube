@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
 
 use rusty_puzzle_cube::cube::face::Face;
-use three_d::{radians, vec3, Mat4, Matrix4, Rad, Vector3};
+use three_d::{Mat4, Matrix4, Rad, Vector3, radians, vec3};
 
 const QUARTER_TURN: Rad<f32> = radians(0.5 * PI);
 const HALF_TURN: Rad<f32> = radians(PI);

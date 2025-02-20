@@ -37,7 +37,9 @@ impl TryFrom<usize> for UniqueCharsSideLength {
         if (1..=8).contains(&side_length) {
             Ok(UniqueCharsSideLength(side_length))
         } else {
-            Err(anyhow::format_err!("Cannot have a side length of less than 1, nor of greater than 8 when using unique display chars"))
+            Err(anyhow::format_err!(
+                "Cannot have a side length of less than 1, nor of greater than 8 when using unique display chars"
+            ))
         }
     }
 }

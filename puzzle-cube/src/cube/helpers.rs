@@ -3,10 +3,10 @@ use std::vec;
 use anyhow::Context;
 
 use super::{
+    Side,
     cubie_face::CubieFace,
     face::IndexAlignment as IA,
     side_lengths::{SideLength, UniqueCharsSideLength},
-    Side,
 };
 
 pub(super) fn create_side(

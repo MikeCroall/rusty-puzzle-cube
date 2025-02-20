@@ -1,4 +1,4 @@
-use rusty_puzzle_cube::cube::{face::Face, rotation::Rotation, Cube};
+use rusty_puzzle_cube::cube::{Cube, face::Face, rotation::Rotation};
 use tracing::error;
 
 pub(super) enum DecidedMove {

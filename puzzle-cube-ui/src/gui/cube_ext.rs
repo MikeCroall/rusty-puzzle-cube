@@ -1,4 +1,4 @@
-use rusty_puzzle_cube::cube::{cubie_face::CubieFace, face::Face, Cube};
+use rusty_puzzle_cube::cube::{Cube, cubie_face::CubieFace, face::Face};
 use three_d::{Instances, Matrix4, Srgba};
 
 use super::{

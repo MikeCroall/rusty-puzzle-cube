@@ -16,8 +16,8 @@ use crate::gui::{
 use mouse_control::MouseControlOutput;
 use rusty_puzzle_cube::{cube::Cube, known_transforms::cube_in_cube_in_cube_in_cube};
 use three_d::{
-    egui::ScrollArea, Axes, ColorMaterial, Context, CpuMesh, Cull, FrameOutput, Gm, InstancedMesh,
-    Mesh, Object, RenderStates, Srgba, Viewport, GUI,
+    Axes, ColorMaterial, Context, CpuMesh, Cull, FrameOutput, GUI, Gm, InstancedMesh, Mesh, Object,
+    RenderStates, Srgba, Viewport, egui::ScrollArea,
 };
 use tracing::{debug, error, info};
 

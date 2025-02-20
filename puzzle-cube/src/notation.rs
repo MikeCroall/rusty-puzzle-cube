@@ -1,7 +1,7 @@
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use itertools::Itertools;
 
-use super::cube::{face::Face, rotation::Rotation, Cube};
+use super::cube::{Cube, face::Face, rotation::Rotation};
 
 const CHAR_FOR_ANTICLOCKWISE: char = '\'';
 const CHAR_FOR_TURN_TWICE: char = '2';
@@ -25,7 +25,9 @@ fn parse_token(original_token: &str) -> anyhow::Result<Vec<Rotation>> {
     let (token, anticlockwise) = strip_suffix(token, CHAR_FOR_ANTICLOCKWISE);
     let (token, turn_twice) = strip_suffix(token, CHAR_FOR_TURN_TWICE);
     if anticlockwise && turn_twice {
-        return Err(anyhow!("Failed parsing token: [{original_token}] as 'turn twice' should not be used as well as 'anticlockwise'"));
+        return Err(anyhow!(
+            "Failed parsing token: [{original_token}] as 'turn twice' should not be used as well as 'anticlockwise'"
+        ));
     }
     let (token, multi_layer) = strip_suffix(token, CHAR_FOR_MULTI_LAYER);
 
@@ -300,8 +302,10 @@ Caused by:
 
         let error = perform_sequence(sequence, &mut cube).unwrap_err();
 
-        assert!(format!("{:?}", error)
-            .starts_with("side did not have required layer (3 of outer vec of side)"));
+        assert!(
+            format!("{:?}", error)
+                .starts_with("side did not have required layer (3 of outer vec of side)")
+        );
     }
 
     #[test]

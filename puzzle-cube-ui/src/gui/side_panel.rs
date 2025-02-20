@@ -1,7 +1,7 @@
-use rusty_puzzle_cube::cube::{side_lengths::SideLength, Cube};
+use rusty_puzzle_cube::cube::{Cube, side_lengths::SideLength};
 use three_d::{
-    egui::{special_emojis::GITHUB, Checkbox, Rgba, Slider, Ui},
     Camera, ColorMaterial, Context, Gm, InstancedMesh, Mesh, Viewport,
+    egui::{Checkbox, Rgba, Slider, Ui, special_emojis::GITHUB},
 };
 use tracing::{error, info};
 

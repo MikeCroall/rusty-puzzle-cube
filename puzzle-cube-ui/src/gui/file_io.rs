@@ -4,7 +4,7 @@ use three_d::{
     Camera, ColorMaterial, Context, CpuTexture, DepthTexture2D, Gm, InstancedMesh, Interpolation,
     Mesh, RenderTarget, Texture2D, TextureData, Viewport, Wrapping,
 };
-use three_d_asset::{io::Serialize as _, Error};
+use three_d_asset::{Error, io::Serialize as _};
 
 use super::defaults::clear_state;
 

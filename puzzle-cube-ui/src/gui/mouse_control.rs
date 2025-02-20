@@ -1,9 +1,9 @@
 use std::f32::consts::PI;
 
-use rusty_puzzle_cube::cube::{face::Face, Cube};
+use rusty_puzzle_cube::cube::{Cube, face::Face};
 use three_d::{
-    pick, radians, Camera, ColorMaterial, Context, Event, Gm, InnerSpace, Mesh, MouseButton,
-    OrbitControl, Rad, Transform, Vec3, Vector3,
+    Camera, ColorMaterial, Context, Event, Gm, InnerSpace, Mesh, MouseButton, OrbitControl, Rad,
+    Transform, Vec3, Vector3, pick, radians,
 };
 use tracing::{error, warn};
 
@@ -132,7 +132,9 @@ fn pick_to_face(pick: Vector3<f32>) -> Option<Face> {
     } else if (pick.z + 1.).abs() < EPSILON {
         Some(Face::Back)
     } else {
-        error!("pick_to_face interaction found no valid face from pick. This should never happen with inner cube.");
+        error!(
+            "pick_to_face interaction found no valid face from pick. This should never happen with inner cube."
+        );
         None
     }
 }
