@@ -226,3 +226,13 @@ fn demo_shuffle() -> anyhow::Result<()> {
         })
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn terminal_demos_are_valid() -> anyhow::Result<()> {
+        terminal_demos()
+    }
+}
