@@ -52,7 +52,7 @@ pub(super) fn initialise_cube(
         && MAX_CUBE_SIZE < *side_length
     {
         *side_length = MAX_CUBE_SIZE;
-    };
+    }
     if ui.button("Apply").clicked() {
         let side_length = SideLength::try_from(*side_length)
             .expect("UI is configured to only allow selecting valid side length values");

@@ -142,7 +142,7 @@ impl Cube {
                 }
                 self.rotate_adjacents_90_deg_clockwise_setback(relative_to, layer)?;
             }
-        };
+        }
         Ok(())
     }
 
@@ -261,7 +261,7 @@ impl Cube {
                     })?
                     .clone_from_slice(&values);
             }
-        };
+        }
         Ok(())
     }
 

@@ -105,7 +105,7 @@ impl MouseControl {
                         decided_move.apply(cube);
                         updated_cube = true;
                         *handled = true;
-                    };
+                    }
                 }
                 _ => {}
             }
