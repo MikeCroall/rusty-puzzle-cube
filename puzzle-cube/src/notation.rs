@@ -61,11 +61,8 @@ fn strip_suffix(string: &str, suffix: char) -> (&str, bool) {
 }
 
 fn strip_face_suffix(string: &str) -> anyhow::Result<(&str, Face)> {
-    if string.is_empty() {
-        return Err(anyhow!("Missing face character"));
-    }
-
     let face = match string.chars().last() {
+        None => return Err(anyhow!("Missing face character")),
         Some('F') => Face::Front,
         Some('R') => Face::Right,
         Some('U') => Face::Up,
@@ -73,7 +70,6 @@ fn strip_face_suffix(string: &str) -> anyhow::Result<(&str, Face)> {
         Some('B') => Face::Back,
         Some('D') => Face::Down,
         Some(c) => return Err(anyhow!("Invalid face character: [{c}]")),
-        _ => unreachable!("Already established `string` is not empty, so a last char must exist"),
     };
 
     Ok((&string[..(string.len() - 1)], face))

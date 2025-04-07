@@ -218,18 +218,14 @@ impl Cube {
         let side = &mut self.side_map[*target_face];
         match target_alignment {
             IA::OuterStart | IA::OuterEnd => {
-                let inner_index = match target_alignment {
-                    IA::OuterStart => layers_back,
-                    IA::OuterEnd => {
-                        self.side_length
-                            .checked_sub(layers_back + 1)
-                            .with_context(|| {
-                                format!("requested layer index {layers_back} caused underflow")
-                            })?
-                    }
-                    _ => unreachable!(
-                        "outer match guard clauses this one to only allow IA::OuterStart and IA::OuterEnd"
-                    ),
+                let inner_index = if *target_alignment == IA::OuterStart {
+                    layers_back
+                } else {
+                    self.side_length
+                        .checked_sub(layers_back + 1)
+                        .with_context(|| {
+                            format!("requested layer index {layers_back} caused underflow")
+                        })?
                 };
                 for (outer_index, value) in values.iter().enumerate() {
                     side.get_mut(outer_index)
@@ -240,18 +236,14 @@ impl Cube {
                 }
             }
             IA::InnerFirst | IA::InnerLast => {
-                let outer_index = match target_alignment {
-                    IA::InnerFirst => layers_back,
-                    IA::InnerLast => {
-                        self.side_length
-                            .checked_sub(layers_back + 1)
-                            .with_context(|| {
-                                format!("requested layer index {layers_back} caused underflow")
-                            })?
-                    }
-                    _ => unreachable!(
-                        "outer match guard clauses this one to only allow IA::InnerFirst and IA::InnerLast"
-                    ),
+                let outer_index = if *target_alignment == IA::InnerFirst {
+                    layers_back
+                } else {
+                    self.side_length
+                        .checked_sub(layers_back + 1)
+                        .with_context(|| {
+                            format!("requested layer index {layers_back} caused underflow")
+                        })?
                 };
                 side.get_mut(outer_index)
                     .with_context(|| {
