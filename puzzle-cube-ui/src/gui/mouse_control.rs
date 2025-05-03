@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use rusty_puzzle_cube::cube::{Cube, face::Face};
+use rusty_puzzle_cube::cube::{PuzzleCube, face::Face};
 use three_d::{
     Camera, ColorMaterial, Context, Event, Gm, InnerSpace, Mesh, MouseButton, OrbitControl, Rad,
     Transform, Vec3, Vector3, pick, radians,
@@ -36,14 +36,14 @@ impl MouseControl {
         }
     }
 
-    pub(super) fn handle_events(
+    pub(super) fn handle_events<C: PuzzleCube>(
         &mut self,
         ctx: &Context,
         inner_cube: &Gm<Mesh, ColorMaterial>,
         side_length: usize,
         camera: &mut Camera,
         events: &mut [Event],
-        cube: &mut Cube,
+        cube: &mut C,
     ) -> MouseControlOutput {
         let mut updated_cube = false;
         for event in events.iter_mut() {

@@ -1,3 +1,4 @@
+mod anim_cube;
 mod colours;
 mod cube_ext;
 mod decided_move;
@@ -13,6 +14,7 @@ use crate::gui::{
     defaults::{clear_state, initial_camera, initial_window},
     mouse_control::MouseControl,
 };
+use anim_cube::AnimCube;
 use mouse_control::MouseControlOutput;
 use rusty_puzzle_cube::{cube::Cube, known_transforms::cube_in_cube_in_cube_in_cube};
 use three_d::{
@@ -24,7 +26,7 @@ use tracing::{debug, error, info};
 pub(super) fn start_gui() -> anyhow::Result<()> {
     info!("Initialising default cube");
     let mut side_length = 4;
-    let mut cube = Cube::create(side_length.try_into()?);
+    let mut cube = AnimCube::new(Cube::create(side_length.try_into()?));
     cube_in_cube_in_cube_in_cube(&mut cube);
 
     info!("Initialising GUI");
@@ -136,7 +138,7 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn initial_instances(ctx: &Context, cube: &Cube) -> Gm<InstancedMesh, ColorMaterial> {
+fn initial_instances<I: AsInstances>(ctx: &Context, cube: &I) -> Gm<InstancedMesh, ColorMaterial> {
     let instanced_square_mesh = InstancedMesh::new(ctx, &cube.as_instances(), &CpuMesh::cube());
     let material = ColorMaterial {
         color: Srgba::WHITE,

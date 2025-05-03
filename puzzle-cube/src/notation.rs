@@ -1,7 +1,7 @@
 use anyhow::{Context, anyhow};
 use itertools::Itertools;
 
-use super::cube::{Cube, face::Face, rotation::Rotation};
+use super::cube::{PuzzleCube, face::Face, rotation::Rotation};
 
 const CHAR_FOR_ANTICLOCKWISE: char = '\'';
 const CHAR_FOR_TURN_TWICE: char = '2';
@@ -11,7 +11,7 @@ const CHAR_FOR_MULTI_LAYER: char = 'w';
 ///
 /// # Errors
 /// Will return an Err variant when the input `token_sequence` is malformed or references layers of the cube that the given cube does not have e.g. 4Uw on a 3x3x3 cube.
-pub fn perform_sequence(token_sequence: &str, cube: &mut Cube) -> anyhow::Result<()> {
+pub fn perform_sequence<C: PuzzleCube>(token_sequence: &str, cube: &mut C) -> anyhow::Result<()> {
     token_sequence
         .split_whitespace()
         .map(parse_token)
@@ -103,7 +103,7 @@ fn rotation_inner(face: Face, anticlockwise: bool, layer: usize) -> Rotation {
 
 #[cfg(test)]
 mod tests {
-    use crate::cube::cubie_face::CubieFace;
+    use crate::cube::{Cube, cubie_face::CubieFace};
     use crate::{create_cube_from_sides, create_cube_side};
 
     use super::*;

@@ -1,11 +1,11 @@
-use super::{cube::Cube, notation::perform_sequence};
+use super::{cube::PuzzleCube, notation::perform_sequence};
 
 /// Apply a sequence to the provided cube that will turn a 3x3x3 cube into a checkerboard.
 ///
 /// Can be used on cubes larger than 3x3x3, but only the faces themselves will be rotated. Inner rows/columns will not be rotated.
 /// # Panics
 /// Will panic if local variable `sequence` contains a malformed sequence. This would be considered a bug.
-pub fn checkerboard_corners(cube: &mut Cube) {
+pub fn checkerboard_corners<C: PuzzleCube>(cube: &mut C) {
     let sequence = "R2 L2 F2 B2 U2 D2";
     perform_sequence(sequence, cube).expect("Known transforms must use valid sequences");
 }
@@ -15,7 +15,7 @@ pub fn checkerboard_corners(cube: &mut Cube) {
 /// Can be used on cubes larger than 3x3x3, but only the faces themselves will be rotated. Inner rows/columns will not be rotated.
 /// # Panics
 /// Will panic if local variable `sequence` contains a malformed sequence. This would be considered a bug.
-pub fn cube_in_cube_in_cube(cube: &mut Cube) {
+pub fn cube_in_cube_in_cube<C: PuzzleCube>(cube: &mut C) {
     let sequence = "F R' U' F' U L' B U' B2 U' F' R' B R2 F U L U";
     perform_sequence(sequence, cube).expect("Known transforms must use valid sequences");
 }
@@ -25,15 +25,17 @@ pub fn cube_in_cube_in_cube(cube: &mut Cube) {
 /// Will not produce the desired result on cubes larger than 4x4x4. Stick to the 3x3x3 version for larger cubes, as that is compatible.
 /// # Panics
 /// Will panic if local variable `sequence` contains a malformed sequence. This would be considered a bug.
-pub fn cube_in_cube_in_cube_in_cube(cube: &mut Cube) {
+pub fn cube_in_cube_in_cube_in_cube<C: PuzzleCube>(cube: &mut C) {
     let sequence = "B' Lw2 L2 Rw2 R2 U2 Lw2 L2 Rw2 R2 B F2 R U' R U R2 U R2 F' U F' Uw Lw Uw' Fw2 Dw Rw' Uw Fw Dw2 Rw2";
     perform_sequence(sequence, cube).expect("Known transforms must use valid sequences");
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::cube::cubie_face::CubieFace;
-    use crate::{create_cube_from_sides, create_cube_side, cube::Cube};
+    use crate::{
+        create_cube_from_sides, create_cube_side,
+        cube::{Cube, cubie_face::CubieFace},
+    };
 
     use super::*;
     use pretty_assertions::assert_eq;

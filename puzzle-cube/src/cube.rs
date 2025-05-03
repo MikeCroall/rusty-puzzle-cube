@@ -38,10 +38,95 @@ type Side = Vec<Vec<CubieFace>>;
 const HORIZONTAL_PADDING: &str = " ";
 
 /// A representation of a cube that can be manipulated via making pre-defined rotations.
+pub trait PuzzleCube {
+    /// Returns a new cube of this type in the default state at the given size.
+    #[must_use]
+    fn recreate_at_size(&self, side_length: SideLength) -> Self;
+
+    /// Returns the amount of cubies along each edge of this cube.
+    #[must_use]
+    fn side_length(&self) -> usize;
+
+    /// Returns the mapping of faces of the cube to the data structure of cubies on those faces to allow fully custom rendering of the cube.
+    #[must_use]
+    fn side_map(&self) -> &SideMap;
+
+    /// Perform `moves` random single-slice rotations on the cube.
+    fn shuffle(&mut self, moves: usize) {
+        for _ in 0..moves {
+            let _ = self.rotate(Rotation::random(self.side_length()));
+        }
+    }
+
+    /// Perform the given 90° rotation once.
+    /// ```no_run
+    /// # use rusty_puzzle_cube::cube::{Cube, face::Face, rotation::Rotation};
+    /// let mut cube = Cube::default();
+    /// cube.rotate(Rotation::clockwise(Face::Front));
+    /// ```
+    /// # Errors
+    /// Err can only be returned if the given rotation is invalid for this cube.
+    fn rotate(&mut self, rotation: Rotation) -> anyhow::Result<()>;
+}
+
+/// An implementer of the `PuzzleCube` trait.
 #[derive(PartialEq)]
 pub struct Cube {
     side_length: usize,
     side_map: SideMap,
+}
+
+impl PuzzleCube for Cube {
+    fn recreate_at_size(&self, side_length: SideLength) -> Self {
+        Cube::create(side_length)
+    }
+
+    fn side_length(&self) -> usize {
+        self.side_length
+    }
+
+    fn side_map(&self) -> &SideMap {
+        &self.side_map
+    }
+
+    fn shuffle(&mut self, moves: usize) {
+        for _ in 0..moves {
+            let _ = self.rotate(Rotation::random(self.side_length));
+        }
+    }
+
+    fn rotate(&mut self, rotation: Rotation) -> anyhow::Result<()> {
+        let side_length = self.side_length;
+
+        let furthest_layer = side_length - 1;
+        if rotation.layer == furthest_layer && side_length > 1 {
+            self.rotate(rotation.as_layer_0_of_opposite_face())?;
+            return Ok(());
+        }
+
+        match rotation {
+            Rotation {
+                direction: Direction::Anticlockwise,
+                ..
+            } => {
+                let reversed = !rotation;
+                self.rotate(reversed)?;
+                self.rotate(reversed)?;
+                self.rotate(reversed)?;
+            }
+            Rotation {
+                relative_to,
+                layer,
+                direction: Direction::Clockwise,
+            } => {
+                if layer == 0 {
+                    self.rotate_face_90_degrees_clockwise_without_adjacents(relative_to);
+                }
+                self.rotate_adjacents_90_deg_clockwise_setback(relative_to, layer)?;
+            }
+        }
+        Ok(())
+    }
 }
 
 impl Cube {
@@ -84,66 +169,6 @@ impl Cube {
                 F::Left => Box::new(create_side_with_unique_characters(side_length, &CubieFace::Red)),
             },
         }
-    }
-
-    /// Returns the amount of cubies along each edge of this cube.
-    #[must_use]
-    pub fn side_length(&self) -> usize {
-        self.side_length
-    }
-
-    /// Returns the mapping of faces of the cube to the data structure of cubies on those faces to allow fully custom rendering of the cube.
-    #[must_use]
-    pub fn side_map(&self) -> &SideMap {
-        &self.side_map
-    }
-
-    /// Perform `moves` random single-slice rotations on the cube.
-    pub fn shuffle(&mut self, moves: usize) {
-        for _ in 0..moves {
-            let _ = self.rotate(Rotation::random(self.side_length));
-        }
-    }
-
-    /// Perform the given 90° rotation once.
-    /// ```no_run
-    /// # use rusty_puzzle_cube::cube::{Cube, face::Face, rotation::Rotation};
-    /// let mut cube = Cube::default();
-    /// cube.rotate(Rotation::clockwise(Face::Front));
-    /// ```
-    /// # Errors
-    /// Err can only be returned if the given rotation is invalid for this cube.
-    pub fn rotate(&mut self, rotation: Rotation) -> anyhow::Result<()> {
-        let side_length = self.side_length;
-
-        let furthest_layer = side_length - 1;
-        if rotation.layer == furthest_layer && side_length > 1 {
-            self.rotate(rotation.as_layer_0_of_opposite_face())?;
-            return Ok(());
-        }
-
-        match rotation {
-            Rotation {
-                direction: Direction::Anticlockwise,
-                ..
-            } => {
-                let reversed = !rotation;
-                self.rotate(reversed)?;
-                self.rotate(reversed)?;
-                self.rotate(reversed)?;
-            }
-            Rotation {
-                relative_to,
-                layer,
-                direction: Direction::Clockwise,
-            } => {
-                if layer == 0 {
-                    self.rotate_face_90_degrees_clockwise_without_adjacents(relative_to);
-                }
-                self.rotate_adjacents_90_deg_clockwise_setback(relative_to, layer)?;
-            }
-        }
-        Ok(())
     }
 
     fn rotate_face_90_degrees_clockwise_without_adjacents(&mut self, face: F) {

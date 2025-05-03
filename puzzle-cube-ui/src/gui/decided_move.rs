@@ -1,8 +1,8 @@
-use rusty_puzzle_cube::cube::{Cube, face::Face, rotation::Rotation};
+use rusty_puzzle_cube::cube::{PuzzleCube, face::Face, rotation::Rotation};
 use tracing::error;
 
 pub(super) enum DecidedMove {
-    // todo can we remove DecidedMove and go straight to Rotation?
+    // todo can/should we remove DecidedMove and go straight to Rotation?
     WholeFace {
         face: Face,
         clockwise: bool,
@@ -20,7 +20,7 @@ pub(super) enum DecidedMove {
 }
 
 impl DecidedMove {
-    pub(super) fn apply(self, cube: &mut Cube) {
+    pub(super) fn apply<C: PuzzleCube>(self, cube: &mut C) {
         let rotate_result = cube.rotate(self.as_rotation());
         if rotate_result.is_err() {
             error!("Invalid rotation was provided to cube. {rotate_result:?}");

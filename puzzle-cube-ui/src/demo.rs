@@ -3,7 +3,7 @@ use crate::gui::start_gui;
 use std::time::Instant;
 
 use rusty_puzzle_cube::{
-    cube::{Cube, face::Face, rotation::Rotation},
+    cube::{Cube, PuzzleCube as _, face::Face, rotation::Rotation},
     known_transforms::{checkerboard_corners, cube_in_cube_in_cube},
 };
 use tracing::error;

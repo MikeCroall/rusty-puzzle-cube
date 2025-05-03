@@ -1,4 +1,4 @@
-use rusty_puzzle_cube::cube::{Cube, side_lengths::SideLength};
+use rusty_puzzle_cube::cube::{PuzzleCube, side_lengths::SideLength};
 use three_d::{
     Camera, ColorMaterial, Context, Gm, InstancedMesh, Mesh, Viewport,
     egui::{Checkbox, Rgba, Slider, Ui, special_emojis::GITHUB},
@@ -25,11 +25,11 @@ pub(super) fn header(ui: &mut Ui) {
     ui.separator();
 }
 
-pub(super) fn initialise_cube(
+pub(super) fn initialise_cube<C: PuzzleCube + AsInstances>(
     ui: &mut Ui,
     unreasonable_mode: &mut bool,
     side_length: &mut usize,
-    cube: &mut Cube,
+    cube: &mut C,
     instanced_square: &mut Gm<InstancedMesh, ColorMaterial>,
 ) {
     ui.add_space(EXTRA_SPACING);
@@ -56,16 +56,16 @@ pub(super) fn initialise_cube(
     if ui.button("Apply").clicked() {
         let side_length = SideLength::try_from(*side_length)
             .expect("UI is configured to only allow selecting valid side length values");
-        *cube = Cube::create(side_length);
+        *cube = cube.recreate_at_size(side_length);
         instanced_square.set_instances(&cube.as_instances());
     }
     ui.add_space(EXTRA_SPACING);
     ui.separator();
 }
 
-pub(super) fn control_cube(
+pub(super) fn control_cube<C: PuzzleCube + AsInstances>(
     ui: &mut Ui,
-    cube: &mut Cube,
+    cube: &mut C,
     instanced_square: &mut Gm<InstancedMesh, ColorMaterial>,
 ) {
     ui.add_space(EXTRA_SPACING);
@@ -112,9 +112,12 @@ pub(super) fn control_camera(
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub(super) fn debug(
+use std::fmt::Display;
+
+#[cfg(not(target_arch = "wasm32"))]
+pub(super) fn debug<C: PuzzleCube + Display>(
     ui: &mut Ui,
-    cube: &Cube,
+    cube: &C,
     ctx: &Context,
     viewport: Viewport,
     camera: &Camera,
