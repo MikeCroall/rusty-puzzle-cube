@@ -58,9 +58,10 @@ pub trait PuzzleCube {
         }
     }
 
-    /// Perform the given 90° rotation once.
+    /// Perform the given rotation once.
     /// ```no_run
-    /// # use rusty_puzzle_cube::cube::{Cube, face::Face, rotation::Rotation};
+    /// use rusty_puzzle_cube::cube::{Cube, PuzzleCube as _, face::Face, rotation::Rotation};
+    ///
     /// let mut cube = Cube::default();
     /// cube.rotate(Rotation::clockwise(Face::Front));
     /// ```
