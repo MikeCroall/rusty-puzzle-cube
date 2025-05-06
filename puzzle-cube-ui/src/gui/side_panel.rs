@@ -7,7 +7,7 @@ use tracing::{error, info};
 
 #[cfg(not(target_arch = "wasm32"))]
 use super::file_io::save_as_image;
-use super::{cube_ext::AsInstances, defaults::initial_camera};
+use super::{cube_ext::PuzzleCube3D, defaults::initial_camera};
 
 const MIN_CUBE_SIZE: usize = 1;
 const MAX_CUBE_SIZE: usize = 100;
@@ -25,7 +25,7 @@ pub(super) fn header(ui: &mut Ui) {
     ui.separator();
 }
 
-pub(super) fn initialise_cube<C: PuzzleCube + AsInstances>(
+pub(super) fn initialise_cube<C: PuzzleCube3D>(
     ui: &mut Ui,
     unreasonable_mode: &mut bool,
     side_length: &mut usize,
@@ -63,7 +63,7 @@ pub(super) fn initialise_cube<C: PuzzleCube + AsInstances>(
     ui.separator();
 }
 
-pub(super) fn control_cube<C: PuzzleCube + AsInstances>(
+pub(super) fn control_cube<C: PuzzleCube3D>(
     ui: &mut Ui,
     cube: &mut C,
     instanced_square: &mut Gm<InstancedMesh, ColorMaterial>,

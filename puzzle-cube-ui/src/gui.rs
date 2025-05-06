@@ -10,7 +10,7 @@ mod side_panel;
 mod transforms;
 
 use crate::gui::{
-    cube_ext::AsInstances,
+    cube_ext::PuzzleCube3D,
     defaults::{clear_state, initial_camera, initial_window},
     mouse_control::MouseControl,
 };
@@ -138,7 +138,7 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn initial_instances<I: AsInstances>(ctx: &Context, cube: &I) -> Gm<InstancedMesh, ColorMaterial> {
+fn initial_instances<I: PuzzleCube3D>(ctx: &Context, cube: &I) -> Gm<InstancedMesh, ColorMaterial> {
     let instanced_square_mesh = InstancedMesh::new(ctx, &cube.as_instances(), &CpuMesh::cube());
     let material = ColorMaterial {
         color: Srgba::WHITE,

@@ -1,4 +1,4 @@
-use rusty_puzzle_cube::cube::{Cube, PuzzleCube as _, cubie_face::CubieFace, face::Face};
+use rusty_puzzle_cube::cube::{Cube, PuzzleCube, cubie_face::CubieFace, face::Face};
 use three_d::{Instances, Matrix4, Srgba};
 
 use super::{
@@ -6,7 +6,7 @@ use super::{
     transforms::cubie_face_to_transformation,
 };
 
-pub(crate) trait AsInstances {
+pub(crate) trait PuzzleCube3D: PuzzleCube {
     fn as_instances(&self) -> Instances;
 }
 
@@ -44,7 +44,7 @@ macro_rules! all_faces_to_instances {
     }};
 }
 
-impl AsInstances for Cube {
+impl PuzzleCube3D for Cube {
     fn as_instances(&self) -> Instances {
         let side_length = self.side_length();
         let side_map = self.side_map();
