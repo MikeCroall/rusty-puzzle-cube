@@ -106,6 +106,7 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
             &mut cube,
         );
         if updated_cube || cube.is_animating() {
+            cube.progress_animation(frame_input.elapsed_time);
             tiles.set_instances(&cube.as_instances());
         }
         redraw |= needs_redraw_from_mouse | cube.is_animating();
@@ -113,7 +114,7 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
         if redraw {
             debug!("Drawing cube");
             let screen = frame_input.screen();
-            let draw_res = screen
+            if let Err(e) = screen
                 .clear(clear_state())
                 .render(&camera, tiles.into_iter().chain(&inner_cube), &[])
                 .write(|| {
@@ -122,8 +123,8 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
                     }
 
                     gui.render()
-                });
-            if let Err(e) = draw_res {
+                })
+            {
                 error!("Error drawing cube {}", e);
             }
         }
