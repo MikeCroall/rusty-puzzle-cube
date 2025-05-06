@@ -31,6 +31,8 @@ jobs:
               uses: taiki-e/install-action@nextest
             - name: Test
               run: cargo nextest run --verbose
+            - name: Doc tests (skipped by nextest)
+              run: cargo test --doc
             - name: Clippy
               run: cargo clippy --verbose -- -D warnings
             - name: Check fmt
