@@ -6,7 +6,6 @@ use super::cube_ext::PuzzleCube3D;
 
 pub(crate) struct AnimCube<C: PuzzleCube3D> {
     cube: C,
-    #[expect(unused)]
     animation: AnimationState,
 }
 
@@ -27,6 +26,10 @@ impl<C: PuzzleCube3D> AnimCube<C> {
             cube,
             animation: AnimationState::default(),
         }
+    }
+
+    pub fn is_animating(&self) -> bool {
+        !matches!(self.animation, AnimationState::Stationary)
     }
 }
 

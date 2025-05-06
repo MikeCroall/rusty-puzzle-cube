@@ -46,58 +46,56 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
     let axes = Axes::new(&ctx, 0.05, 2.);
 
     window.render_loop(move |mut frame_input| {
-        let mut redraw = frame_input.first_frame;
-
         let mut panel_width = 0.;
-        redraw |= gui.update(
-            &mut frame_input.events,
-            frame_input.accumulated_time,
-            frame_input.viewport,
-            frame_input.device_pixel_ratio,
-            |gui_ctx| {
-                use three_d::egui::SidePanel;
-                SidePanel::left("side_panel").show(gui_ctx, |ui| {
-                    ScrollArea::vertical().show(ui, |ui| {
-                        side_panel::header(ui);
-                        side_panel::initialise_cube(
-                            ui,
-                            &mut unreasonable_mode,
-                            &mut side_length,
-                            &mut cube,
-                            &mut tiles,
-                        );
-                        side_panel::control_cube(ui, &mut cube, &mut tiles);
-                        side_panel::control_camera(
-                            ui,
-                            &mut camera,
-                            frame_input.viewport,
-                            &mut render_axes,
-                        );
-                        #[cfg(not(target_arch = "wasm32"))]
-                        side_panel::debug(
-                            ui,
-                            &cube,
-                            &ctx,
-                            frame_input.viewport,
-                            &camera,
-                            &tiles,
-                            &inner_cube,
-                        );
-                    })
-                });
-                panel_width = gui_ctx.used_rect().width();
-            },
-        );
+        let mut redraw = frame_input.first_frame
+            | gui.update(
+                &mut frame_input.events,
+                frame_input.accumulated_time,
+                frame_input.viewport,
+                frame_input.device_pixel_ratio,
+                |gui_ctx| {
+                    use three_d::egui::SidePanel;
+                    SidePanel::left("side_panel").show(gui_ctx, |ui| {
+                        ScrollArea::vertical().show(ui, |ui| {
+                            side_panel::header(ui);
+                            side_panel::initialise_cube(
+                                ui,
+                                &mut unreasonable_mode,
+                                &mut side_length,
+                                &mut cube,
+                                &mut tiles,
+                            );
+                            side_panel::control_cube(ui, &mut cube, &mut tiles);
+                            side_panel::control_camera(
+                                ui,
+                                &mut camera,
+                                frame_input.viewport,
+                                &mut render_axes,
+                            );
+                            #[cfg(not(target_arch = "wasm32"))]
+                            side_panel::debug(
+                                ui,
+                                &cube,
+                                &ctx,
+                                frame_input.viewport,
+                                &camera,
+                                &tiles,
+                                &inner_cube,
+                            );
+                        })
+                    });
+                    panel_width = gui_ctx.used_rect().width();
+                },
+            );
 
-        let viewport = calc_viewport(
+        redraw |= camera.set_viewport(calc_viewport(
             panel_width,
             frame_input.viewport,
             frame_input.device_pixel_ratio,
-        );
-        redraw |= camera.set_viewport(viewport);
+        ));
 
         let MouseControlOutput {
-            redraw: needs_redraw,
+            redraw: needs_redraw_from_mouse,
             updated_cube,
         } = mouse_control.handle_events(
             &ctx,
@@ -107,10 +105,10 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
             &mut frame_input.events,
             &mut cube,
         );
-        if updated_cube {
+        if updated_cube || cube.is_animating() {
             tiles.set_instances(&cube.as_instances());
         }
-        redraw |= needs_redraw;
+        redraw |= needs_redraw_from_mouse | cube.is_animating();
 
         if redraw {
             debug!("Drawing cube");
