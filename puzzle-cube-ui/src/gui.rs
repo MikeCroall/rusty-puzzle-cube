@@ -1,6 +1,6 @@
 mod anim_cube;
 mod colours;
-mod cube_ext;
+mod cube_3d_ext;
 mod decided_move;
 mod defaults;
 #[cfg(not(target_arch = "wasm32"))]
@@ -10,7 +10,7 @@ mod side_panel;
 mod transforms;
 
 use crate::gui::{
-    cube_ext::PuzzleCube3D,
+    cube_3d_ext::PuzzleCube3D,
     defaults::{clear_state, initial_camera, initial_window},
     mouse_control::MouseControl,
 };

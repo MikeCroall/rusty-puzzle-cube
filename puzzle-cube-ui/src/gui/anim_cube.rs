@@ -1,13 +1,10 @@
-use std::fmt::Display;
-
 use rusty_puzzle_cube::cube::{PuzzleCube, rotation::Rotation, side_lengths::SideLength};
+use std::fmt::Display;
 use tracing::debug;
-
-use super::cube_ext::PuzzleCube3D;
 
 const ANIM_SPEED: f64 = 0.005;
 
-pub(crate) struct AnimCube<C: PuzzleCube3D> {
+pub(crate) struct AnimCube<C: PuzzleCube> {
     cube: C,
     animation: AnimationState,
 }
@@ -22,7 +19,7 @@ enum AnimationState {
     },
 }
 
-impl<C: PuzzleCube3D> AnimCube<C> {
+impl<C: PuzzleCube> AnimCube<C> {
     pub fn new(cube: C) -> Self {
         AnimCube {
             cube,
@@ -53,7 +50,7 @@ impl<C: PuzzleCube3D> AnimCube<C> {
     }
 }
 
-impl<C: PuzzleCube3D> PuzzleCube for AnimCube<C> {
+impl<C: PuzzleCube> PuzzleCube for AnimCube<C> {
     fn recreate_at_size(&self, side_length: SideLength) -> Self {
         let cube = self.cube.recreate_at_size(side_length);
         AnimCube {
@@ -79,14 +76,7 @@ impl<C: PuzzleCube3D> PuzzleCube for AnimCube<C> {
     }
 }
 
-impl<C: PuzzleCube3D> PuzzleCube3D for AnimCube<C> {
-    fn as_instances(&self) -> three_d::Instances {
-        // todo 'lerp' between some before and after positions but has to be rotate around origin, not linear a to b - should `rotate` save some before+after or other metadata into anim state to help?
-        self.cube.as_instances()
-    }
-}
-
-impl<C: PuzzleCube3D + Display> Display for AnimCube<C> {
+impl<C: PuzzleCube + Display> Display for AnimCube<C> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.cube)
     }

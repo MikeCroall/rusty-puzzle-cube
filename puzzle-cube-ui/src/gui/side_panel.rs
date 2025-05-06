@@ -7,7 +7,7 @@ use tracing::{error, info};
 
 #[cfg(not(target_arch = "wasm32"))]
 use super::file_io::save_as_image;
-use super::{cube_ext::PuzzleCube3D, defaults::initial_camera};
+use super::{cube_3d_ext::PuzzleCube3D, defaults::initial_camera};
 
 const MIN_CUBE_SIZE: usize = 1;
 const MAX_CUBE_SIZE: usize = 100;

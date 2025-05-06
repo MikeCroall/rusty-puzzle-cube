@@ -1,7 +1,8 @@
-use rusty_puzzle_cube::cube::{Cube, PuzzleCube, cubie_face::CubieFace, face::Face};
+use rusty_puzzle_cube::cube::{PuzzleCube, cubie_face::CubieFace, face::Face};
 use three_d::{Instances, Matrix4, Srgba};
 
 use super::{
+    anim_cube::AnimCube,
     colours::{BLUE, GREEN, ORANGE, RED, WHITE, YELLOW},
     transforms::cubie_face_to_transformation,
 };
@@ -32,7 +33,7 @@ macro_rules! all_faces_to_instances {
         (transformations, colours)
     }};
     ($side_map:ident, $side_length:ident, $this_face:expr) => {
-        face_to_instances($this_face, &$side_map[$this_face], $side_length)
+        $crate::gui::cube_3d_ext::face_to_instances($this_face, &$side_map[$this_face], $side_length)
     };
     ($side_map:ident, $side_length:ident, $this_face:expr, $($tail:expr),+ $(,)?) => {{
         let (transforms, colours) = all_faces_to_instances!($side_map, $side_length, $this_face);
@@ -44,8 +45,8 @@ macro_rules! all_faces_to_instances {
     }};
 }
 
-impl PuzzleCube3D for Cube {
-    fn as_instances(&self) -> Instances {
+impl<C: PuzzleCube> PuzzleCube3D for AnimCube<C> {
+    fn as_instances(&self) -> three_d::Instances {
         let side_length = self.side_length();
         let side_map = self.side_map();
         let (transformations, colours) = all_faces_to_instances!(side_map, side_length);
@@ -54,6 +55,7 @@ impl PuzzleCube3D for Cube {
             colors: Some(colours),
             ..Default::default()
         }
+        // todo 'lerp' between some before and after positions but has to be rotate around origin, not linear a to b - should `rotate` save some before+after or other metadata into anim state to help? Should build this into the all_faces_to_instances generated code
     }
 }
 
@@ -78,7 +80,7 @@ fn face_to_instances(
     let colours = side
         .iter()
         .flatten()
-        .map(move |cubie_face| cubie_face_to_colour(*cubie_face));
+        .map(|cubie_face| cubie_face_to_colour(*cubie_face));
 
     (transformations, colours)
 }
