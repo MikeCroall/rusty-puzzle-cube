@@ -133,8 +133,8 @@ impl PuzzleCube for Cube {
 impl Cube {
     /// Create a new `Cube` instance with `side_length` cubies along each edge.
     /// ```no_run
-    /// # use rusty_puzzle_cube::cube::Cube;
-    /// # use rusty_puzzle_cube::cube::side_lengths::SideLength;
+    /// use rusty_puzzle_cube::cube::{Cube, side_lengths::SideLength};
+    ///
     /// let side_length = SideLength::try_from(5)?;
     /// let cube = Cube::create(side_length);
     /// # Ok::<(), anyhow::Error>(())
