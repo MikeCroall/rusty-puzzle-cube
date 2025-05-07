@@ -99,13 +99,7 @@ impl PuzzleCube for Cube {
     }
 
     fn rotate(&mut self, rotation: Rotation) -> anyhow::Result<()> {
-        let side_length = self.side_length;
-
-        let furthest_layer = side_length - 1;
-        if rotation.layer == furthest_layer && side_length > 1 {
-            self.rotate(rotation.as_layer_0_of_opposite_face())?;
-            return Ok(());
-        }
+        let rotation = rotation.normalise(self.side_length);
 
         match rotation {
             Rotation {

@@ -51,7 +51,11 @@ impl Distribution<Face> for StandardUniform {
 }
 
 impl Face {
-    pub(crate) fn adjacent_faces_clockwise(self) -> [(Face, IndexAlignment); 4] {
+    /// Provides an array of the four adjacent `Face`s to `self`, each with an `IndexAlignment` that indicates where in the internal 2D `Vec` the cubies that sit along the edge between `self` and the paired `Face` are stored.
+    /// See `IndexAlignment` docs for more detail.
+    ///
+    /// This method is intended for internal use but made available as a convenience.
+    pub fn adjacent_faces_clockwise(self) -> [(Face, IndexAlignment); 4] {
         match self {
             F::Up => [
                 (F::Front, IA::InnerFirst),
@@ -95,7 +99,7 @@ impl Face {
 
 /// This enum describes an edge of the 2d side, where a side is a `Vec<Vec<CubieFace>>`.
 ///
-/// For example, given a 3x3x3 side with numbers representing `CubieFace` instances:
+/// For example, given a 3x3 side with numbers representing `CubieFace` instances:
 ///```text
 /// [
 ///     [0, 1, 2],
@@ -111,10 +115,50 @@ impl Face {
 /// OuterEnd    = 2, 5, 8
 /// ```
 #[derive(Debug, PartialEq)]
-pub(crate) enum IndexAlignment {
+pub enum IndexAlignment {
+    /// Indicates that for a `Vec<Vec<_>>`, the desired indices are the 0th index of each inner `Vec`.
+    ///
+    /// For example, given the below side, this variant would represent positions `0, 3, 6`.
+    ///```text
+    /// [
+    ///     [0, 1, 2],
+    ///     [3, 4, 5],
+    ///     [6, 7, 8],
+    /// ]
+    ///```
     OuterStart,
+    /// Indicates that for a `Vec<Vec<_>>`, the desired indices are the last index of each inner `Vec`.
+    ///
+    /// For example, given the below side, this variant would represent positions `2, 5, 8`.
+    ///```text
+    /// [
+    ///     [0, 1, 2],
+    ///     [3, 4, 5],
+    ///     [6, 7, 8],
+    /// ]
+    ///```
     OuterEnd,
+    /// Indicates that for a `Vec<Vec<_>>`, the desired indices are each index of the inner `Vec` at the outer `Vec`s 0th index.
+    ///
+    /// For example, given the below side, this variant would represent positions `0, 1, 2`.
+    ///```text
+    /// [
+    ///     [0, 1, 2],
+    ///     [3, 4, 5],
+    ///     [6, 7, 8],
+    /// ]
+    ///```
     InnerFirst,
+    /// Indicates that for a `Vec<Vec<_>>`, the desired indices are each index of the inner `Vec` at the outer `Vec`s last index.
+    ///
+    /// For example, given the below side, this variant would represent positions `6, 7, 8`.
+    ///```text
+    /// [
+    ///     [0, 1, 2],
+    ///     [3, 4, 5],
+    ///     [6, 7, 8],
+    /// ]
+    ///```
     InnerLast,
 }
 

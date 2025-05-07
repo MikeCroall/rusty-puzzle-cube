@@ -83,6 +83,20 @@ impl Rotation {
         }
     }
 
+    /// Ensure that this `Rotation` does not have a `layer` that corresponds to the `Face` opposite to the one this `Rotation` is `relative_to`.
+    /// That is, if this `Rotation` is `relative_to` the `Front` face, with a `layer` that means it actually turns the `Back` face, return a `Rotation` that is `relative_to` the `Back` face with a `layer` of 0.
+    /// The `direction` is also flipped such that the semantics of the rotation are maintained.
+    /// This applies to any pair of opposite faces.
+    #[must_use]
+    pub fn normalise(self, side_length: usize) -> Rotation {
+        let furthest_layer = side_length - 1;
+        if self.layer == furthest_layer && side_length > 1 {
+            self.as_layer_0_of_opposite_face()
+        } else {
+            self
+        }
+    }
+
     pub(crate) fn as_layer_0_of_opposite_face(self) -> Rotation {
         Rotation {
             relative_to: !self.relative_to,
@@ -150,6 +164,32 @@ mod tests {
             direction: Direction::Anticlockwise,
         };
         assert_eq!(expected_output, acwsb);
+    }
+
+    #[test]
+    fn normalise_already_normalised() {
+        let input = Rotation {
+            relative_to: Face::Up,
+            layer: 7,
+            direction: Direction::Clockwise,
+        };
+        let expected_output = input;
+        assert_eq!(expected_output, input.normalise(9));
+    }
+
+    #[test]
+    fn normalise_not_already_normalised() {
+        let input = Rotation {
+            relative_to: Face::Up,
+            layer: 7,
+            direction: Direction::Clockwise,
+        };
+        let expected_output = Rotation {
+            relative_to: Face::Down,
+            layer: 0,
+            direction: Direction::Anticlockwise,
+        };
+        assert_eq!(expected_output, input.normalise(8));
     }
 
     #[test]
