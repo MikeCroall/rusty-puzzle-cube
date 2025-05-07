@@ -2,21 +2,27 @@ use rusty_puzzle_cube::cube::{PuzzleCube, rotation::Rotation, side_lengths::Side
 use std::fmt::Display;
 use tracing::debug;
 
-const ANIM_SPEED: f64 = 0.005;
+const ANIM_SPEED: f32 = 0.005;
 
 pub(crate) struct AnimCube<C: PuzzleCube> {
     cube: C,
-    animation: AnimationState,
+    pub(crate) animation: AnimationState,
 }
 
 #[derive(Default)]
-enum AnimationState {
+pub(crate) enum AnimationState {
     #[default]
     Stationary,
     Rotating {
         rotation: Rotation,
-        progress: f64,
+        progress: f32,
     },
+}
+
+impl AnimationState {
+    fn is_animating(&self) -> bool {
+        !matches!(self, AnimationState::Stationary)
+    }
 }
 
 impl<C: PuzzleCube> AnimCube<C> {
@@ -28,10 +34,10 @@ impl<C: PuzzleCube> AnimCube<C> {
     }
 
     pub fn is_animating(&self) -> bool {
-        !matches!(self.animation, AnimationState::Stationary)
+        self.animation.is_animating()
     }
 
-    pub fn progress_animation(&mut self, elapsed_time: f64) {
+    pub fn progress_animation(&mut self, elapsed_time: f32) {
         match self.animation {
             AnimationState::Stationary => {}
             AnimationState::Rotating { progress, .. } if progress >= 1. => {

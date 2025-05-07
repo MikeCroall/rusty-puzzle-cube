@@ -1,10 +1,13 @@
-use rusty_puzzle_cube::cube::{PuzzleCube, cubie_face::CubieFace, face::Face};
-use three_d::{Instances, Matrix4, Srgba};
+use rusty_puzzle_cube::cube::{
+    PuzzleCube, cubie_face::CubieFace, direction::Direction, face::Face, rotation::Rotation,
+};
+use three_d::{Instances, Mat4, Matrix4, Srgba};
+use tracing::debug;
 
 use super::{
-    anim_cube::AnimCube,
+    anim_cube::{AnimCube, AnimationState},
     colours::{BLUE, GREEN, ORANGE, RED, WHITE, YELLOW},
-    transforms::cubie_face_to_transformation,
+    transforms::{QUARTER_TURN, cubie_face_to_transformation, fraction_of_quarter_turn},
 };
 
 pub(crate) trait PuzzleCube3D: PuzzleCube {
@@ -12,10 +15,11 @@ pub(crate) trait PuzzleCube3D: PuzzleCube {
 }
 
 macro_rules! all_faces_to_instances {
-    ($side_map:ident, $side_length:ident) => {{
+    ($side_map:ident, $side_length:ident, $rotation_with_anim_transform:ident) => {{
         let (iter_transformations, iter_colours) = all_faces_to_instances!(
             $side_map,
             $side_length,
+            $rotation_with_anim_transform,
             Face::Front,
             Face::Back,
             Face::Left,
@@ -32,12 +36,12 @@ macro_rules! all_faces_to_instances {
 
         (transformations, colours)
     }};
-    ($side_map:ident, $side_length:ident, $this_face:expr) => {
-        $crate::gui::cube_3d_ext::face_to_instances($this_face, &$side_map[$this_face], $side_length)
+    ($side_map:ident, $side_length:ident, $rotation_with_anim_transform:ident, $this_face:expr) => {
+        $crate::gui::cube_3d_ext::face_to_instances($this_face, &$side_map[$this_face], $side_length, $rotation_with_anim_transform)
     };
-    ($side_map:ident, $side_length:ident, $this_face:expr, $($tail:expr),+ $(,)?) => {{
-        let (transforms, colours) = all_faces_to_instances!($side_map, $side_length, $this_face);
-        let (tail_transforms, tail_colours) = all_faces_to_instances!($side_map, $side_length, $($tail),*);
+    ($side_map:ident, $side_length:ident, $rotation_with_anim_transform:ident, $this_face:expr, $($tail:expr),+ $(,)?) => {{
+        let (transforms, colours) = all_faces_to_instances!($side_map, $side_length, $rotation_with_anim_transform, $this_face);
+        let (tail_transforms, tail_colours) = all_faces_to_instances!($side_map, $side_length, $rotation_with_anim_transform, $($tail),*);
         (
             transforms.chain(tail_transforms),
             colours.chain(tail_colours),
@@ -49,13 +53,53 @@ impl<C: PuzzleCube> PuzzleCube3D for AnimCube<C> {
     fn as_instances(&self) -> three_d::Instances {
         let side_length = self.side_length();
         let side_map = self.side_map();
-        let (transformations, colours) = all_faces_to_instances!(side_map, side_length);
+        let rotation_with_anim_transform = choose_anim_transform(&self.animation);
+        let (transformations, colours) =
+            all_faces_to_instances!(side_map, side_length, rotation_with_anim_transform);
         Instances {
             transformations,
             colors: Some(colours),
             ..Default::default()
         }
-        // todo 'lerp' between some before and after positions but has to be rotate around origin, not linear a to b - should `rotate` save some before+after or other metadata into anim state to help? Should build this into the all_faces_to_instances generated code
+    }
+}
+
+fn choose_anim_transform(animation: &AnimationState) -> Option<(Rotation, Matrix4<f32>)> {
+    match animation {
+        AnimationState::Rotating { rotation, progress } => {
+            // Minus a full quarter turn as the cube has already set itself to the new positions that we want to slowly animate toward
+            let rad = fraction_of_quarter_turn(*progress) - QUARTER_TURN;
+            Some((
+                *rotation,
+                match rotation {
+                    Rotation {
+                        relative_to,
+                        direction: Direction::Clockwise,
+                        ..
+                    } => match relative_to {
+                        Face::Up => Mat4::from_angle_y(-rad),
+                        Face::Down => Mat4::from_angle_y(rad),
+                        Face::Front => Mat4::from_angle_z(-rad),
+                        Face::Right => Mat4::from_angle_x(-rad),
+                        Face::Back => Mat4::from_angle_z(rad),
+                        Face::Left => Mat4::from_angle_x(rad),
+                    },
+                    Rotation {
+                        relative_to,
+                        direction: Direction::Anticlockwise,
+                        ..
+                    } => match relative_to {
+                        Face::Up => Mat4::from_angle_y(rad),
+                        Face::Down => Mat4::from_angle_y(-rad),
+                        Face::Front => Mat4::from_angle_z(rad),
+                        Face::Right => Mat4::from_angle_x(rad),
+                        Face::Back => Mat4::from_angle_z(-rad),
+                        Face::Left => Mat4::from_angle_x(-rad),
+                    },
+                },
+            ))
+        }
+        AnimationState::Stationary => None,
     }
 }
 
@@ -63,6 +107,7 @@ fn face_to_instances(
     face: Face,
     side: &[Vec<CubieFace>],
     side_length: usize,
+    rotation_with_anim_transform: Option<(Rotation, Matrix4<f32>)>,
 ) -> (
     impl Iterator<Item = Matrix4<f32>> + '_,
     impl Iterator<Item = Srgba> + '_,
@@ -74,7 +119,16 @@ fn face_to_instances(
         .map(move |(i, _cubie_face)| {
             let y = i / side_length;
             let x = i % side_length;
-            cubie_face_to_transformation(side_length, face, x, y)
+
+            let base_transform = cubie_face_to_transformation(side_length, face, x, y);
+
+            match rotation_with_anim_transform {
+                Some((rotation, anim_transform)) if should_apply_anim(face, x, y, rotation) => {
+                    debug!("Chose to apply anim_transform to {face:?} {x}, {y}");
+                    anim_transform * base_transform
+                }
+                _ => base_transform,
+            }
         });
 
     let colours = side
@@ -83,6 +137,15 @@ fn face_to_instances(
         .map(|cubie_face| cubie_face_to_colour(*cubie_face));
 
     (transformations, colours)
+}
+
+fn should_apply_anim(face: Face, _x: usize, _y: usize, rotation: Rotation) -> bool {
+    if face == rotation.relative_to && rotation.layer == 0 {
+        return true;
+    }
+
+    // todo!("logic to match cubies that aren't on a face but are still being turned")
+    false
 }
 
 fn cubie_face_to_colour(cubie_face: CubieFace) -> Srgba {

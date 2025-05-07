@@ -3,11 +3,15 @@ use std::f32::consts::PI;
 use rusty_puzzle_cube::cube::face::Face;
 use three_d::{Mat4, Matrix4, Rad, Vector3, radians, vec3};
 
-const QUARTER_TURN: Rad<f32> = radians(0.5 * PI);
+pub const QUARTER_TURN: Rad<f32> = radians(0.5 * PI);
 const HALF_TURN: Rad<f32> = radians(PI);
 const TRANSLATE_UP: Vector3<f32> = vec3(0., 1., 0.);
 const TRANSLATE_TOWARD: Vector3<f32> = vec3(0., 0., 1.);
 const TRANSLATE_RIGHT: Vector3<f32> = vec3(1., 0., 0.);
+
+pub(super) fn fraction_of_quarter_turn(fraction: f32) -> Rad<f32> {
+    radians(fraction * QUARTER_TURN.0)
+}
 
 pub(super) fn quarter_turn_around_x() -> Matrix4<f32> {
     Mat4::from_angle_x(QUARTER_TURN)
@@ -115,6 +119,13 @@ mod tests {
         let diff = f1 - f2;
         let abs = diff.abs();
         assert!(abs < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_fraction_of_quarter_turn() {
+        assert_eq!(radians(0.45 * PI), fraction_of_quarter_turn(0.9));
+        assert_eq!(radians(0.25 * PI), fraction_of_quarter_turn(0.5));
+        assert_eq!(radians(0.05 * PI), fraction_of_quarter_turn(0.1));
     }
 
     #[test]
