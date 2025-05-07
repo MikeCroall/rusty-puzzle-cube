@@ -55,6 +55,7 @@ impl Face {
     /// See `IndexAlignment` docs for more detail.
     ///
     /// This method is intended for internal use but made available as a convenience.
+    #[must_use]
     pub fn adjacent_faces_clockwise(self) -> [(Face, IndexAlignment); 4] {
         match self {
             F::Up => [
