@@ -37,14 +37,15 @@ impl<C: PuzzleCube> AnimCube<C> {
         self.animation.is_animating()
     }
 
-    pub fn progress_animation(&mut self, elapsed_time: f32) {
+    pub fn progress_animation(&mut self, elapsed_time: f64) {
         match self.animation {
             AnimationState::Stationary => {}
             AnimationState::Rotating { progress, .. } if progress >= 1. => {
                 self.animation = AnimationState::Stationary;
             }
             AnimationState::Rotating { rotation, progress } => {
-                let new_progress = progress + (elapsed_time * ANIM_SPEED);
+                #[expect(clippy::cast_possible_truncation)]
+                let new_progress = progress + (elapsed_time as f32 * ANIM_SPEED);
                 let new_progress = new_progress.clamp(0., 1.);
                 debug!("progress_animation calculated new progress {new_progress}");
                 self.animation = AnimationState::Rotating {
@@ -74,6 +75,7 @@ impl<C: PuzzleCube> PuzzleCube for AnimCube<C> {
     }
 
     fn rotate(&mut self, rotation: Rotation) -> anyhow::Result<()> {
+        let rotation = rotation.normalise(self.side_length());
         self.animation = AnimationState::Rotating {
             rotation,
             progress: 0.,

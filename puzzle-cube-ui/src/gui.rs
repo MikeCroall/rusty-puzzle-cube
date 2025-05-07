@@ -106,7 +106,7 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
             &mut cube,
         );
         if updated_cube || cube.is_animating() {
-            cube.progress_animation(frame_input.elapsed_time as f32);
+            cube.progress_animation(frame_input.elapsed_time);
             tiles.set_instances(&cube.as_instances());
         }
         redraw |= needs_redraw_from_mouse | cube.is_animating();

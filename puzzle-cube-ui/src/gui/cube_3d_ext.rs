@@ -1,8 +1,11 @@
 use rusty_puzzle_cube::cube::{
-    PuzzleCube, cubie_face::CubieFace, direction::Direction, face::Face, rotation::Rotation,
+    PuzzleCube,
+    cubie_face::CubieFace,
+    direction::Direction,
+    face::{Face, IndexAlignment},
+    rotation::Rotation,
 };
 use three_d::{Instances, Mat4, Matrix4, Srgba};
-use tracing::debug;
 
 use super::{
     anim_cube::{AnimCube, AnimationState},
@@ -123,8 +126,9 @@ fn face_to_instances(
             let base_transform = cubie_face_to_transformation(side_length, face, x, y);
 
             match rotation_with_anim_transform {
-                Some((rotation, anim_transform)) if should_apply_anim(face, x, y, rotation) => {
-                    debug!("Chose to apply anim_transform to {face:?} {x}, {y}");
+                Some((rotation, anim_transform))
+                    if should_apply_anim(face, side_length, x, y, rotation) =>
+                {
                     anim_transform * base_transform
                 }
                 _ => base_transform,
@@ -139,12 +143,27 @@ fn face_to_instances(
     (transformations, colours)
 }
 
-fn should_apply_anim(face: Face, _x: usize, _y: usize, rotation: Rotation) -> bool {
+fn should_apply_anim(
+    face: Face,
+    side_length: usize,
+    x: usize,
+    y: usize,
+    rotation: Rotation,
+) -> bool {
     if face == rotation.relative_to && rotation.layer == 0 {
         return true;
     }
 
-    // todo!("logic to match cubies that aren't on a face but are still being turned")
+    let adjacents = rotation.relative_to.adjacent_faces_clockwise();
+    if let Some((_, index_alignment)) = adjacents.iter().find(|(f, _)| f == &face) {
+        return match index_alignment {
+            IndexAlignment::OuterStart => x == rotation.layer,
+            IndexAlignment::OuterEnd => x == side_length - 1 - rotation.layer,
+            IndexAlignment::InnerFirst => y == rotation.layer,
+            IndexAlignment::InnerLast => y == side_length - 1 - rotation.layer,
+        };
+    }
+
     false
 }
 
