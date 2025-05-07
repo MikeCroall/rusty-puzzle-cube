@@ -13,7 +13,9 @@ use self::helpers::{
 use self::rotation::Rotation;
 use self::side_lengths::{SideLength, UniqueCharsSideLength};
 
-mod direction;
+/// An enum representing clockwise and anti-clockwise directions for a rotation.
+pub mod direction;
+
 mod helpers;
 
 /// An enum representing an individual cubie within one side of the cube, hence it only represents one face of the cubie.

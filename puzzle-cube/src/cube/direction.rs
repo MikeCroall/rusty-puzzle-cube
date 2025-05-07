@@ -1,8 +1,13 @@
 use std::ops::Not;
 
+/// Representing a direction of a rotation about some not-defined-here axis.
+///
+/// Part of the specification of a rotation on the cube.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Direction {
+    /// A clockwise rotation relative to some not-defined-here axis.
     Clockwise,
+    /// An anti-clockwise rotation relative to some not-defined-here axis.
     Anticlockwise,
 }
 
