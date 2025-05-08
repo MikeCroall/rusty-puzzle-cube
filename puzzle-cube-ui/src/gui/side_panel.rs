@@ -11,7 +11,6 @@ use super::{cube_3d_ext::PuzzleCube3D, defaults::initial_camera};
 
 const MIN_CUBE_SIZE: usize = 1;
 const MAX_CUBE_SIZE: usize = 100;
-const UNREASONABLE_MAX_CUBE_SIZE: usize = 2000;
 const EXTRA_SPACING: f32 = 10.;
 
 pub(super) fn header(ui: &mut Ui) {
@@ -27,32 +26,19 @@ pub(super) fn header(ui: &mut Ui) {
 
 pub(super) fn initialise_cube<C: PuzzleCube3D>(
     ui: &mut Ui,
-    unreasonable_mode: &mut bool,
     side_length: &mut usize,
     cube: &mut C,
     instanced_square: &mut Gm<InstancedMesh, ColorMaterial>,
 ) {
     ui.add_space(EXTRA_SPACING);
     ui.heading("Initialise Cube");
-    let slider_max_value = if *unreasonable_mode {
-        UNREASONABLE_MAX_CUBE_SIZE
-    } else {
-        MAX_CUBE_SIZE
-    };
+
     let prev_side_length = *side_length;
     ui.add(
-        Slider::new(side_length, MIN_CUBE_SIZE..=slider_max_value).text(format!(
+        Slider::new(side_length, MIN_CUBE_SIZE..=MAX_CUBE_SIZE).text(format!(
             "{prev_side_length}x{prev_side_length}x{prev_side_length} Cube"
         )),
     );
-    if ui
-        .checkbox(unreasonable_mode, "Unreasonable mode")
-        .changed()
-        && !*unreasonable_mode
-        && MAX_CUBE_SIZE < *side_length
-    {
-        *side_length = MAX_CUBE_SIZE;
-    }
     if ui.button("Apply").clicked() {
         let side_length = SideLength::try_from(*side_length)
             .expect("UI is configured to only allow selecting valid side length values");

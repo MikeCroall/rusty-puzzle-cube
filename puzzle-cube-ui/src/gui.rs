@@ -32,7 +32,6 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
     let window = initial_window()?;
     let mut camera = initial_camera(window.viewport());
     let mut mouse_control = MouseControl::new(camera.target(), 1.0, 80.0);
-    let mut unreasonable_mode = false;
 
     let ctx = window.gl();
     let mut gui = GUI::new(&ctx);
@@ -59,7 +58,6 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
                             side_panel::header(ui);
                             side_panel::initialise_cube(
                                 ui,
-                                &mut unreasonable_mode,
                                 &mut side_length,
                                 &mut cube,
                                 &mut tiles,
