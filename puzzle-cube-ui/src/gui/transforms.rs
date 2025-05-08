@@ -57,6 +57,11 @@ pub(super) fn translate_away() -> Matrix4<f32> {
     Mat4::from_translation(-TRANSLATE_TOWARD)
 }
 
+pub(super) fn scale_down_backing(side_length: f32) -> Matrix4<f32> {
+    let scale = 1. / side_length;
+    Mat4::from_nonuniform_scale(scale, scale, 0.005 * 3. / side_length)
+}
+
 pub(super) fn scale_down(side_length: f32) -> Matrix4<f32> {
     let scale = 0.9 / side_length;
     Mat4::from_nonuniform_scale(scale, scale, 0.015 * 3. / side_length)
@@ -81,6 +86,18 @@ pub(super) fn move_face_into_place(face: Face) -> Matrix4<f32> {
         Face::Back => translate_away() * half_turn_around_y(),
         Face::Left => translate_left() * rev_quarter_turn_around_y(),
     }
+}
+
+#[expect(clippy::cast_precision_loss)]
+pub(super) fn cubie_face_to_backing_transformation(
+    side_length: usize,
+    face: Face,
+    x: usize,
+    y: usize,
+) -> Matrix4<f32> {
+    move_face_into_place(face)
+        * position_from_origin_centered_to(side_length as f32, x as f32, y as f32)
+        * scale_down_backing(side_length as f32)
 }
 
 #[expect(clippy::cast_precision_loss)]
@@ -296,6 +313,21 @@ mod tests {
         );
 
         assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_scale_down_backing_small_side_length() {
+        let actual = scale_down_backing(2.);
+
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            0.5, 0., 0., 0.,
+            0., 0.5, 0., 0.,
+            0., 0., 0.0075, 0.,
+            0., 0., 0., 1.,
+        );
+
+        assert_mat_eq_with_tolerance(expected, actual);
     }
 
     #[test]

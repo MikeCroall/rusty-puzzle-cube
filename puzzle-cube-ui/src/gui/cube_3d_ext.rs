@@ -10,7 +10,10 @@ use three_d::{Instances, Mat4, Matrix4, Srgba};
 use super::{
     anim_cube::{AnimCube, AnimationState},
     colours::{BLUE, GREEN, ORANGE, RED, WHITE, YELLOW},
-    transforms::{QUARTER_TURN, cubie_face_to_transformation, fraction_of_quarter_turn},
+    transforms::{
+        QUARTER_TURN, cubie_face_to_backing_transformation, cubie_face_to_transformation,
+        fraction_of_quarter_turn,
+    },
 };
 
 pub(crate) trait PuzzleCube3D: PuzzleCube {
@@ -124,26 +127,30 @@ fn face_to_instances(
         .iter()
         .flatten()
         .enumerate()
-        .map(move |(i, _cubie_face)| {
+        .flat_map(move |(i, _cubie_face)| {
             let y = i / side_length;
             let x = i % side_length;
 
-            let base_transform = cubie_face_to_transformation(side_length, face, x, y);
+            let transform = cubie_face_to_transformation(side_length, face, x, y);
+            let backing_transform = cubie_face_to_backing_transformation(side_length, face, x, y);
 
             match rotation_with_anim_transform {
                 Some((rotation, anim_transform))
                     if should_apply_anim(face, side_length, x, y, rotation) =>
                 {
-                    anim_transform * base_transform
+                    [
+                        anim_transform * transform,
+                        anim_transform * backing_transform,
+                    ]
                 }
-                _ => base_transform,
+                _ => [transform, backing_transform],
             }
         });
 
     let colours = side
         .iter()
         .flatten()
-        .map(|cubie_face| cubie_face_to_colour(*cubie_face));
+        .flat_map(|cubie_face| [cubie_face_to_colour(*cubie_face), Srgba::BLACK]);
 
     (transformations, colours)
 }
