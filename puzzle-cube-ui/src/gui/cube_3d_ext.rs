@@ -176,7 +176,7 @@ fn should_apply_anim(
         };
     }
 
-    false
+    side_length == 1 && face == !rotation.relative_to
 }
 
 fn cubie_face_to_colour(cubie_face: CubieFace) -> Srgba {
