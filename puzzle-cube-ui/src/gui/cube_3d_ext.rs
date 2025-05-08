@@ -15,6 +15,7 @@ use super::{
 
 pub(crate) trait PuzzleCube3D: PuzzleCube {
     fn as_instances(&self) -> Instances;
+    fn cancel_animation(&mut self);
 }
 
 macro_rules! all_faces_to_instances {
@@ -64,6 +65,10 @@ impl<C: PuzzleCube> PuzzleCube3D for AnimCube<C> {
             colors: Some(colours),
             ..Default::default()
         }
+    }
+
+    fn cancel_animation(&mut self) {
+        self.animation = AnimationState::Stationary;
     }
 }
 

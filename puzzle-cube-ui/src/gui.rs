@@ -26,8 +26,7 @@ use tracing::{debug, error, info};
 pub(super) fn start_gui() -> anyhow::Result<()> {
     info!("Initialising default cube");
     let mut side_length = 4;
-    let mut cube = AnimCube::new(Cube::create(side_length.try_into()?));
-    cube_in_cube_in_cube_in_cube(&mut cube);
+    let mut cube = initial_anim_cube(side_length)?;
 
     info!("Initialising GUI");
     let window = initial_window()?;
@@ -40,7 +39,7 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
 
     let mut tiles = initial_instances(&ctx, &cube);
 
-    let inner_cube = inner_cube(&ctx);
+    let pick_cube = inner_cube(&ctx);
 
     let mut render_axes = false;
     let axes = Axes::new(&ctx, 0.05, 2.);
@@ -80,7 +79,7 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
                                 frame_input.viewport,
                                 &camera,
                                 &tiles,
-                                &inner_cube,
+                                &pick_cube,
                             );
                         })
                     });
@@ -99,7 +98,7 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
             updated_cube,
         } = mouse_control.handle_events(
             &ctx,
-            &inner_cube,
+            &pick_cube,
             side_length,
             &mut camera,
             &mut frame_input.events,
@@ -116,7 +115,7 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
             let screen = frame_input.screen();
             if let Err(e) = screen
                 .clear(clear_state())
-                .render(&camera, tiles.into_iter().chain(&inner_cube), &[])
+                .render(&camera, &tiles, &[])
                 .write(|| {
                     if render_axes {
                         axes.render(&camera, &[]);
@@ -135,6 +134,15 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
         }
     });
     Ok(())
+}
+
+fn initial_anim_cube(side_length: usize) -> anyhow::Result<AnimCube<Cube>> {
+    let mut cube = AnimCube::new(Cube::create(side_length.try_into()?));
+
+    cube_in_cube_in_cube_in_cube(&mut cube);
+    cube.cancel_animation();
+
+    Ok(cube)
 }
 
 fn initial_instances<I: PuzzleCube3D>(ctx: &Context, cube: &I) -> Gm<InstancedMesh, ColorMaterial> {
