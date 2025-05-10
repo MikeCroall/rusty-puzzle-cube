@@ -92,12 +92,6 @@ impl PuzzleCube for Cube {
         &self.side_map
     }
 
-    fn shuffle(&mut self, moves: usize) {
-        for _ in 0..moves {
-            let _ = self.rotate(Rotation::random(self.side_length));
-        }
-    }
-
     fn rotate(&mut self, rotation: Rotation) -> anyhow::Result<()> {
         let rotation = rotation.normalise(self.side_length);
 
