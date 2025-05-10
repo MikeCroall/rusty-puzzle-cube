@@ -69,8 +69,8 @@ pub(super) fn control_cube<C: PuzzleCube3D>(
         .clicked()
     {
         cube.shuffle(shuffle_moves);
-        instanced_square.set_instances(&cube.as_instances());
         cube.cancel_animation();
+        instanced_square.set_instances(&cube.as_instances());
     }
     ui.separator();
 }
