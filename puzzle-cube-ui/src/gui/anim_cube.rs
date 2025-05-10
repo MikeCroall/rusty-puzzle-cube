@@ -15,7 +15,7 @@ pub(crate) enum AnimationState {
     Stationary,
     Rotating {
         rotation: Rotation,
-        progress: f32,
+        progress_linear: f32,
     },
 }
 
@@ -40,17 +40,22 @@ impl<C: PuzzleCube> AnimCube<C> {
     pub fn progress_animation(&mut self, elapsed_time: f64) {
         match self.animation {
             AnimationState::Stationary => {}
-            AnimationState::Rotating { progress, .. } if progress >= 1. => {
+            AnimationState::Rotating {
+                progress_linear, ..
+            } if progress_linear >= 1. => {
                 self.animation = AnimationState::Stationary;
             }
-            AnimationState::Rotating { rotation, progress } => {
+            AnimationState::Rotating {
+                rotation,
+                progress_linear,
+            } => {
                 #[expect(clippy::cast_possible_truncation)]
-                let new_progress = progress + (elapsed_time as f32 * ANIM_SPEED);
+                let new_progress = progress_linear + (elapsed_time as f32 * ANIM_SPEED);
                 let new_progress = new_progress.clamp(0., 1.);
                 debug!("progress_animation calculated new progress {new_progress}");
                 self.animation = AnimationState::Rotating {
                     rotation,
-                    progress: new_progress,
+                    progress_linear: new_progress,
                 }
             }
         }
@@ -78,7 +83,7 @@ impl<C: PuzzleCube> PuzzleCube for AnimCube<C> {
         let rotation = rotation.normalise(self.side_length());
         self.animation = AnimationState::Rotating {
             rotation,
-            progress: 0.,
+            progress_linear: 0.,
         };
         self.cube.rotate(rotation)
     }
