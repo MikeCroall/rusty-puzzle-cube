@@ -420,6 +420,21 @@ mod tests {
     use pretty_assertions::{assert_eq, assert_ne};
 
     #[test]
+    fn test_recreate_at_size() -> anyhow::Result<()> {
+        let mut shuffled_large_cube = Cube::create(SideLength::try_from(5)?);
+        shuffled_large_cube.shuffle(25);
+
+        let original_cube = Cube::create(SideLength::try_from(3)?);
+
+        assert_eq!(
+            original_cube,
+            shuffled_large_cube.recreate_at_size(SideLength::try_from(3)?)
+        );
+
+        Ok(())
+    }
+
+    #[test]
     fn test_side_length_getter() {
         let cube = Cube::default();
         assert_eq!(cube.side_length, cube.side_length());
