@@ -10,24 +10,18 @@
 
 Experimental, still a work in progress, etc.
 
-#### Cube in Cube in Cube (3x3x3 algo only on multiple cube sizes)
+![Demo video](img/demo-3D.gif)
 
-![Cube in Cube in Cube 3D 3x3x3 screenshot](img/3x3x3-3D-cicic.png)
 ![Cube in Cube in Cube 3D 4x4x4 screenshot](img/4x4x4-3D-cicic.png)
-![Cube in Cube in Cube 3D 10x10x10 screenshot](img/10x10x10-3D-cicic.png)
 ![Shuffled 3D 10x10x10 screenshot](img/10x10x10-3D-shuffle.png)
 
 #### Controls
 
-Click and drag along the edge of a face to perform a rotation
+Click and drag along a line of cubies to perform a rotation, making sure to remain on the face the drag started on
 
-Unreasonable mode simply changes the maximum cube size from 100 to 2000
+Shuffle will make `10n` random moves on an `n` x `n` x `n` cube
 
-Shuffle will make `10n` moves on an `n` x `n` x `n` cube
-
-Some controls are removed on the WASM target
-
-![Controls for the 3D renderer](img/gui-controls-3D.png)
+Some controls (debug) are removed on the WASM target
 
 ### Building Puzzle Cube GUI Crate for web
 
@@ -52,9 +46,9 @@ Demos of basic notation being parsed and applied to a newly created cube
 #### Cube in Cube in Cube
 
 ```rust
-let mut cube = Cube::create(3);
+let mut cube = Cube::create(3.try_into()?);
 let sequence = "F R' U' F' U L' B U' B2 U' F' R' B R2 F U L U";
-perform_sequence(sequence, &mut cube).unwrap();
+perform_sequence(sequence, &mut cube)?;
 print!("{cube}");
 ```
 
@@ -63,9 +57,9 @@ print!("{cube}");
 #### Checkerboard Corners
 
 ```rust
-let mut cube = Cube::create(3);
+let mut cube = Cube::create(3.try_into()?);
 let sequence = "R2 L2 F2 B2 U2 D2";
-perform_sequence(sequence, &mut cube).unwrap();
+perform_sequence(sequence, &mut cube)?;
 print!("{cube}");
 ```
 
