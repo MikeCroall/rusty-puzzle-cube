@@ -19,7 +19,8 @@ use mouse_control::MouseControlOutput;
 use rusty_puzzle_cube::{cube::Cube, known_transforms::cube_in_cube_in_cube_in_cube};
 use three_d::{
     Axes, ColorMaterial, Context, CpuMesh, Cull, FrameOutput, GUI, Gm, InstancedMesh, Mesh, Object,
-    RenderStates, Srgba, Viewport, egui::ScrollArea,
+    RenderStates, Srgba, Viewport,
+    egui::{ScrollArea, SidePanel},
 };
 use tracing::{debug, error, info};
 
@@ -52,7 +53,6 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
                 frame_input.viewport,
                 frame_input.device_pixel_ratio,
                 |gui_ctx| {
-                    use three_d::egui::SidePanel;
                     SidePanel::left("side_panel").show(gui_ctx, |ui| {
                         ScrollArea::vertical().show(ui, |ui| {
                             side_panel::header(ui);
