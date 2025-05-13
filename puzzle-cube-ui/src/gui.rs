@@ -17,10 +17,10 @@ use crate::gui::{
 use anim_cube::AnimCube;
 use mouse_control::MouseControlOutput;
 use rusty_puzzle_cube::{cube::Cube, known_transforms::cube_in_cube_in_cube_in_cube};
+use side_panel::draw_side_panel;
 use three_d::{
     Axes, ColorMaterial, Context, CpuMesh, Cull, FrameOutput, GUI, Gm, InstancedMesh, Mesh, Object,
     RenderStates, Srgba, Viewport,
-    egui::{ScrollArea, SidePanel},
 };
 use tracing::{debug, error, info};
 
@@ -46,44 +46,27 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
 
     window.render_loop(move |mut frame_input| {
         let mut panel_width = 0.;
-        let mut redraw = frame_input.first_frame
-            | gui.update(
-                &mut frame_input.events,
-                frame_input.accumulated_time,
-                frame_input.viewport,
-                frame_input.device_pixel_ratio,
-                |gui_ctx| {
-                    SidePanel::left("side_panel").show(gui_ctx, |ui| {
-                        ScrollArea::vertical().show(ui, |ui| {
-                            side_panel::header(ui);
-                            side_panel::initialise_cube(
-                                ui,
-                                &mut side_length,
-                                &mut cube,
-                                &mut tiles,
-                            );
-                            side_panel::control_cube(ui, &mut cube, &mut tiles);
-                            side_panel::control_camera(
-                                ui,
-                                &mut camera,
-                                frame_input.viewport,
-                                &mut render_axes,
-                            );
-                            #[cfg(not(target_arch = "wasm32"))]
-                            side_panel::debug(
-                                ui,
-                                &cube,
-                                &ctx,
-                                frame_input.viewport,
-                                &camera,
-                                &tiles,
-                                &pick_cube,
-                            );
-                        })
-                    });
-                    panel_width = gui_ctx.used_rect().width();
-                },
-            );
+        let mut redraw = frame_input.first_frame;
+        redraw |= gui.update(
+            &mut frame_input.events,
+            frame_input.accumulated_time,
+            frame_input.viewport,
+            frame_input.device_pixel_ratio,
+            |gui_ctx| {
+                draw_side_panel(
+                    &mut side_length,
+                    &mut cube,
+                    &mut camera,
+                    &ctx,
+                    &mut tiles,
+                    &pick_cube,
+                    &mut render_axes,
+                    frame_input.viewport,
+                    gui_ctx,
+                );
+                panel_width = gui_ctx.used_rect().width();
+            },
+        );
 
         redraw |= camera.set_viewport(calc_viewport(
             panel_width,

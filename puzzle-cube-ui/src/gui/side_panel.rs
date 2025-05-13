@@ -1,7 +1,9 @@
+use std::fmt::Display;
+
 use rusty_puzzle_cube::cube::{PuzzleCube, side_lengths::SideLength};
 use three_d::{
-    Camera, ColorMaterial, Context, Gm, InstancedMesh, Mesh, Viewport,
-    egui::{Checkbox, Rgba, Slider, Ui, special_emojis::GITHUB},
+    Camera, ColorMaterial, Gm, InstancedMesh, Mesh, Viewport,
+    egui::{Checkbox, Rgba, ScrollArea, SidePanel, Slider, Ui, special_emojis::GITHUB},
 };
 use tracing::{error, info};
 
@@ -13,7 +15,31 @@ const MIN_CUBE_SIZE: usize = 1;
 const MAX_CUBE_SIZE: usize = 100;
 const EXTRA_SPACING: f32 = 10.;
 
-pub(super) fn header(ui: &mut Ui) {
+#[expect(clippy::too_many_arguments)]
+pub(super) fn draw_side_panel<C: PuzzleCube3D + Display>(
+    side_length: &mut usize,
+    cube: &mut C,
+    camera: &mut Camera,
+    ctx: &three_d::Context,
+    tiles: &mut Gm<InstancedMesh, ColorMaterial>,
+    pick_cube: &Gm<Mesh, ColorMaterial>,
+    render_axes: &mut bool,
+    viewport: Viewport,
+    gui_ctx: &three_d::egui::Context,
+) {
+    SidePanel::left("side_panel").show(gui_ctx, |ui| {
+        ScrollArea::vertical().show(ui, |ui| {
+            header(ui);
+            initialise_cube(ui, side_length, cube, tiles);
+            control_cube(ui, cube, tiles);
+            control_camera(ui, camera, viewport, render_axes);
+            #[cfg(not(target_arch = "wasm32"))]
+            debug_ctrls(ui, &*cube, ctx, viewport, &*camera, &*tiles, pick_cube);
+        })
+    });
+}
+
+fn header(ui: &mut Ui) {
     ui.heading("Rusty Puzzle Cube");
     ui.label("By Mike Croall");
     ui.hyperlink_to(
@@ -24,7 +50,7 @@ pub(super) fn header(ui: &mut Ui) {
     ui.separator();
 }
 
-pub(super) fn initialise_cube<C: PuzzleCube3D>(
+fn initialise_cube<C: PuzzleCube3D>(
     ui: &mut Ui,
     side_length: &mut usize,
     cube: &mut C,
@@ -49,7 +75,7 @@ pub(super) fn initialise_cube<C: PuzzleCube3D>(
     ui.separator();
 }
 
-pub(super) fn control_cube<C: PuzzleCube3D>(
+fn control_cube<C: PuzzleCube3D>(
     ui: &mut Ui,
     cube: &mut C,
     instanced_square: &mut Gm<InstancedMesh, ColorMaterial>,
@@ -75,12 +101,7 @@ pub(super) fn control_cube<C: PuzzleCube3D>(
     ui.separator();
 }
 
-pub(super) fn control_camera(
-    ui: &mut Ui,
-    camera: &mut Camera,
-    viewport: Viewport,
-    render_axes: &mut bool,
-) {
+fn control_camera(ui: &mut Ui, camera: &mut Camera, viewport: Viewport, render_axes: &mut bool) {
     ui.add_space(EXTRA_SPACING);
     ui.heading("Control Camera etc.");
     ui.label("The camera can be moved with a click and drag starting from the blank space around the cube, or by dragging from one face to any other face or empty space");
@@ -99,13 +120,10 @@ pub(super) fn control_camera(
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-use std::fmt::Display;
-
-#[cfg(not(target_arch = "wasm32"))]
-pub(super) fn debug<C: PuzzleCube + Display>(
+fn debug_ctrls<C: PuzzleCube + Display>(
     ui: &mut Ui,
     cube: &C,
-    ctx: &Context,
+    ctx: &three_d::Context,
     viewport: Viewport,
     camera: &Camera,
     tiles: &Gm<InstancedMesh, ColorMaterial>,
