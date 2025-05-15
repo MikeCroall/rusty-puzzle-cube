@@ -3,8 +3,8 @@ use std::f32::consts::PI;
 use circular_buffer::CircularBuffer;
 use rusty_puzzle_cube::cube::{PuzzleCube, face::Face, rotation::Rotation};
 use three_d::{
-    Camera, ColorMaterial, Context, Event, Gm, InnerSpace, Mesh, MouseButton, OrbitControl, Rad,
-    Transform, Vec3, Vector3, pick, radians,
+    Camera, ColorMaterial, Context, Event, FreeOrbitControl, Gm, InnerSpace, Mesh, MouseButton,
+    Rad, Transform, Vec3, Vector3, pick, radians,
 };
 use tracing::{error, warn};
 
@@ -15,7 +15,7 @@ const DIAGONAL_MOVE_THRESHOLD: Rad<f32> = radians(0.125 * PI);
 const EPSILON: f32 = 0.01;
 
 pub(super) struct MouseControl {
-    orbit: OrbitControl,
+    orbit: FreeOrbitControl,
     drag: Option<FaceDrag>,
 }
 
@@ -32,7 +32,7 @@ struct FaceDrag {
 impl MouseControl {
     pub(super) fn new(target: Vec3, min_distance: f32, max_distance: f32) -> Self {
         Self {
-            orbit: OrbitControl::new(target, min_distance, max_distance),
+            orbit: FreeOrbitControl::new(target, min_distance, max_distance),
             drag: None,
         }
     }
