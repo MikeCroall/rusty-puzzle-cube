@@ -6,6 +6,7 @@ authors = ["Mike Croall"]
 
 [dependencies]
 anyhow = "1.0.95"
+circular-buffer = "1.1.0"
 rusty-puzzle-cube = { path = "../puzzle-cube" }
 three-d = { version = "0.18.1", features = ["egui-gui"] }
 three-d-asset = { version = "0.9.2", features = ["png"] }

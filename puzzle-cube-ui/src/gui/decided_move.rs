@@ -20,10 +20,14 @@ pub(super) enum DecidedMove {
 }
 
 impl DecidedMove {
-    pub(super) fn apply<C: PuzzleCube>(self, cube: &mut C) {
-        let rotate_result = cube.rotate(self.as_rotation());
+    pub(super) fn apply<C: PuzzleCube>(self, cube: &mut C) -> Option<Rotation> {
+        let rotation = self.as_rotation();
+        let rotate_result = cube.rotate(rotation);
         if rotate_result.is_err() {
             error!("Invalid rotation was provided to cube. {rotate_result:?}");
+            None
+        } else {
+            Some(rotation)
         }
     }
 

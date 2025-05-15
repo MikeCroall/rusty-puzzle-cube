@@ -1,9 +1,10 @@
 use std::fmt::Display;
 
-use rusty_puzzle_cube::cube::{PuzzleCube, side_lengths::SideLength};
+use circular_buffer::CircularBuffer;
+use rusty_puzzle_cube::cube::{PuzzleCube, rotation::Rotation, side_lengths::SideLength};
 use three_d::{
     Camera, ColorMaterial, Gm, InstancedMesh, Mesh, Viewport,
-    egui::{Checkbox, Rgba, ScrollArea, SidePanel, Slider, Ui, special_emojis::GITHUB},
+    egui::{Button, Checkbox, Rgba, ScrollArea, SidePanel, Slider, Ui, special_emojis::GITHUB},
 };
 use tracing::{error, info};
 
@@ -16,9 +17,10 @@ const MAX_CUBE_SIZE: usize = 100;
 const EXTRA_SPACING: f32 = 10.;
 
 #[expect(clippy::too_many_arguments)]
-pub(super) fn draw_side_panel<C: PuzzleCube3D + Display>(
+pub(super) fn draw_side_panel<C: PuzzleCube3D + Display, const UNDO_SIZE: usize>(
     side_length: &mut usize,
     cube: &mut C,
+    undo_queue: &mut CircularBuffer<UNDO_SIZE, Rotation>,
     camera: &mut Camera,
     ctx: &three_d::Context,
     tiles: &mut Gm<InstancedMesh, ColorMaterial>,
@@ -30,8 +32,8 @@ pub(super) fn draw_side_panel<C: PuzzleCube3D + Display>(
     SidePanel::left("side_panel").show(gui_ctx, |ui| {
         ScrollArea::vertical().show(ui, |ui| {
             header(ui);
-            initialise_cube(ui, side_length, cube, tiles);
-            control_cube(ui, cube, tiles);
+            initialise_cube(ui, side_length, cube, undo_queue, tiles);
+            control_cube(ui, cube, undo_queue, tiles);
             control_camera(ui, camera, viewport, render_axes);
             #[cfg(not(target_arch = "wasm32"))]
             debug_ctrls(ui, &*cube, ctx, viewport, &*camera, &*tiles, pick_cube);
@@ -50,10 +52,11 @@ fn header(ui: &mut Ui) {
     ui.separator();
 }
 
-fn initialise_cube<C: PuzzleCube3D>(
+fn initialise_cube<C: PuzzleCube3D, const UNDO_SIZE: usize>(
     ui: &mut Ui,
     side_length: &mut usize,
     cube: &mut C,
+    undo_queue: &mut CircularBuffer<UNDO_SIZE, Rotation>,
     instanced_square: &mut Gm<InstancedMesh, ColorMaterial>,
 ) {
     ui.add_space(EXTRA_SPACING);
@@ -69,15 +72,17 @@ fn initialise_cube<C: PuzzleCube3D>(
         let side_length = SideLength::try_from(*side_length)
             .expect("UI is configured to only allow selecting valid side length values");
         *cube = cube.recreate_at_size(side_length);
+        undo_queue.clear();
         instanced_square.set_instances(&cube.as_instances());
     }
     ui.add_space(EXTRA_SPACING);
     ui.separator();
 }
 
-fn control_cube<C: PuzzleCube3D>(
+fn control_cube<C: PuzzleCube3D, const UNDO_SIZE: usize>(
     ui: &mut Ui,
     cube: &mut C,
+    undo_queue: &mut CircularBuffer<UNDO_SIZE, Rotation>,
     instanced_square: &mut Gm<InstancedMesh, ColorMaterial>,
 ) {
     ui.add_space(EXTRA_SPACING);
@@ -89,6 +94,24 @@ fn control_cube<C: PuzzleCube3D>(
     );
     ui.add_space(EXTRA_SPACING);
 
+    let undos_available = undo_queue.len();
+    let undo_text = if undos_available > 0 {
+        format!("Undo ({undos_available})")
+    } else {
+        "Undo".to_owned()
+    };
+    if ui
+        .add_enabled(undos_available > 0, Button::new(undo_text))
+        .clicked()
+    {
+        let to_undo = undo_queue
+            .pop_back()
+            .expect("button disabled if queue empty");
+        cube.rotate(!to_undo)
+            .expect("moves on queue must be reversible");
+    }
+    ui.add_space(EXTRA_SPACING);
+
     let shuffle_moves = cube.side_length() * 10;
     if ui
         .button(format!("Shuffle ({shuffle_moves} moves)"))
@@ -96,8 +119,10 @@ fn control_cube<C: PuzzleCube3D>(
     {
         cube.shuffle(shuffle_moves);
         cube.cancel_animation();
+        undo_queue.clear();
         instanced_square.set_instances(&cube.as_instances());
     }
+
     ui.separator();
 }
 

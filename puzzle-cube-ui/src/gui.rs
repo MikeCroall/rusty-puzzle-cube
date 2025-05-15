@@ -15,14 +15,20 @@ use crate::gui::{
     mouse_control::MouseControl,
 };
 use anim_cube::AnimCube;
+use circular_buffer::CircularBuffer;
 use mouse_control::MouseControlOutput;
-use rusty_puzzle_cube::{cube::Cube, known_transforms::cube_in_cube_in_cube_in_cube};
+use rusty_puzzle_cube::{
+    cube::{Cube, rotation::Rotation},
+    known_transforms::cube_in_cube_in_cube_in_cube,
+};
 use side_panel::draw_side_panel;
 use three_d::{
     Axes, ColorMaterial, Context, CpuMesh, Cull, FrameOutput, GUI, Gm, InstancedMesh, Mesh, Object,
     RenderStates, Srgba, Viewport,
 };
 use tracing::{debug, error, info};
+
+const UNDO_QUEUE_MAX_SIZE: usize = 100;
 
 pub(super) fn start_gui() -> anyhow::Result<()> {
     info!("Initialising default cube");
@@ -44,6 +50,8 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
     let mut render_axes = false;
     let axes = Axes::new(&ctx, 0.05, 2.);
 
+    let mut undo_queue = CircularBuffer::<UNDO_QUEUE_MAX_SIZE, Rotation>::new();
+
     window.render_loop(move |mut frame_input| {
         let mut panel_width = 0.;
         let mut redraw = frame_input.first_frame;
@@ -56,6 +64,7 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
                 draw_side_panel(
                     &mut side_length,
                     &mut cube,
+                    &mut undo_queue,
                     &mut camera,
                     &ctx,
                     &mut tiles,
@@ -84,6 +93,7 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
             &mut camera,
             &mut frame_input.events,
             &mut cube,
+            &mut undo_queue,
         );
         if updated_cube || cube.is_animating() {
             cube.progress_animation(frame_input.elapsed_time);

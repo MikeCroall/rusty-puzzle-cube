@@ -1,6 +1,7 @@
 use std::f32::consts::PI;
 
-use rusty_puzzle_cube::cube::{PuzzleCube, face::Face};
+use circular_buffer::CircularBuffer;
+use rusty_puzzle_cube::cube::{PuzzleCube, face::Face, rotation::Rotation};
 use three_d::{
     Camera, ColorMaterial, Context, Event, Gm, InnerSpace, Mesh, MouseButton, OrbitControl, Rad,
     Transform, Vec3, Vector3, pick, radians,
@@ -36,7 +37,8 @@ impl MouseControl {
         }
     }
 
-    pub(super) fn handle_events<C: PuzzleCube>(
+    #[expect(clippy::too_many_arguments)]
+    pub(super) fn handle_events<C: PuzzleCube, const UNDO_SIZE: usize>(
         &mut self,
         ctx: &Context,
         inner_cube: &Gm<Mesh, ColorMaterial>,
@@ -44,6 +46,7 @@ impl MouseControl {
         camera: &mut Camera,
         events: &mut [Event],
         cube: &mut C,
+        undo_queue: &mut CircularBuffer<UNDO_SIZE, Rotation>,
     ) -> MouseControlOutput {
         let mut updated_cube = false;
         for event in events.iter_mut() {
@@ -102,7 +105,9 @@ impl MouseControl {
                     if let Some(decided_move) =
                         picks_to_move(side_length, *start_pick, end_pick.position, *face)
                     {
-                        decided_move.apply(cube);
+                        if let Some(applied_rotation) = decided_move.apply(cube) {
+                            undo_queue.push_back(applied_rotation);
+                        }
                         updated_cube = true;
                         *handled = true;
                     }
