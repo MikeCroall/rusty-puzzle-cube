@@ -94,14 +94,15 @@ fn control_cube<C: PuzzleCube3D, const UNDO_SIZE: usize>(
     );
     ui.add_space(EXTRA_SPACING);
 
-    let undos_available = undo_queue.len();
-    let undo_text = if undos_available > 0 {
-        format!("Undo ({undos_available})")
+    let undo_text = if undo_queue.is_full() {
+        format!("Undo ({}, at limit)", undo_queue.len())
+    } else if !undo_queue.is_empty() {
+        format!("Undo ({})", undo_queue.len())
     } else {
         "Undo".to_owned()
     };
     if ui
-        .add_enabled(undos_available > 0, Button::new(undo_text))
+        .add_enabled(!undo_queue.is_empty(), Button::new(undo_text))
         .clicked()
     {
         let to_undo = undo_queue
