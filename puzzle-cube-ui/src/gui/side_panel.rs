@@ -32,9 +32,17 @@ pub(super) fn draw_side_panel<C: PuzzleCube3D + Display, const UNDO_SIZE: usize>
     SidePanel::left("side_panel").show(gui_ctx, |ui| {
         ScrollArea::vertical().show(ui, |ui| {
             header(ui);
+            ui.separator();
+
             initialise_cube(ui, side_length, cube, undo_queue, tiles);
+            ui.separator();
+
             control_cube(ui, cube, undo_queue, tiles);
+            ui.separator();
+
             control_camera(ui, camera, viewport, render_axes);
+            ui.separator();
+
             #[cfg(not(target_arch = "wasm32"))]
             debug_ctrls(ui, &*cube, ctx, viewport, &*camera, &*tiles, pick_cube);
         })
@@ -49,7 +57,6 @@ fn header(ui: &mut Ui) {
         "https://github.com/MikeCroall/rusty-puzzle-cube/",
     );
     ui.add_space(EXTRA_SPACING);
-    ui.separator();
 }
 
 fn initialise_cube<C: PuzzleCube3D, const UNDO_SIZE: usize>(
@@ -61,14 +68,18 @@ fn initialise_cube<C: PuzzleCube3D, const UNDO_SIZE: usize>(
 ) {
     ui.add_space(EXTRA_SPACING);
     ui.heading("Initialise Cube");
+    ui.add_space(EXTRA_SPACING);
 
     let prev_side_length = *side_length;
-    ui.add(
-        Slider::new(side_length, MIN_CUBE_SIZE..=MAX_CUBE_SIZE).text(format!(
-            "{prev_side_length}x{prev_side_length}x{prev_side_length} Cube"
-        )),
-    );
-    if ui.button("Apply").clicked() {
+    ui.add(Slider::new(side_length, MIN_CUBE_SIZE..=MAX_CUBE_SIZE));
+    ui.add_space(EXTRA_SPACING);
+
+    if ui
+        .button(format!(
+            "New {prev_side_length}x{prev_side_length}x{prev_side_length} Cube"
+        ))
+        .clicked()
+    {
         let side_length = SideLength::try_from(*side_length)
             .expect("UI is configured to only allow selecting valid side length values");
         *cube = cube.recreate_at_size(side_length);
@@ -76,7 +87,6 @@ fn initialise_cube<C: PuzzleCube3D, const UNDO_SIZE: usize>(
         instanced_square.set_instances(&cube.as_instances());
     }
     ui.add_space(EXTRA_SPACING);
-    ui.separator();
 }
 
 fn control_cube<C: PuzzleCube3D, const UNDO_SIZE: usize>(
@@ -123,26 +133,27 @@ fn control_cube<C: PuzzleCube3D, const UNDO_SIZE: usize>(
         undo_queue.clear();
         instanced_square.set_instances(&cube.as_instances());
     }
-
-    ui.separator();
+    ui.add_space(EXTRA_SPACING);
 }
 
 fn control_camera(ui: &mut Ui, camera: &mut Camera, viewport: Viewport, render_axes: &mut bool) {
     ui.add_space(EXTRA_SPACING);
     ui.heading("Control Camera etc.");
     ui.label("The camera can be moved with a click and drag starting from the blank space around the cube, or by dragging from one face to any other face or empty space");
+    ui.add_space(EXTRA_SPACING);
+
     if ui.button("Reset camera").clicked() {
         *camera = initial_camera(viewport);
     }
+    ui.add_space(EXTRA_SPACING);
+
     ui.add(Checkbox::new(render_axes, "Show axes"));
     if *render_axes {
         ui.colored_label(Rgba::from_rgb(0.15, 0.15, 1.), "F is the blue axis");
         ui.colored_label(Rgba::RED, "R is the red axis");
         ui.colored_label(Rgba::GREEN, "U is the green axis");
     }
-
     ui.add_space(EXTRA_SPACING);
-    ui.separator();
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -157,13 +168,17 @@ fn debug_ctrls<C: PuzzleCube + Display>(
 ) {
     ui.add_space(EXTRA_SPACING);
     ui.heading("Debug");
+    ui.add_space(EXTRA_SPACING);
+
     if ui.button("Print cube to terminal").clicked() {
         info!("\n{cube}");
     }
+    ui.add_space(EXTRA_SPACING);
 
     if ui.button("Save as image").clicked() {
         if let Err(e) = save_as_image(ctx, viewport, camera, tiles, inner_cube) {
             error!("Could not save image file: {}", e);
         }
     }
+    ui.add_space(EXTRA_SPACING);
 }
