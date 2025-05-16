@@ -159,7 +159,7 @@ fn picks_to_move(
     let (move_along_x, toward_positive) = validate_straight_dir(start_pick, end_pick)?;
 
     let (face, clockwise) = if move_along_x {
-        let row_0_to_1 = (start_pick.y + 1.) / 2.;
+        let row_0_to_1 = f32::midpoint(start_pick.y, 1.);
         let row = (row_0_to_1 * side_length as f32) as usize;
         if row != 0 && row != side_length - 1 {
             return Some(DecidedMove::InnerRow {
@@ -170,7 +170,7 @@ fn picks_to_move(
         }
         translate_horizontal_drag(row, dragged_face, toward_positive)
     } else {
-        let col_0_to_1 = (start_pick.x + 1.) / 2.;
+        let col_0_to_1 = f32::midpoint(start_pick.x, 1.);
         let col = (col_0_to_1 * side_length as f32) as usize;
         if col != 0 && col != side_length - 1 {
             return Some(DecidedMove::InnerCol {
