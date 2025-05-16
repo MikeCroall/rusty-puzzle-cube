@@ -22,6 +22,7 @@ pub(super) fn draw_side_panel<C: PuzzleCube3D + Display, const UNDO_SIZE: usize>
     cube: &mut C,
     undo_queue: &mut CircularBuffer<UNDO_SIZE, Rotation>,
     camera: &mut Camera,
+    lock_upright: &mut bool,
     ctx: &three_d::Context,
     tiles: &mut Gm<InstancedMesh, ColorMaterial>,
     pick_cube: &Gm<Mesh, ColorMaterial>,
@@ -40,7 +41,7 @@ pub(super) fn draw_side_panel<C: PuzzleCube3D + Display, const UNDO_SIZE: usize>
             control_cube(ui, cube, undo_queue, tiles);
             ui.separator();
 
-            control_camera(ui, camera, viewport, render_axes);
+            control_camera(ui, camera, lock_upright, viewport, render_axes);
             ui.separator();
 
             #[cfg(not(target_arch = "wasm32"))]
@@ -136,13 +137,28 @@ fn control_cube<C: PuzzleCube3D, const UNDO_SIZE: usize>(
     ui.add_space(EXTRA_SPACING);
 }
 
-fn control_camera(ui: &mut Ui, camera: &mut Camera, viewport: Viewport, render_axes: &mut bool) {
+fn control_camera(
+    ui: &mut Ui,
+    camera: &mut Camera,
+    lock_upright: &mut bool,
+    viewport: Viewport,
+    render_axes: &mut bool,
+) {
     ui.add_space(EXTRA_SPACING);
     ui.heading("Control Camera etc.");
     ui.label("The camera can be moved with a click and drag starting from the blank space around the cube, or by dragging from one face to any other face or empty space");
     ui.add_space(EXTRA_SPACING);
 
     if ui.button("Reset camera").clicked() {
+        *camera = initial_camera(viewport);
+    }
+    ui.add_space(EXTRA_SPACING);
+
+    if ui
+        .add(Checkbox::new(lock_upright, "Lock upright"))
+        .changed()
+        && *lock_upright
+    {
         *camera = initial_camera(viewport);
     }
     ui.add_space(EXTRA_SPACING);

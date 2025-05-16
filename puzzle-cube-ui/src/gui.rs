@@ -38,6 +38,7 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
     info!("Initialising GUI");
     let window = initial_window()?;
     let mut camera = initial_camera(window.viewport());
+    let mut lock_upright = false;
     let mut mouse_control = MouseControl::new(camera.target(), 1.0, 80.0);
 
     let ctx = window.gl();
@@ -66,6 +67,7 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
                     &mut cube,
                     &mut undo_queue,
                     &mut camera,
+                    &mut lock_upright,
                     &ctx,
                     &mut tiles,
                     &pick_cube,
@@ -91,6 +93,7 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
             &pick_cube,
             side_length,
             &mut camera,
+            lock_upright,
             &mut frame_input.events,
             &mut cube,
             &mut undo_queue,

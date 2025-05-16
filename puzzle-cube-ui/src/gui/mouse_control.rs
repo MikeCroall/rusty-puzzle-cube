@@ -4,7 +4,7 @@ use circular_buffer::CircularBuffer;
 use rusty_puzzle_cube::cube::{PuzzleCube, face::Face, rotation::Rotation};
 use three_d::{
     Camera, ColorMaterial, Context, Event, FreeOrbitControl, Gm, InnerSpace, Mesh, MouseButton,
-    Rad, Transform, Vec3, Vector3, pick, radians,
+    OrbitControl, Rad, Transform, Vec3, Vector3, pick, radians,
 };
 use tracing::{error, warn};
 
@@ -15,7 +15,8 @@ const DIAGONAL_MOVE_THRESHOLD: Rad<f32> = radians(0.125 * PI);
 const EPSILON: f32 = 0.01;
 
 pub(super) struct MouseControl {
-    orbit: FreeOrbitControl,
+    free_orbit: FreeOrbitControl,
+    upright_orbit: OrbitControl,
     drag: Option<FaceDrag>,
 }
 
@@ -32,7 +33,12 @@ struct FaceDrag {
 impl MouseControl {
     pub(super) fn new(target: Vec3, min_distance: f32, max_distance: f32) -> Self {
         Self {
-            orbit: FreeOrbitControl::new(target, min_distance, max_distance),
+            free_orbit: FreeOrbitControl::new(target, min_distance, max_distance),
+            upright_orbit: OrbitControl {
+                target,
+                min_distance,
+                max_distance,
+            },
             drag: None,
         }
     }
@@ -44,6 +50,7 @@ impl MouseControl {
         inner_cube: &Gm<Mesh, ColorMaterial>,
         side_length: usize,
         camera: &mut Camera,
+        lock_upright: bool,
         events: &mut [Event],
         cube: &mut C,
         undo_queue: &mut CircularBuffer<UNDO_SIZE, Rotation>,
@@ -118,7 +125,12 @@ impl MouseControl {
 
         MouseControlOutput {
             updated_cube,
-            redraw: updated_cube || self.orbit.handle_events(camera, events),
+            redraw: updated_cube
+                || if lock_upright {
+                    self.upright_orbit.handle_events(camera, events)
+                } else {
+                    self.free_orbit.handle_events(camera, events)
+                },
         }
     }
 }
