@@ -80,6 +80,7 @@ fn choose_anim_transform(animation: &AnimationState) -> Option<(Rotation, Matrix
         AnimationState::Rotating {
             rotation,
             progress_linear,
+            ..
         } => {
             // Minus a full quarter turn as the cube has already set itself to the new positions that we want to slowly animate toward
             let rad = fraction_of_quarter_turn(*progress_linear) - QUARTER_TURN;
@@ -113,7 +114,7 @@ fn choose_anim_transform(animation: &AnimationState) -> Option<(Rotation, Matrix
                 },
             ))
         }
-        AnimationState::Stationary => None,
+        AnimationState::Stationary | AnimationState::TransitioningToNext { .. } => None,
     }
 }
 

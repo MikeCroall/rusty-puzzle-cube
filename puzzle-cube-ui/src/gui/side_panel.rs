@@ -105,23 +105,35 @@ fn control_cube<C: PuzzleCube3D, const UNDO_SIZE: usize>(
     );
     ui.add_space(EXTRA_SPACING);
 
-    let undo_text = if undo_queue.is_full() {
-        format!("Undo ({}, at limit)", undo_queue.len())
-    } else if !undo_queue.is_empty() {
-        format!("Undo ({})", undo_queue.len())
-    } else {
-        "Undo".to_owned()
-    };
-    if ui
-        .add_enabled(!undo_queue.is_empty(), Button::new(undo_text))
-        .clicked()
-    {
-        let to_undo = undo_queue
-            .pop_back()
-            .expect("button disabled if queue empty");
-        cube.rotate(!to_undo)
-            .expect("moves on queue must be reversible");
-    }
+    ui.horizontal(|ui| {
+        let undo_text = if undo_queue.is_full() {
+            format!("Undo ({}, at limit)", undo_queue.len())
+        } else if !undo_queue.is_empty() {
+            format!("Undo ({})", undo_queue.len())
+        } else {
+            "Undo".to_owned()
+        };
+        if ui
+            .add_enabled(!undo_queue.is_empty(), Button::new(undo_text))
+            .clicked()
+        {
+            let to_undo = undo_queue
+                .pop_back()
+                .expect("button disabled if queue empty");
+            cube.rotate(!to_undo)
+                .expect("moves on queue must be reversible");
+        }
+
+        if ui
+            .add_enabled(!undo_queue.is_empty(), Button::new("Undo all"))
+            .clicked()
+        {
+            let moves = undo_queue.to_vec();
+            undo_queue.clear();
+            cube.rotate_seq(moves.into_iter().rev().map(|r| !r))
+                .expect("moves on queue must be reversible");
+        }
+    });
     ui.add_space(EXTRA_SPACING);
 
     let shuffle_moves = cube.side_length() * 10;
