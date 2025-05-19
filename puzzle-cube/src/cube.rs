@@ -70,6 +70,25 @@ pub trait PuzzleCube {
     /// # Errors
     /// Err can only be returned if the given rotation is invalid for this cube.
     fn rotate(&mut self, rotation: Rotation) -> anyhow::Result<()>;
+
+    /// Iterate over `rotations` performing each rotation encountered once.
+    /// ```no_run
+    /// use rusty_puzzle_cube::cube::{Cube, PuzzleCube as _, face::Face, rotation::Rotation};
+    ///
+    /// let mut cube = Cube::default();
+    /// cube.rotate_seq(vec![Rotation::clockwise(Face::Front), Rotation::anticlockwise(Face::Right)]);
+    /// ```
+    /// # Errors
+    /// Err can only be returned if any of the given rotations are invalid for this cube.
+    fn rotate_seq(
+        &mut self,
+        rotations: impl IntoIterator<Item = Rotation> + 'static,
+    ) -> anyhow::Result<()> {
+        for r in rotations {
+            self.rotate(r)?;
+        }
+        Ok(())
+    }
 }
 
 /// An implementer of the `PuzzleCube` trait.
@@ -653,6 +672,25 @@ mod tests {
             format!("{err:?}")
                 .starts_with("side did not have required layer (4 of outer vec of side)")
         );
+        Ok(())
+    }
+
+    #[test]
+    fn rotate_seq() -> anyhow::Result<()> {
+        let side_length = 4;
+        let mut seq_cube = Cube::create(side_length.try_into()?);
+        let mut no_seq_cube = Cube::create(side_length.try_into()?);
+
+        let rot_1 = Rotation::clockwise(Face::Up);
+        let rot_2 = Rotation::clockwise(Face::Left);
+        let rot_3 = Rotation::anticlockwise(Face::Up);
+
+        seq_cube.rotate_seq(vec![rot_1, rot_2, rot_3])?;
+        no_seq_cube.rotate(rot_1)?;
+        no_seq_cube.rotate(rot_2)?;
+        no_seq_cube.rotate(rot_3)?;
+
+        assert_eq!(no_seq_cube, seq_cube);
         Ok(())
     }
 }
