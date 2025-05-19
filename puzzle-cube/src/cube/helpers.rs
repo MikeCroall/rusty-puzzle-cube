@@ -87,3 +87,38 @@ pub(super) fn get_clockwise_slice_of_side_setback(
     };
     Ok(vec)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use pretty_assertions::assert_eq;
+
+    #[test]
+    fn only_use_visible_unique_characters() {
+        let side = create_side_with_unique_characters(UniqueCharsSideLength::MAX, &CubieFace::Blue);
+
+        side.iter()
+            .flatten()
+            .map(|cubie| cubie.get_coloured_display_char().input)
+            .for_each(|string| {
+                assert_eq!(
+                    1,
+                    string.chars().count(),
+                    "Found too many chars: {string} (len: {})",
+                    string.chars().count()
+                );
+
+                let char = string.chars().next().unwrap();
+                assert!(
+                    !char.is_whitespace(),
+                    "Found whitespace char: {}",
+                    char.escape_unicode()
+                );
+                assert!(
+                    !char.is_control(),
+                    "Found control char: {}",
+                    char.escape_unicode()
+                );
+            });
+    }
+}

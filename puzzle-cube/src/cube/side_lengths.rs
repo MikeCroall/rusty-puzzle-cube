@@ -30,11 +30,16 @@ impl From<SideLength> for usize {
 #[derive(Debug, Copy, Clone)]
 pub struct UniqueCharsSideLength(usize);
 
+impl UniqueCharsSideLength {
+    /// The maximum possible side length usable without unique characters to allow for unique, visible characters per cubie in the basic ascii range.
+    pub const MAX: UniqueCharsSideLength = UniqueCharsSideLength(8);
+}
+
 impl TryFrom<usize> for UniqueCharsSideLength {
     type Error = anyhow::Error;
 
     fn try_from(side_length: usize) -> Result<Self, Self::Error> {
-        if (1..=8).contains(&side_length) {
+        if (1..=UniqueCharsSideLength::MAX.0).contains(&side_length) {
             Ok(UniqueCharsSideLength(side_length))
         } else {
             Err(anyhow::format_err!(
