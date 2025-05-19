@@ -1,3 +1,4 @@
 [workspace]
 resolver = "2"
 members = ["puzzle-cube", "puzzle-cube-ui"]
+rust-version = "1.85.1"
