@@ -7,16 +7,26 @@ const CHAR_FOR_ANTICLOCKWISE: char = '\'';
 const CHAR_FOR_TURN_TWICE: char = '2';
 const CHAR_FOR_MULTI_LAYER: char = 'w';
 
-/// Perform a sequence of moves on a provided Cube instance.
+/// Parse a sequence of moves.
 ///
 /// # Errors
-/// Will return an Err variant when the input `token_sequence` is malformed or references layers of the cube that the given cube does not have e.g. 4Uw on a 3x3x3 cube.
-pub fn perform_sequence<C: PuzzleCube>(token_sequence: &str, cube: &mut C) -> anyhow::Result<()> {
+/// Will return an Err variant when the input `token_sequence` is malformed.
+pub fn parse_sequence(token_sequence: &str) -> anyhow::Result<Vec<Rotation>> {
     token_sequence
         .split_whitespace()
         .map(parse_token)
         .flatten_ok()
-        .try_for_each(|rotation_result| cube.rotate(rotation_result?))
+        .collect()
+}
+
+/// Parse a sequence of moves and perform them on a provided Cube instance.
+///
+/// # Errors
+/// Will return an Err variant when the input `token_sequence` is malformed or references layers of the cube that the given cube does not have e.g. 4Uw on a 3x3x3 cube.
+pub fn perform_sequence<C: PuzzleCube>(token_sequence: &str, cube: &mut C) -> anyhow::Result<()> {
+    parse_sequence(token_sequence)?
+        .into_iter()
+        .try_for_each(|rotation_result| cube.rotate(rotation_result))
 }
 
 fn parse_token(original_token: &str) -> anyhow::Result<Vec<Rotation>> {

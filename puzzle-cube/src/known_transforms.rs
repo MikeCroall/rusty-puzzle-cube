@@ -1,4 +1,18 @@
+use crate::{cube::rotation::Rotation, notation::parse_sequence};
+
 use super::{cube::PuzzleCube, notation::perform_sequence};
+
+const CHECKERBOARD_CORNERS: &str = "R2 L2 F2 B2 U2 D2";
+
+/// Get a sequence of moves that will turn a 3x3x3 cube into a checkerboard.
+///
+/// Can be used on cubes larger than 3x3x3, but only the faces themselves will be rotated. Inner rows/columns will not be rotated.
+/// # Panics
+/// Will panic if local variable `sequence` contains a malformed sequence. This would be considered a bug.
+#[must_use]
+pub fn checkerboard_corners_seq() -> Vec<Rotation> {
+    parse_sequence(CHECKERBOARD_CORNERS).expect("Known transforms must use valid sequences")
+}
 
 /// Apply a sequence to the provided cube that will turn a 3x3x3 cube into a checkerboard.
 ///
@@ -6,8 +20,20 @@ use super::{cube::PuzzleCube, notation::perform_sequence};
 /// # Panics
 /// Will panic if local variable `sequence` contains a malformed sequence. This would be considered a bug.
 pub fn checkerboard_corners<C: PuzzleCube>(cube: &mut C) {
-    let sequence = "R2 L2 F2 B2 U2 D2";
-    perform_sequence(sequence, cube).expect("Known transforms must use valid sequences");
+    perform_sequence(CHECKERBOARD_CORNERS, cube)
+        .expect("Known transforms must use valid sequences");
+}
+
+const NESTED_CUBE_3X3X3: &str = "F R' U' F' U L' B U' B2 U' F' R' B R2 F U L U";
+
+/// Get a sequence of moves that will turn a 3x3x3 cube into a cube within a cube within a cube pattern.
+///
+/// Can be used on cubes larger than 3x3x3, but only the faces themselves will be rotated. Inner rows/columns will not be rotated.
+/// # Panics
+/// Will panic if local variable `sequence` contains a malformed sequence. This would be considered a bug.
+#[must_use]
+pub fn cube_in_cube_in_cube_seq() -> Vec<Rotation> {
+    parse_sequence(NESTED_CUBE_3X3X3).expect("Known transforms must use valid sequences")
 }
 
 /// Apply a sequence to the provided cube that will turn a 3x3x3 cube into a cube within a cube within a cube pattern.
@@ -16,8 +42,19 @@ pub fn checkerboard_corners<C: PuzzleCube>(cube: &mut C) {
 /// # Panics
 /// Will panic if local variable `sequence` contains a malformed sequence. This would be considered a bug.
 pub fn cube_in_cube_in_cube<C: PuzzleCube>(cube: &mut C) {
-    let sequence = "F R' U' F' U L' B U' B2 U' F' R' B R2 F U L U";
-    perform_sequence(sequence, cube).expect("Known transforms must use valid sequences");
+    perform_sequence(NESTED_CUBE_3X3X3, cube).expect("Known transforms must use valid sequences");
+}
+
+const NESTED_CUBE_4X4X4: &str = "B' Lw2 L2 Rw2 R2 U2 Lw2 L2 Rw2 R2 B F2 R U' R U R2 U R2 F' U F' Uw Lw Uw' Fw2 Dw Rw' Uw Fw Dw2 Rw2";
+
+/// Get a sequence of moves that will turn a 4x4x4 cube into a cube within a cube within a cube pattern.
+///
+/// Will not produce the desired result on cubes larger than 4x4x4. Stick to the 3x3x3 version for larger cubes, as that is compatible.
+/// # Panics
+/// Will panic if local variable `sequence` contains a malformed sequence. This would be considered a bug.
+#[must_use]
+pub fn cube_in_cube_in_cube_in_cube_seq() -> Vec<Rotation> {
+    parse_sequence(NESTED_CUBE_4X4X4).expect("Known transforms must use valid sequences")
 }
 
 /// Apply a sequence to the provided cube that will turn a 4x4x4 cube into a cube within a cube within a cube pattern.
@@ -26,8 +63,7 @@ pub fn cube_in_cube_in_cube<C: PuzzleCube>(cube: &mut C) {
 /// # Panics
 /// Will panic if local variable `sequence` contains a malformed sequence. This would be considered a bug.
 pub fn cube_in_cube_in_cube_in_cube<C: PuzzleCube>(cube: &mut C) {
-    let sequence = "B' Lw2 L2 Rw2 R2 U2 Lw2 L2 Rw2 R2 B F2 R U' R U R2 U R2 F' U F' Uw Lw Uw' Fw2 Dw Rw' Uw Fw Dw2 Rw2";
-    perform_sequence(sequence, cube).expect("Known transforms must use valid sequences");
+    perform_sequence(NESTED_CUBE_4X4X4, cube).expect("Known transforms must use valid sequences");
 }
 
 #[cfg(test)]
@@ -42,6 +78,8 @@ mod tests {
 
     #[test]
     fn test_checkerboard_corners() {
+        let _does_not_panic = checkerboard_corners_seq();
+
         let mut cube = Cube::create(3.try_into().expect("known good value"));
 
         checkerboard_corners(&mut cube);
@@ -84,6 +122,8 @@ mod tests {
 
     #[test]
     fn test_cube_in_cube_in_cube() {
+        let _does_not_panic = cube_in_cube_in_cube_seq();
+
         let mut cube = Cube::create(3.try_into().expect("known good value"));
 
         cube_in_cube_in_cube(&mut cube);
@@ -126,6 +166,8 @@ mod tests {
 
     #[test]
     fn test_cube_in_cube_in_cube_in_cube() {
+        let _does_not_panic = cube_in_cube_in_cube_in_cube_seq();
+
         let mut cube = Cube::create(4.try_into().expect("known good value"));
 
         cube_in_cube_in_cube_in_cube(&mut cube);
