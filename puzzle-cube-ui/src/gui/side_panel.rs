@@ -1,7 +1,12 @@
 use std::fmt::Display;
 
 use circular_buffer::CircularBuffer;
-use rusty_puzzle_cube::cube::{PuzzleCube, rotation::Rotation, side_lengths::SideLength};
+use rusty_puzzle_cube::{
+    cube::{PuzzleCube, rotation::Rotation, side_lengths::SideLength},
+    known_transforms::{
+        checkerboard_corners_seq, cube_in_cube_in_cube_in_cube_seq, cube_in_cube_in_cube_seq,
+    },
+};
 use three_d::{
     Camera, ColorMaterial, Gm, InstancedMesh, Mesh, Viewport,
     egui::{Button, Checkbox, Rgba, ScrollArea, SidePanel, Slider, Ui, special_emojis::GITHUB},
@@ -154,6 +159,36 @@ fn control_cube<C: PuzzleCube3D, const UNDO_SIZE: usize>(
         undo_queue.clear();
         instanced_square.set_instances(&cube.as_instances());
     }
+    ui.add_space(EXTRA_SPACING);
+
+    ui.collapsing("Pre-defined sequences", |ui| {
+        if ui
+            .button("Checkerboard corners 3x3x3\nsafe for any")
+            .clicked()
+        {
+            cube.rotate_seq(checkerboard_corners_seq())
+                .expect("known transforms must be valid, sequence is valid on any cube");
+        }
+        ui.add_space(EXTRA_SPACING);
+
+        if ui.button("Nested cubes 3x3x3\nsafe for any").clicked() {
+            cube.rotate_seq(cube_in_cube_in_cube_seq())
+                .expect("known transforms must be valid, sequence is valid on any cube");
+        }
+        ui.add_space(EXTRA_SPACING);
+
+        if ui
+            .add_enabled(
+                cube.side_length() >= 4,
+                Button::new("Nested cubes 4x4x4\nsafe but wrong above"),
+            )
+            .clicked()
+        {
+            cube.rotate_seq(cube_in_cube_in_cube_in_cube_seq()).expect(
+                "known transforms must be valid, button is disabled if side length too small",
+            );
+        }
+    });
     ui.add_space(EXTRA_SPACING);
 }
 
