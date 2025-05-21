@@ -27,6 +27,7 @@ pub(super) fn draw_side_panel<C: PuzzleCube3D + Display, const UNDO_SIZE: usize>
     tiles: &mut Gm<InstancedMesh, ColorMaterial>,
     pick_cube: &Gm<Mesh, ColorMaterial>,
     render_axes: &mut bool,
+    animation_speed: &mut f64,
     viewport: Viewport,
     gui_ctx: &three_d::egui::Context,
 ) {
@@ -41,7 +42,14 @@ pub(super) fn draw_side_panel<C: PuzzleCube3D + Display, const UNDO_SIZE: usize>
             control_cube(ui, cube, undo_queue, tiles);
             ui.separator();
 
-            control_camera(ui, camera, lock_upright, viewport, render_axes);
+            control_camera(
+                ui,
+                camera,
+                lock_upright,
+                viewport,
+                render_axes,
+                animation_speed,
+            );
             ui.separator();
 
             #[cfg(not(target_arch = "wasm32"))]
@@ -97,7 +105,7 @@ fn control_cube<C: PuzzleCube3D, const UNDO_SIZE: usize>(
     instanced_square: &mut Gm<InstancedMesh, ColorMaterial>,
 ) {
     ui.add_space(EXTRA_SPACING);
-    ui.heading("Control Cube");
+    ui.heading("Cube Controls");
     ui.label("Click and drag directly on the cube to make a rotation");
     ui.label("You must only drag across one face of the cube");
     ui.label(
@@ -155,9 +163,10 @@ fn control_camera(
     lock_upright: &mut bool,
     viewport: Viewport,
     render_axes: &mut bool,
+    animation_speed: &mut f64,
 ) {
     ui.add_space(EXTRA_SPACING);
-    ui.heading("Control Camera etc.");
+    ui.heading("Camera and Rendering");
     ui.label("The camera can be moved with a click and drag starting from the blank space around the cube, or by dragging from one face to any other face or empty space");
     ui.add_space(EXTRA_SPACING);
 
@@ -181,6 +190,10 @@ fn control_camera(
         ui.colored_label(Rgba::RED, "R is the red axis");
         ui.colored_label(Rgba::GREEN, "U is the green axis");
     }
+    ui.add_space(EXTRA_SPACING);
+
+    ui.label("Animation speed");
+    ui.add(Slider::new(animation_speed, 0.1..=3.0));
     ui.add_space(EXTRA_SPACING);
 }
 

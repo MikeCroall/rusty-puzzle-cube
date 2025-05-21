@@ -50,6 +50,7 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
 
     let mut render_axes = false;
     let axes = Axes::new(&ctx, 0.05, 2.);
+    let mut animation_speed = 1.0;
 
     let mut undo_queue = CircularBuffer::<UNDO_QUEUE_MAX_SIZE, Rotation>::new();
 
@@ -72,6 +73,7 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
                     &mut tiles,
                     &pick_cube,
                     &mut render_axes,
+                    &mut animation_speed,
                     frame_input.viewport,
                     gui_ctx,
                 );
@@ -99,7 +101,7 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
             &mut undo_queue,
         );
         if updated_cube || cube.is_animating() {
-            cube.progress_animation(frame_input.elapsed_time);
+            cube.progress_animation(animation_speed * frame_input.elapsed_time);
             tiles.set_instances(&cube.as_instances());
         }
         redraw |= needs_redraw_from_mouse | cube.is_animating();
