@@ -1,7 +1,6 @@
 use std::{fmt, mem};
 
 use anyhow::Context;
-use enum_map::{EnumMap, enum_map};
 use itertools::izip;
 
 use self::cubie_face::CubieFace;
@@ -33,8 +32,6 @@ pub mod rotation;
 /// Structs that ensure cubes are constructed with only valid values for side length, depending on the type of cube.
 pub mod side_lengths;
 
-/// An internal type representing a mapping between a face of the cube and the type that holds the cubies currently on that face.
-type SideMap = EnumMap<F, Box<Side>>;
 /// A type that holds the cubies currently on a face.
 pub type Side = Vec<Vec<CubieFace>>;
 
@@ -96,7 +93,12 @@ pub trait PuzzleCube {
 #[derive(PartialEq)]
 pub struct Cube {
     side_length: usize,
-    side_map: SideMap,
+    up: Side,
+    down: Side,
+    front: Side,
+    right: Side,
+    back: Side,
+    left: Side,
 }
 
 impl PuzzleCube for Cube {
@@ -109,7 +111,14 @@ impl PuzzleCube for Cube {
     }
 
     fn side(&self, face: F) -> &Side {
-        &self.side_map[face]
+        match face {
+            F::Up => &self.up,
+            F::Down => &self.down,
+            F::Front => &self.front,
+            F::Right => &self.right,
+            F::Back => &self.back,
+            F::Left => &self.left,
+        }
     }
 
     fn rotate(&mut self, rotation: Rotation) -> anyhow::Result<()> {
@@ -153,14 +162,12 @@ impl Cube {
     pub fn create(side_length: SideLength) -> Self {
         Self {
             side_length: side_length.into(),
-            side_map: enum_map! {
-                F::Up => Box::new(create_side(side_length, &CubieFace::White)),
-                F::Down => Box::new(create_side(side_length, &CubieFace::Yellow)),
-                F::Front => Box::new(create_side(side_length, &CubieFace::Blue)),
-                F::Right => Box::new(create_side(side_length, &CubieFace::Orange)),
-                F::Back => Box::new(create_side(side_length, &CubieFace::Green)),
-                F::Left => Box::new(create_side(side_length, &CubieFace::Red)),
-            },
+            up: create_side(side_length, &CubieFace::White),
+            down: create_side(side_length, &CubieFace::Yellow),
+            front: create_side(side_length, &CubieFace::Blue),
+            right: create_side(side_length, &CubieFace::Orange),
+            back: create_side(side_length, &CubieFace::Green),
+            left: create_side(side_length, &CubieFace::Red),
         }
     }
 
@@ -171,21 +178,31 @@ impl Cube {
     pub fn create_with_unique_characters(side_length: UniqueCharsSideLength) -> Self {
         Self {
             side_length: side_length.into(),
-            side_map: enum_map! {
-                F::Up => Box::new(create_side_with_unique_characters(side_length, &CubieFace::White)),
-                F::Down => Box::new(create_side_with_unique_characters(side_length, &CubieFace::Yellow)),
-                F::Front => Box::new(create_side_with_unique_characters(side_length, &CubieFace::Blue)),
-                F::Right => Box::new(create_side_with_unique_characters(side_length, &CubieFace::Orange)),
-                F::Back => Box::new(create_side_with_unique_characters(side_length, &CubieFace::Green)),
-                F::Left => Box::new(create_side_with_unique_characters(side_length, &CubieFace::Red)),
-            },
+            up: create_side_with_unique_characters(side_length, &CubieFace::White),
+            down: create_side_with_unique_characters(side_length, &CubieFace::Yellow),
+            front: create_side_with_unique_characters(side_length, &CubieFace::Blue),
+            right: create_side_with_unique_characters(side_length, &CubieFace::Orange),
+            back: create_side_with_unique_characters(side_length, &CubieFace::Green),
+            left: create_side_with_unique_characters(side_length, &CubieFace::Red),
+        }
+    }
+
+    fn side_mut(&mut self, face: F) -> &mut Side {
+        match face {
+            F::Up => &mut self.up,
+            F::Down => &mut self.down,
+            F::Front => &mut self.front,
+            F::Right => &mut self.right,
+            F::Back => &mut self.back,
+            F::Left => &mut self.left,
         }
     }
 
     fn rotate_face_90_degrees_clockwise_without_adjacents(&mut self, face: F) {
-        let side: &mut Vec<Vec<CubieFace>> = &mut self.side_map[face];
+        let side_length = self.side_length;
+        let side: &mut Vec<Vec<CubieFace>> = self.side_mut(face);
         side.reverse();
-        for i in 1..self.side_length {
+        for i in 1..side_length {
             let (left, right) = side.split_at_mut(i);
             (0..i).for_each(|j| {
                 mem::swap(&mut left[j][i], &mut right[0][j]);
@@ -200,22 +217,22 @@ impl Cube {
     ) -> anyhow::Result<()> {
         let adjacents = face.adjacent_faces_clockwise();
         let slice_0 = get_clockwise_slice_of_side_setback(
-            &self.side_map[adjacents[0].0],
+            self.side(adjacents[0].0),
             &adjacents[0].1,
             layers_back,
         )?;
         let slice_1 = get_clockwise_slice_of_side_setback(
-            &self.side_map[adjacents[1].0],
+            self.side(adjacents[1].0),
             &adjacents[1].1,
             layers_back,
         )?;
         let slice_2 = get_clockwise_slice_of_side_setback(
-            &self.side_map[adjacents[2].0],
+            self.side(adjacents[2].0),
             &adjacents[2].1,
             layers_back,
         )?;
         let slice_3 = get_clockwise_slice_of_side_setback(
-            &self.side_map[adjacents[3].0],
+            self.side(adjacents[3].0),
             &adjacents[3].1,
             layers_back,
         )?;
@@ -251,17 +268,16 @@ impl Cube {
             IA::OuterStart | IA::InnerLast => unadjusted_values,
         };
 
-        let side = &mut self.side_map[*target_face];
+        let side_length = self.side_length;
+        let side = self.side_mut(*target_face);
         match target_alignment {
             IA::OuterStart | IA::OuterEnd => {
                 let inner_index = if *target_alignment == IA::OuterStart {
                     layers_back
                 } else {
-                    self.side_length
-                        .checked_sub(layers_back + 1)
-                        .with_context(|| {
-                            format!("requested layer index {layers_back} caused underflow")
-                        })?
+                    side_length.checked_sub(layers_back + 1).with_context(|| {
+                        format!("requested layer index {layers_back} caused underflow")
+                    })?
                 };
                 for (outer_index, value) in values.iter().enumerate() {
                     side.get_mut(outer_index)
@@ -275,11 +291,9 @@ impl Cube {
                 let outer_index = if *target_alignment == IA::InnerFirst {
                     layers_back
                 } else {
-                    self.side_length
-                        .checked_sub(layers_back + 1)
-                        .with_context(|| {
-                            format!("requested layer index {layers_back} caused underflow")
-                        })?
+                    side_length.checked_sub(layers_back + 1).with_context(|| {
+                        format!("requested layer index {layers_back} caused underflow")
+                    })?
                 };
                 side.get_mut(outer_index)
                     .with_context(|| {
@@ -294,8 +308,7 @@ impl Cube {
     }
 
     fn write_indented_single_side(&self, f: &mut fmt::Formatter, face: F) -> fmt::Result {
-        let side = self.side_map[face].as_ref();
-        for cubie_row in side {
+        for cubie_row in self.side(face) {
             write!(
                 f,
                 "{}",
@@ -315,10 +328,10 @@ impl Cube {
         face_c: F,
         face_d: F,
     ) -> fmt::Result {
-        let side_a = self.side_map[face_a].iter();
-        let side_b = self.side_map[face_b].iter();
-        let side_c = self.side_map[face_c].iter();
-        let side_d = self.side_map[face_d].iter();
+        let side_a = self.side(face_a).iter();
+        let side_b = self.side(face_b).iter();
+        let side_c = self.side(face_c).iter();
+        let side_d = self.side(face_d).iter();
 
         for (cubie_row_a, cubie_row_b, cubie_row_c, cubie_row_d) in
             izip!(side_a, side_b, side_c, side_d)
@@ -400,32 +413,24 @@ mod impl_for_tests_only {
     impl Cube {
         /// Create a new `Cube` instance with pre-made `Side` instances, specifically for easily defining test cases
         pub fn create_from_sides(
-            top: Side,
-            bottom: Side,
+            up: Side,
+            down: Side,
             front: Side,
             right: Side,
             back: Side,
             left: Side,
         ) -> Self {
-            let side_length = top.len();
-            assert_side_lengths!(side_length, top, bottom, front, right, back, left);
+            let side_length = up.len();
+            assert_side_lengths!(side_length, up, down, front, right, back, left);
 
-            let boxed_top = Box::new(top);
-            let boxed_bottom = Box::new(bottom);
-            let boxed_front = Box::new(front);
-            let boxed_right = Box::new(right);
-            let boxed_back = Box::new(back);
-            let boxed_left = Box::new(left);
             Self {
                 side_length,
-                side_map: enum_map! {
-                    F::Up => boxed_top.clone(),
-                    F::Down => boxed_bottom.clone(),
-                    F::Front => boxed_front.clone(),
-                    F::Right => boxed_right.clone(),
-                    F::Back => boxed_back.clone(),
-                    F::Left => boxed_left.clone(),
-                },
+                up,
+                down,
+                front,
+                right,
+                back,
+                left,
             }
         }
     }
@@ -433,8 +438,6 @@ mod impl_for_tests_only {
 
 #[cfg(test)]
 mod tests {
-    use std::ops::Deref;
-
     use crate::{create_cube_from_sides, create_cube_side};
 
     use super::face::Face;
@@ -465,12 +468,12 @@ mod tests {
     #[test]
     fn test_side_getter() {
         let cube = Cube::default();
-        assert_eq!(cube.side_map[Face::Up].deref(), cube.side(Face::Up));
-        assert_eq!(cube.side_map[Face::Down].deref(), cube.side(Face::Down));
-        assert_eq!(cube.side_map[Face::Front].deref(), cube.side(Face::Front));
-        assert_eq!(cube.side_map[Face::Right].deref(), cube.side(Face::Right));
-        assert_eq!(cube.side_map[Face::Back].deref(), cube.side(Face::Back));
-        assert_eq!(cube.side_map[Face::Left].deref(), cube.side(Face::Left));
+        assert_eq!(&cube.up, cube.side(Face::Up));
+        assert_eq!(&cube.down, cube.side(Face::Down));
+        assert_eq!(&cube.front, cube.side(Face::Front));
+        assert_eq!(&cube.right, cube.side(Face::Right));
+        assert_eq!(&cube.back, cube.side(Face::Back));
+        assert_eq!(&cube.left, cube.side(Face::Left));
     }
 
     #[test]
