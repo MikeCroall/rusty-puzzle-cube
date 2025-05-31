@@ -5,14 +5,14 @@
 #[macro_export]
 macro_rules! create_cube_from_sides {
     (
-        top: $top:expr,
-        bottom: $bottom:expr,
+        up: $up:expr,
+        down: $down:expr,
         front: $front:expr,
         right: $right:expr,
         back: $back:expr,
         left: $left:expr $(,)?
     ) => {
-        Cube::create_from_sides($top, $bottom, $front, $right, $back, $left)
+        Cube::create_from_sides($up, $down, $front, $right, $back, $left)
     };
 }
 

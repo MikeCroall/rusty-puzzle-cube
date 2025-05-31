@@ -481,8 +481,8 @@ mod tests {
         let cube = Cube::default();
 
         let expected_cube = create_cube_from_sides!(
-            top: create_cube_side!(White; 3),
-            bottom: create_cube_side!(Yellow; 3),
+            up: create_cube_side!(White; 3),
+            down: create_cube_side!(Yellow; 3),
             front: create_cube_side!(Blue; 3),
             right: create_cube_side!(Orange; 3),
             back: create_cube_side!(Green; 3),
@@ -497,12 +497,12 @@ mod tests {
         let cube = Cube::create_with_unique_characters(3.try_into().expect("known good value"));
 
         let expected_cube = create_cube_from_sides!(
-            top: vec![
+            up: vec![
                 vec![CubieFace::White(Some('0')), CubieFace::White(Some('1')), CubieFace::White(Some('2'))],
                 vec![CubieFace::White(Some('3')), CubieFace::White(Some('4')), CubieFace::White(Some('5'))],
                 vec![CubieFace::White(Some('6')), CubieFace::White(Some('7')), CubieFace::White(Some('8'))],
             ],
-            bottom: vec![
+            down: vec![
                 vec![CubieFace::Yellow(Some('0')), CubieFace::Yellow(Some('1')), CubieFace::Yellow(Some('2'))],
                 vec![CubieFace::Yellow(Some('3')), CubieFace::Yellow(Some('4')), CubieFace::Yellow(Some('5'))],
                 vec![CubieFace::Yellow(Some('6')), CubieFace::Yellow(Some('7')), CubieFace::Yellow(Some('8'))],
@@ -581,11 +581,11 @@ mod tests {
         cube.rotate(Rotation::anticlockwise(Face::Back))?;
 
         let expected_cube = create_cube_from_sides!(
-            top: vec![
+            up: vec![
                 vec![CubieFace::Red(Some('2')), CubieFace::Red(Some('0'))],
                 vec![CubieFace::White(Some('2')), CubieFace::White(Some('3'))],
             ],
-            bottom: vec![
+            down: vec![
                 vec![CubieFace::Yellow(Some('0')), CubieFace::Yellow(Some('1'))],
                 vec![CubieFace::Orange(Some('3')), CubieFace::Orange(Some('1'))],
             ],
@@ -616,12 +616,12 @@ mod tests {
         cube.rotate(Rotation::clockwise_setback_from(Face::Front, 1))?;
 
         let expected_cube = create_cube_from_sides!(
-            top: vec![
+            up: vec![
                 vec![CubieFace::White(Some('0')), CubieFace::White(Some('1')), CubieFace::White(Some('2'))],
                 vec![CubieFace::Red(Some('7')), CubieFace::Red(Some('4')), CubieFace::Red(Some('1'))],
                 vec![CubieFace::White(Some('6')), CubieFace::White(Some('7')), CubieFace::White(Some('8'))],
             ],
-            bottom: vec![
+            down: vec![
                 vec![CubieFace::Yellow(Some('0')), CubieFace::Yellow(Some('1')), CubieFace::Yellow(Some('2'))],
                 vec![CubieFace::Orange(Some('7')), CubieFace::Orange(Some('4')), CubieFace::Orange(Some('1'))],
                 vec![CubieFace::Yellow(Some('6')), CubieFace::Yellow(Some('7')), CubieFace::Yellow(Some('8'))],

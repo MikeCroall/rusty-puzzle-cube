@@ -266,12 +266,12 @@ Caused by:
         perform_sequence(sequence, &mut cube_under_test).expect("Sequence in test should be valid");
 
         let expected_cube = create_cube_from_sides!(
-            top: create_cube_side!(
+            up: create_cube_side!(
                 Green Orange Green;
                 White White Yellow;
                 Blue Red White;
             ),
-            bottom: create_cube_side!(
+            down: create_cube_side!(
                 Orange Yellow Yellow;
                 White Yellow Blue;
                 White Red Blue;

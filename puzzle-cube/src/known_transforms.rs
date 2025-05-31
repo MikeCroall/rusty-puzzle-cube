@@ -85,12 +85,12 @@ mod tests {
         checkerboard_corners(&mut cube);
 
         let expected_cube = create_cube_from_sides!(
-            top: create_cube_side!(
+            up: create_cube_side!(
                 White Yellow White;
                 Yellow White Yellow;
                 White Yellow White;
             ),
-            bottom: create_cube_side!(
+            down: create_cube_side!(
                 Yellow White Yellow;
                 White Yellow White;
                 Yellow White Yellow;
@@ -129,12 +129,12 @@ mod tests {
         cube_in_cube_in_cube(&mut cube);
 
         let expected_cube = create_cube_from_sides!(
-            top: create_cube_side!(
+            up: create_cube_side!(
                 Blue Blue Blue;
                 Blue White White;
                 Blue White Orange;
             ),
-            bottom: create_cube_side!(
+            down: create_cube_side!(
                 Green Green Green;
                 Yellow Yellow Green;
                 Red Yellow Green;
@@ -173,13 +173,13 @@ mod tests {
         cube_in_cube_in_cube_in_cube(&mut cube);
 
         let expected_cube = create_cube_from_sides!(
-            top: create_cube_side!(
+            up: create_cube_side!(
                 White White White White;
                 White Yellow Yellow Yellow;
                 White Yellow Blue Blue;
                 White Yellow Blue Green;
             ),
-            bottom: create_cube_side!(
+            down: create_cube_side!(
                 Yellow Yellow Yellow Yellow;
                 White White White Yellow;
                 Green Green White Yellow;
