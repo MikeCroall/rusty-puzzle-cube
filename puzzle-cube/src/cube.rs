@@ -12,10 +12,10 @@ use self::helpers::{
 use self::rotation::Rotation;
 use self::side_lengths::{SideLength, UniqueCharsSideLength};
 
+mod helpers;
+
 /// An enum representing clockwise and anti-clockwise directions for a rotation.
 pub mod direction;
-
-mod helpers;
 
 /// An enum representing an individual cubie within one side of the cube, hence it only represents one face of the cubie.
 pub mod cubie_face;
@@ -32,13 +32,13 @@ pub mod rotation;
 /// Structs that ensure cubes are constructed with only valid values for side length, depending on the type of cube.
 pub mod side_lengths;
 
-/// A type that holds the cubies currently on a face.
-pub type Side = Vec<Vec<CubieFace>>;
-
 const HORIZONTAL_PADDING: &str = " ";
 
 /// A representation of a cube that can be manipulated via making pre-defined rotations.
 pub trait PuzzleCube {
+    /// A type that holds the cubies currently on a face.
+    type Side;
+
     /// Returns a new cube of this type in the default state at the given size.
     #[must_use]
     fn recreate_at_size(&self, side_length: SideLength) -> Self;
@@ -49,7 +49,7 @@ pub trait PuzzleCube {
 
     /// Returns a given face of the cube data structure to allow fully custom rendering of the cube.
     #[must_use]
-    fn side(&self, face: F) -> &Side;
+    fn side(&self, face: F) -> &Self::Side;
 
     /// Perform `moves` random single-slice rotations on the cube.
     fn shuffle(&mut self, moves: usize) {
@@ -89,19 +89,24 @@ pub trait PuzzleCube {
     }
 }
 
+/// The `Side` type, for the provided `Cube`'s implementation of `PuzzleCube`, that holds the cubies currently on a face.
+pub type DefaultSide = Vec<Vec<CubieFace>>;
+
 /// An implementer of the `PuzzleCube` trait.
 #[derive(PartialEq)]
 pub struct Cube {
     side_length: usize,
-    up: Side,
-    down: Side,
-    front: Side,
-    right: Side,
-    back: Side,
-    left: Side,
+    up: DefaultSide,
+    down: DefaultSide,
+    front: DefaultSide,
+    right: DefaultSide,
+    back: DefaultSide,
+    left: DefaultSide,
 }
 
 impl PuzzleCube for Cube {
+    type Side = DefaultSide;
+
     fn recreate_at_size(&self, side_length: SideLength) -> Self {
         Cube::create(side_length)
     }
@@ -110,7 +115,7 @@ impl PuzzleCube for Cube {
         self.side_length
     }
 
-    fn side(&self, face: F) -> &Side {
+    fn side(&self, face: F) -> &Self::Side {
         match face {
             F::Up => &self.up,
             F::Down => &self.down,
@@ -187,7 +192,7 @@ impl Cube {
         }
     }
 
-    fn side_mut(&mut self, face: F) -> &mut Side {
+    fn side_mut(&mut self, face: F) -> &mut DefaultSide {
         match face {
             F::Up => &mut self.up,
             F::Down => &mut self.down,
@@ -413,12 +418,12 @@ mod impl_for_tests_only {
     impl Cube {
         /// Create a new `Cube` instance with pre-made `Side` instances, specifically for easily defining test cases
         pub fn create_from_sides(
-            up: Side,
-            down: Side,
-            front: Side,
-            right: Side,
-            back: Side,
-            left: Side,
+            up: DefaultSide,
+            down: DefaultSide,
+            front: DefaultSide,
+            right: DefaultSide,
+            back: DefaultSide,
+            left: DefaultSide,
         ) -> Self {
             let side_length = up.len();
             assert_side_lengths!(side_length, up, down, front, right, back, left);

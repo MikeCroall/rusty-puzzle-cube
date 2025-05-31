@@ -1,5 +1,5 @@
 use rusty_puzzle_cube::cube::{
-    PuzzleCube,
+    DefaultSide, PuzzleCube,
     cubie_face::CubieFace,
     direction::Direction,
     face::{Face, IndexAlignment},
@@ -44,7 +44,7 @@ macro_rules! all_faces_to_instances {
         (transformations, colours)
     }};
     ($cube:ident, $side_length:ident, $rotation_with_anim_transform:ident, $this_face:expr) => {
-        $crate::gui::cube_3d_ext::face_to_instances($this_face, $cube.side($this_face), $side_length, $rotation_with_anim_transform)
+        $crate::gui::cube_3d_ext::face_to_instances($this_face, $cube, $side_length, $rotation_with_anim_transform)
     };
     ($cube:ident, $side_length:ident, $rotation_with_anim_transform:ident, $this_face:expr, $($tail:expr),+ $(,)?) => {{
         let (transforms, colours) = all_faces_to_instances!($cube, $side_length, $rotation_with_anim_transform, $this_face);
@@ -56,7 +56,7 @@ macro_rules! all_faces_to_instances {
     }};
 }
 
-impl<C: PuzzleCube> PuzzleCube3D for AnimCube<C> {
+impl<C: PuzzleCube<Side = DefaultSide>> PuzzleCube3D for AnimCube<C> {
     fn as_instances(&self) -> three_d::Instances {
         let cube = self;
         let side_length = self.side_length();
@@ -118,40 +118,43 @@ fn choose_anim_transform(animation: &AnimationState) -> Option<(Rotation, Matrix
     }
 }
 
-fn face_to_instances(
+fn face_to_instances<C: PuzzleCube<Side = DefaultSide>>(
     face: Face,
-    side: &[Vec<CubieFace>],
+    cube: &C,
     side_length: usize,
     rotation_with_anim_transform: Option<(Rotation, Matrix4<f32>)>,
 ) -> (
     impl Iterator<Item = Matrix4<f32>> + '_,
     impl Iterator<Item = Srgba> + '_,
 ) {
-    let transformations = side
-        .iter()
-        .flatten()
-        .enumerate()
-        .flat_map(move |(i, _cubie_face)| {
-            let y = i / side_length;
-            let x = i % side_length;
+    let transformations =
+        cube.side(face)
+            .iter()
+            .flatten()
+            .enumerate()
+            .flat_map(move |(i, _cubie_face)| {
+                let y = i / side_length;
+                let x = i % side_length;
 
-            let transform = cubie_face_to_transformation(side_length, face, x, y);
-            let backing_transform = cubie_face_to_backing_transformation(side_length, face, x, y);
+                let transform = cubie_face_to_transformation(side_length, face, x, y);
+                let backing_transform =
+                    cubie_face_to_backing_transformation(side_length, face, x, y);
 
-            match rotation_with_anim_transform {
-                Some((rotation, anim_transform))
-                    if should_apply_anim(face, side_length, x, y, rotation) =>
-                {
-                    [
-                        anim_transform * transform,
-                        anim_transform * backing_transform,
-                    ]
+                match rotation_with_anim_transform {
+                    Some((rotation, anim_transform))
+                        if should_apply_anim(face, side_length, x, y, rotation) =>
+                    {
+                        [
+                            anim_transform * transform,
+                            anim_transform * backing_transform,
+                        ]
+                    }
+                    _ => [transform, backing_transform],
                 }
-                _ => [transform, backing_transform],
-            }
-        });
+            });
 
-    let colours = side
+    let colours = cube
+        .side(face)
         .iter()
         .flatten()
         .flat_map(|cubie_face| [cubie_face_to_colour(*cubie_face), Srgba::BLACK]);

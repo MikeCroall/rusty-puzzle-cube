@@ -1,12 +1,12 @@
 use rusty_puzzle_cube::cube::{
-    PuzzleCube, Side, face::Face, rotation::Rotation, side_lengths::SideLength,
+    DefaultSide, PuzzleCube, face::Face, rotation::Rotation, side_lengths::SideLength,
 };
 use std::fmt::Display;
 use tracing::debug;
 
 const ANIM_SPEED: f32 = 0.005;
 
-pub(crate) struct AnimCube<C: PuzzleCube> {
+pub(crate) struct AnimCube<C: PuzzleCube<Side = DefaultSide>> {
     cube: C,
     pub(crate) animation: AnimationState,
 }
@@ -84,7 +84,7 @@ impl AnimationState {
     }
 }
 
-impl<C: PuzzleCube> AnimCube<C> {
+impl<C: PuzzleCube<Side = DefaultSide>> AnimCube<C> {
     pub fn new(cube: C) -> Self {
         AnimCube {
             cube,
@@ -106,7 +106,9 @@ impl<C: PuzzleCube> AnimCube<C> {
     }
 }
 
-impl<C: PuzzleCube> PuzzleCube for AnimCube<C> {
+impl<C: PuzzleCube<Side = DefaultSide>> PuzzleCube for AnimCube<C> {
+    type Side = C::Side;
+
     fn recreate_at_size(&self, side_length: SideLength) -> Self {
         let cube = self.cube.recreate_at_size(side_length);
         AnimCube {
@@ -119,7 +121,7 @@ impl<C: PuzzleCube> PuzzleCube for AnimCube<C> {
         self.cube.side_length()
     }
 
-    fn side(&self, face: Face) -> &Side {
+    fn side(&self, face: Face) -> &Self::Side {
         self.cube.side(face)
     }
 
@@ -148,7 +150,7 @@ impl<C: PuzzleCube> PuzzleCube for AnimCube<C> {
     }
 }
 
-impl<C: PuzzleCube + Display> Display for AnimCube<C> {
+impl<C: PuzzleCube<Side = DefaultSide> + Display> Display for AnimCube<C> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.cube)
     }

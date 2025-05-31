@@ -3,7 +3,7 @@ use std::vec;
 use anyhow::Context;
 
 use super::{
-    Side,
+    DefaultSide,
     cubie_face::CubieFace,
     face::IndexAlignment as IA,
     side_lengths::{SideLength, UniqueCharsSideLength},
@@ -12,7 +12,7 @@ use super::{
 pub(super) fn create_side(
     side_length: SideLength,
     colour_variant_creator: &dyn Fn(Option<char>) -> CubieFace,
-) -> Side {
+) -> DefaultSide {
     let side_length = side_length.into();
     let mut side = vec![];
     for _outer in 0..side_length {
@@ -25,7 +25,7 @@ pub(super) fn create_side(
 pub(super) fn create_side_with_unique_characters(
     side_length: UniqueCharsSideLength,
     colour_variant_creator: &dyn Fn(Option<char>) -> CubieFace,
-) -> Side {
+) -> DefaultSide {
     let side_length = side_length.into();
     let mut side = vec![];
     for outer in 0..side_length {
@@ -42,7 +42,7 @@ pub(super) fn create_side_with_unique_characters(
 }
 
 pub(super) fn get_clockwise_slice_of_side_setback(
-    side: &Side,
+    side: &DefaultSide,
     index_alignment: &IA,
     layers_back: usize,
 ) -> anyhow::Result<Vec<CubieFace>> {
