@@ -1,4 +1,6 @@
-use rusty_puzzle_cube::cube::{PuzzleCube, SideMap, rotation::Rotation, side_lengths::SideLength};
+use rusty_puzzle_cube::cube::{
+    PuzzleCube, Side, face::Face, rotation::Rotation, side_lengths::SideLength,
+};
 use std::fmt::Display;
 use tracing::debug;
 
@@ -117,8 +119,8 @@ impl<C: PuzzleCube> PuzzleCube for AnimCube<C> {
         self.cube.side_length()
     }
 
-    fn side_map(&self) -> &SideMap {
-        self.cube.side_map()
+    fn side(&self, face: Face) -> &Side {
+        self.cube.side(face)
     }
 
     fn rotate(&mut self, rotation: Rotation) -> anyhow::Result<()> {

@@ -22,9 +22,9 @@ pub(crate) trait PuzzleCube3D: PuzzleCube {
 }
 
 macro_rules! all_faces_to_instances {
-    ($side_map:ident, $side_length:ident, $rotation_with_anim_transform:ident) => {{
+    ($cube:ident, $side_length:ident, $rotation_with_anim_transform:ident) => {{
         let (iter_transformations, iter_colours) = all_faces_to_instances!(
-            $side_map,
+            $cube,
             $side_length,
             $rotation_with_anim_transform,
             Face::Front,
@@ -43,12 +43,12 @@ macro_rules! all_faces_to_instances {
 
         (transformations, colours)
     }};
-    ($side_map:ident, $side_length:ident, $rotation_with_anim_transform:ident, $this_face:expr) => {
-        $crate::gui::cube_3d_ext::face_to_instances($this_face, &$side_map[$this_face], $side_length, $rotation_with_anim_transform)
+    ($cube:ident, $side_length:ident, $rotation_with_anim_transform:ident, $this_face:expr) => {
+        $crate::gui::cube_3d_ext::face_to_instances($this_face, $cube.side($this_face), $side_length, $rotation_with_anim_transform)
     };
-    ($side_map:ident, $side_length:ident, $rotation_with_anim_transform:ident, $this_face:expr, $($tail:expr),+ $(,)?) => {{
-        let (transforms, colours) = all_faces_to_instances!($side_map, $side_length, $rotation_with_anim_transform, $this_face);
-        let (tail_transforms, tail_colours) = all_faces_to_instances!($side_map, $side_length, $rotation_with_anim_transform, $($tail),*);
+    ($cube:ident, $side_length:ident, $rotation_with_anim_transform:ident, $this_face:expr, $($tail:expr),+ $(,)?) => {{
+        let (transforms, colours) = all_faces_to_instances!($cube, $side_length, $rotation_with_anim_transform, $this_face);
+        let (tail_transforms, tail_colours) = all_faces_to_instances!($cube, $side_length, $rotation_with_anim_transform, $($tail),*);
         (
             transforms.chain(tail_transforms),
             colours.chain(tail_colours),
@@ -58,11 +58,11 @@ macro_rules! all_faces_to_instances {
 
 impl<C: PuzzleCube> PuzzleCube3D for AnimCube<C> {
     fn as_instances(&self) -> three_d::Instances {
+        let cube = self;
         let side_length = self.side_length();
-        let side_map = self.side_map();
         let rotation_with_anim_transform = choose_anim_transform(&self.animation);
         let (transformations, colours) =
-            all_faces_to_instances!(side_map, side_length, rotation_with_anim_transform);
+            all_faces_to_instances!(cube, side_length, rotation_with_anim_transform);
         Instances {
             transformations,
             colors: Some(colours),

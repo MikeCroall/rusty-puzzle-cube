@@ -33,9 +33,10 @@ pub mod rotation;
 /// Structs that ensure cubes are constructed with only valid values for side length, depending on the type of cube.
 pub mod side_lengths;
 
-/// A type representing a mapping between a face of the cube and the type that holds the cubies currently on that face.
-pub type SideMap = EnumMap<F, Box<Side>>;
-type Side = Vec<Vec<CubieFace>>;
+/// An internal type representing a mapping between a face of the cube and the type that holds the cubies currently on that face.
+type SideMap = EnumMap<F, Box<Side>>;
+/// A type that holds the cubies currently on a face.
+pub type Side = Vec<Vec<CubieFace>>;
 
 const HORIZONTAL_PADDING: &str = " ";
 
@@ -49,9 +50,9 @@ pub trait PuzzleCube {
     #[must_use]
     fn side_length(&self) -> usize;
 
-    /// Returns the mapping of faces of the cube to the data structure of cubies on those faces to allow fully custom rendering of the cube.
+    /// Returns a given face of the cube data structure to allow fully custom rendering of the cube.
     #[must_use]
-    fn side_map(&self) -> &SideMap;
+    fn side(&self, face: F) -> &Side;
 
     /// Perform `moves` random single-slice rotations on the cube.
     fn shuffle(&mut self, moves: usize) {
@@ -107,8 +108,8 @@ impl PuzzleCube for Cube {
         self.side_length
     }
 
-    fn side_map(&self) -> &SideMap {
-        &self.side_map
+    fn side(&self, face: F) -> &Side {
+        &self.side_map[face]
     }
 
     fn rotate(&mut self, rotation: Rotation) -> anyhow::Result<()> {
@@ -432,6 +433,8 @@ mod impl_for_tests_only {
 
 #[cfg(test)]
 mod tests {
+    use std::ops::Deref;
+
     use crate::{create_cube_from_sides, create_cube_side};
 
     use super::face::Face;
@@ -460,9 +463,14 @@ mod tests {
     }
 
     #[test]
-    fn test_side_map_getter() {
+    fn test_side_getter() {
         let cube = Cube::default();
-        assert_eq!(&cube.side_map, cube.side_map());
+        assert_eq!(cube.side_map[Face::Up].deref(), cube.side(Face::Up));
+        assert_eq!(cube.side_map[Face::Down].deref(), cube.side(Face::Down));
+        assert_eq!(cube.side_map[Face::Front].deref(), cube.side(Face::Front));
+        assert_eq!(cube.side_map[Face::Right].deref(), cube.side(Face::Right));
+        assert_eq!(cube.side_map[Face::Back].deref(), cube.side(Face::Back));
+        assert_eq!(cube.side_map[Face::Left].deref(), cube.side(Face::Left));
     }
 
     #[test]
