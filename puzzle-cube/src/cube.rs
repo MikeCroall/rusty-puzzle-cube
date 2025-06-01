@@ -143,6 +143,22 @@ impl PuzzleCube for Cube {
                 relative_to,
                 layer,
                 direction: Direction::Clockwise,
+                multilayer: true,
+            } => {
+                for active_layer in 0..=layer {
+                    self.rotate(Rotation {
+                        relative_to,
+                        layer: active_layer,
+                        direction: Direction::Clockwise,
+                        multilayer: false,
+                    })?;
+                }
+            }
+            Rotation {
+                relative_to,
+                layer,
+                direction: Direction::Clockwise,
+                ..
             } => {
                 if layer == 0 {
                     self.rotate_face_90_degrees_clockwise_without_adjacents(relative_to);
@@ -650,6 +666,47 @@ mod tests {
                 vec![CubieFace::Red(Some('0')), CubieFace::Yellow(Some('3')), CubieFace::Red(Some('2'))],
                 vec![CubieFace::Red(Some('3')), CubieFace::Yellow(Some('4')), CubieFace::Red(Some('5'))],
                 vec![CubieFace::Red(Some('6')), CubieFace::Yellow(Some('5')), CubieFace::Red(Some('8'))],
+            ],
+        );
+        assert_eq!(expected_cube, cube);
+        Ok(())
+    }
+
+    #[test]
+    fn rotate_multilayer() -> anyhow::Result<()> {
+        let mut cube = Cube::create_with_unique_characters(3.try_into()?);
+        cube.rotate(Rotation::clockwise_multilayer_from(Face::Front, 1))?;
+
+        let expected_cube = create_cube_from_sides!(
+            up: vec![
+                vec![CubieFace::White(Some('0')), CubieFace::White(Some('1')), CubieFace::White(Some('2'))],
+                vec![CubieFace::Red(Some('7')), CubieFace::Red(Some('4')), CubieFace::Red(Some('1'))],
+                vec![CubieFace::Red(Some('8')), CubieFace::Red(Some('5')), CubieFace::Red(Some('2'))],
+            ],
+            down: vec![
+                vec![CubieFace::Orange(Some('6')), CubieFace::Orange(Some('3')), CubieFace::Orange(Some('0'))],
+                vec![CubieFace::Orange(Some('7')), CubieFace::Orange(Some('4')), CubieFace::Orange(Some('1'))],
+                vec![CubieFace::Yellow(Some('6')), CubieFace::Yellow(Some('7')), CubieFace::Yellow(Some('8'))],
+            ],
+            front: vec![
+                vec![CubieFace::Blue(Some('6')), CubieFace::Blue(Some('3')), CubieFace::Blue(Some('0'))],
+                vec![CubieFace::Blue(Some('7')), CubieFace::Blue(Some('4')), CubieFace::Blue(Some('1'))],
+                vec![CubieFace::Blue(Some('8')), CubieFace::Blue(Some('5')), CubieFace::Blue(Some('2'))],
+            ],
+            right: vec![
+                vec![CubieFace::White(Some('6')), CubieFace::White(Some('3')), CubieFace::Orange(Some('2'))],
+                vec![CubieFace::White(Some('7')), CubieFace::White(Some('4')), CubieFace::Orange(Some('5'))],
+                vec![CubieFace::White(Some('8')), CubieFace::White(Some('5')), CubieFace::Orange(Some('8'))],
+            ],
+            back: vec![
+                vec![CubieFace::Green(Some('0')), CubieFace::Green(Some('1')), CubieFace::Green(Some('2'))],
+                vec![CubieFace::Green(Some('3')), CubieFace::Green(Some('4')), CubieFace::Green(Some('5'))],
+                vec![CubieFace::Green(Some('6')), CubieFace::Green(Some('7')), CubieFace::Green(Some('8'))],
+            ],
+            left: vec![
+                vec![CubieFace::Red(Some('0')), CubieFace::Yellow(Some('3')), CubieFace::Yellow(Some('0'))],
+                vec![CubieFace::Red(Some('3')), CubieFace::Yellow(Some('4')), CubieFace::Yellow(Some('1'))],
+                vec![CubieFace::Red(Some('6')), CubieFace::Yellow(Some('5')), CubieFace::Yellow(Some('2'))],
             ],
         );
         assert_eq!(expected_cube, cube);

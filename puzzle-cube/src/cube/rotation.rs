@@ -13,14 +13,24 @@ pub struct Rotation {
     pub relative_to: Face,
 
     /// How far 'in' to the cube the layer to rotate is.
+    ///
     /// A value of 0 would be the face itself, which would not technically be a slice twist, but a whole face twist. This is a special case.
+    ///
     /// A value of 1 would be the layer immediately behind the face layer.
+    ///
     /// A value of 2 would be the layer behind layer 1, further away from the `relative_to` face.
+    ///
     /// A value equal to side length - 1 would be the opposite face, which is also a special case.
     pub layer: usize,
 
     /// Whether the rotation should be clockwise, using the reference frame of the face `relative_to`.
     pub direction: Direction,
+
+    /// If true, the semantics of this rotation is to rotate all layers between the face layer at `relative_to` and the internal `layer` (how far 'in' to the cube), inclusive,
+    /// as opposed to only the specified `layer`.
+    ///
+    /// This is useful for creating rotations from notation, where e.g. 3Rw means rotate `Direction::Clockwise` relative to `Face::Right`, on layers `0`, `1`, and `2`.
+    pub multilayer: bool,
 }
 
 impl Rotation {
@@ -31,6 +41,7 @@ impl Rotation {
             relative_to: face,
             layer: 0,
             direction: Direction::Clockwise,
+            multilayer: false,
         }
     }
 
@@ -41,6 +52,7 @@ impl Rotation {
             relative_to: face,
             layer: 0,
             direction: Direction::Anticlockwise,
+            multilayer: false,
         }
     }
 
@@ -51,6 +63,7 @@ impl Rotation {
             relative_to,
             layer: layers_back,
             direction: Direction::Clockwise,
+            multilayer: false,
         }
     }
 
@@ -61,6 +74,29 @@ impl Rotation {
             relative_to,
             layer: layers_back,
             direction: Direction::Anticlockwise,
+            multilayer: false,
+        }
+    }
+
+    /// Construct a `Rotation` that will turn multiple layers of the cube 90° clockwise from the perspective of looking directly at `face` from outside the cube. The layers start from the `face` layer and extend into the cube as far as `layers_back` where `face` itself is 0, the layer immediately behind it is 1, and so on.
+    #[must_use]
+    pub fn clockwise_multilayer_from(relative_to: Face, layers_back: usize) -> Rotation {
+        Rotation {
+            relative_to,
+            layer: layers_back,
+            direction: Direction::Clockwise,
+            multilayer: true,
+        }
+    }
+
+    /// Construct a `Rotation` that will turn multiple layers of the cube 90° anticlockwise from the perspective of looking directly at `face` from outside the cube. The layers start from the `face` layer and extend into the cube as far as `layers_back` where `face` itself is 0, the layer immediately behind it is 1, and so on.
+    #[must_use]
+    pub fn anticlockwise_multilayer_from(relative_to: Face, layers_back: usize) -> Rotation {
+        Rotation {
+            relative_to,
+            layer: layers_back,
+            direction: Direction::Anticlockwise,
+            multilayer: true,
         }
     }
 
@@ -76,10 +112,12 @@ impl Rotation {
         } else {
             Direction::Anticlockwise
         };
+        let multilayer = rng.random_bool(0.333);
         Rotation {
             relative_to,
             layer,
             direction,
+            multilayer,
         }
     }
 
@@ -90,7 +128,7 @@ impl Rotation {
     #[must_use]
     pub fn normalise(self, side_length: usize) -> Rotation {
         let furthest_layer = side_length - 1;
-        if self.layer == furthest_layer && side_length > 1 {
+        if side_length > 1 && !self.multilayer && self.layer == furthest_layer {
             self.as_layer_0_of_opposite_face()
         } else {
             self
@@ -102,6 +140,7 @@ impl Rotation {
             relative_to: !self.relative_to,
             layer: 0,
             direction: !self.direction,
+            multilayer: false,
         }
     }
 }
@@ -129,6 +168,7 @@ mod tests {
             relative_to: Face::Back,
             layer: 0,
             direction: Direction::Clockwise,
+            multilayer: false,
         };
         assert_eq!(expected_output, cw);
     }
@@ -140,6 +180,7 @@ mod tests {
             relative_to: Face::Right,
             layer: 0,
             direction: Direction::Anticlockwise,
+            multilayer: false,
         };
         assert_eq!(expected_output, acw);
     }
@@ -151,6 +192,7 @@ mod tests {
             relative_to: Face::Down,
             layer: 3,
             direction: Direction::Clockwise,
+            multilayer: false,
         };
         assert_eq!(expected_output, cwsb);
     }
@@ -162,6 +204,31 @@ mod tests {
             relative_to: Face::Front,
             layer: 4,
             direction: Direction::Anticlockwise,
+            multilayer: false,
+        };
+        assert_eq!(expected_output, acwsb);
+    }
+
+    #[test]
+    fn clockwise_multilayer_from() {
+        let cwsb = Rotation::clockwise_multilayer_from(Face::Down, 3);
+        let expected_output = Rotation {
+            relative_to: Face::Down,
+            layer: 3,
+            direction: Direction::Clockwise,
+            multilayer: true,
+        };
+        assert_eq!(expected_output, cwsb);
+    }
+
+    #[test]
+    fn anticlockwise_multilayer_from() {
+        let acwsb = Rotation::anticlockwise_multilayer_from(Face::Front, 4);
+        let expected_output = Rotation {
+            relative_to: Face::Front,
+            layer: 4,
+            direction: Direction::Anticlockwise,
+            multilayer: true,
         };
         assert_eq!(expected_output, acwsb);
     }
@@ -172,9 +239,22 @@ mod tests {
             relative_to: Face::Up,
             layer: 7,
             direction: Direction::Clockwise,
+            multilayer: false,
         };
         let expected_output = input;
         assert_eq!(expected_output, input.normalise(9));
+    }
+
+    #[test]
+    fn normalise_already_normalised_only_because_multilayer() {
+        let input = Rotation {
+            relative_to: Face::Up,
+            layer: 7,
+            direction: Direction::Clockwise,
+            multilayer: true,
+        };
+        let expected_output = input;
+        assert_eq!(expected_output, input.normalise(8));
     }
 
     #[test]
@@ -183,11 +263,13 @@ mod tests {
             relative_to: Face::Up,
             layer: 7,
             direction: Direction::Clockwise,
+            multilayer: false,
         };
         let expected_output = Rotation {
             relative_to: Face::Down,
             layer: 0,
             direction: Direction::Anticlockwise,
+            multilayer: false,
         };
         assert_eq!(expected_output, input.normalise(8));
     }
@@ -198,11 +280,30 @@ mod tests {
             relative_to: Face::Up,
             layer: 7,
             direction: Direction::Clockwise,
+            multilayer: false,
         };
         let expected_output = Rotation {
             relative_to: Face::Down,
             layer: 0,
             direction: Direction::Anticlockwise,
+            multilayer: false,
+        };
+        assert_eq!(expected_output, input.as_layer_0_of_opposite_face());
+    }
+
+    #[test]
+    fn as_layer_0_of_opposite_face_multilayer() {
+        let input = Rotation {
+            relative_to: Face::Up,
+            layer: 7,
+            direction: Direction::Clockwise,
+            multilayer: true,
+        };
+        let expected_output = Rotation {
+            relative_to: Face::Down,
+            layer: 0,
+            direction: Direction::Anticlockwise,
+            multilayer: false,
         };
         assert_eq!(expected_output, input.as_layer_0_of_opposite_face());
     }
@@ -215,11 +316,13 @@ mod tests {
             relative_to,
             layer,
             direction: Direction::Anticlockwise,
+            multilayer: true,
         };
         let expected_output = Rotation {
             relative_to,
             layer,
             direction: Direction::Clockwise,
+            multilayer: true,
         };
         assert_eq!(expected_output, !input);
     }
