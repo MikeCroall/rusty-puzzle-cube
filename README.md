@@ -9,12 +9,15 @@
 
 ### Puzzle Cube GUI Crate
 
-Experimental, still a work in progress, etc.
+Still a work in progress. Screenshots and/or demo gif may not be fully up to date with the latest features.
 
 ![Demo video](img/demo-3D.gif)
 
 ![Cube in Cube in Cube 3D 4x4x4 screenshot](img/4x4x4-3D-cicic.png)
+
 ![Shuffled 3D 10x10x10 screenshot](img/10x10x10-3D-shuffle.png)
+
+![Known transforms dropdown screenshot](img/known-transforms-dropdown.png)
 
 #### Controls
 
@@ -42,9 +45,11 @@ Then visit `http://localhost:8080`
 
 ### Puzzle Cube Lib Crate Demo
 
-Demos of basic notation being parsed and applied to a newly created cube
+Demos of known transforms and basic notation being parsed and applied to a newly created cube
 
-#### Cube in Cube in Cube
+#### Notation Parsed: Cube in Cube in Cube
+
+Also available as `KnownTransform::NestedCube3x3x3`
 
 ```rust
 let mut cube = Cube::create(3.try_into()?);
@@ -55,12 +60,11 @@ print!("{cube}");
 
 ![Cube in Cube in Cube output screenshot](img/cube-in-cube-in-cube.png)
 
-#### Checkerboard Corners
+#### Known Transform: Checkerboard Corners
 
 ```rust
 let mut cube = Cube::create(3.try_into()?);
-let notation = "R2 L2 F2 B2 U2 D2";
-perform_notation(notation, &mut cube)?;
+KnownTransform::CheckerboardCorners3x3x3.perform_instantly(&mut cube);
 print!("{cube}");
 ```
 
