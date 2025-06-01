@@ -10,7 +10,7 @@ pub(super) fn initial_window() -> Result<Window, three_d::WindowError> {
 pub(super) fn initial_camera(viewport: Viewport) -> Camera {
     Camera::new_perspective(
         viewport,
-        vec3(3.0, 3.0, 6.0),
+        vec3(2.0, 2.5, 4.0),
         vec3(0.0, 0.0, 0.0),
         vec3(0.0, 1.0, 0.0),
         degrees(45.0),
