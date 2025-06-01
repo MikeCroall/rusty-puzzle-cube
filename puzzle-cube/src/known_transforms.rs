@@ -7,6 +7,7 @@ use strum::EnumIter;
 
 const CHECKERBOARD_CORNERS_3X3X3: &str = "R2 L2 F2 B2 U2 D2";
 const CROSSES_3X3X3: &str = "R2 L' D F2 R' D' R' L U' D R D B2 R' U D2";
+const SPOTS_3X3X3: &str = "U D' R L' F B' U D'";
 const NESTED_CUBE_3X3X3: &str = "F R' U' F' U L' B U' B2 U' F' R' B R2 F U L U";
 const NESTED_CUBE_4X4X4: &str = "B' Lw2 L2 Rw2 R2 U2 Lw2 L2 Rw2 R2 B F2 R U' R U R2 U R2 F' U F' Uw Lw Uw' Fw2 Dw Rw' Uw Fw Dw2 Rw2";
 
@@ -22,6 +23,11 @@ pub enum KnownTransform {
     ///
     /// This can be applied to any cube size, but will pretend the cube is a 3x3x3.
     Crosses3x3x3,
+
+    /// Puts spots in the middle of each side of a 3x3x3 cube.
+    ///
+    /// This can be applied to any cube size, but will pretend the cube is a 3x3x3.
+    Spots3x3x3,
 
     /// Turns a 3x3x3 cube into 3 nested cubes (cube within a cube within a cube).
     ///
@@ -41,6 +47,7 @@ impl KnownTransform {
         match self {
             KnownTransform::CheckerboardCorners3x3x3 => "Checkerboard Corners",
             KnownTransform::Crosses3x3x3 => "Crosses",
+            KnownTransform::Spots3x3x3 => "Spots",
             KnownTransform::NestedCube3x3x3 => "Nested Cubes (3)",
             KnownTransform::NestedCube4x4x4 => "Nested Cubes (4)",
         }
@@ -51,7 +58,7 @@ impl KnownTransform {
     #[must_use]
     pub fn description(&self) -> String {
         match self {
-            KnownTransform::CheckerboardCorners3x3x3 | KnownTransform::Crosses3x3x3 | KnownTransform::NestedCube3x3x3 => {
+            KnownTransform::CheckerboardCorners3x3x3 | KnownTransform::Crosses3x3x3 | KnownTransform::Spots3x3x3 | KnownTransform::NestedCube3x3x3 => {
                 "Designed for 3x3x3 cubes, can run on any size cube"
             }
             KnownTransform::NestedCube4x4x4 => {
@@ -76,6 +83,7 @@ impl KnownTransform {
         match self {
             KnownTransform::CheckerboardCorners3x3x3 => CHECKERBOARD_CORNERS_3X3X3,
             KnownTransform::Crosses3x3x3 => CROSSES_3X3X3,
+            KnownTransform::Spots3x3x3 => SPOTS_3X3X3,
             KnownTransform::NestedCube3x3x3 => NESTED_CUBE_3X3X3,
             KnownTransform::NestedCube4x4x4 => NESTED_CUBE_4X4X4,
         }
