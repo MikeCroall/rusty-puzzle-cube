@@ -10,6 +10,7 @@ const CROSSES_3X3X3: &str = "R2 L' D F2 R' D' R' L U' D R D B2 R' U D2";
 const SPOTS_3X3X3: &str = "U D' R L' F B' U D'";
 const NESTED_CUBE_3X3X3: &str = "F R' U' F' U L' B U' B2 U' F' R' B R2 F U L U";
 const NESTED_CUBE_4X4X4: &str = "B' Lw2 L2 Rw2 R2 U2 Lw2 L2 Rw2 R2 B F2 R U' R U R2 U R2 F' U F' Uw Lw Uw' Fw2 Dw Rw' Uw Fw Dw2 Rw2";
+const SPIRAL_3X3X3: &str = "L' B' D U R U' R' D2 R2 D L D' L' R' F U";
 
 /// A collection of pre-defined sequences that can be applied to `PuzzleCube` instances to achieve visually pleasing patterns.
 #[derive(Debug, Copy, Clone, PartialEq, EnumIter)]
@@ -38,6 +39,11 @@ pub enum KnownTransform {
     ///
     /// This can be applied to any cube that is 4x4x4 or larger, but will not have the desired effect on cubes larger than 4x4x4.
     NestedCube4x4x4,
+
+    /// Puts spirals on each face of a 3x3x3 cube.
+    ///
+    /// This can be applied to any cube size, but will pretend the cube is a 3x3x3.
+    Spiral3x3x3,
 }
 
 impl KnownTransform {
@@ -50,6 +56,7 @@ impl KnownTransform {
             KnownTransform::Spots3x3x3 => "Spots",
             KnownTransform::NestedCube3x3x3 => "Nested Cubes (3)",
             KnownTransform::NestedCube4x4x4 => "Nested Cubes (4)",
+            KnownTransform::Spiral3x3x3 => "Spiral",
         }
         .to_owned()
     }
@@ -58,7 +65,7 @@ impl KnownTransform {
     #[must_use]
     pub fn description(&self) -> String {
         match self {
-            KnownTransform::CheckerboardCorners3x3x3 | KnownTransform::Crosses3x3x3 | KnownTransform::Spots3x3x3 | KnownTransform::NestedCube3x3x3 => {
+            KnownTransform::CheckerboardCorners3x3x3 | KnownTransform::Crosses3x3x3 | KnownTransform::Spots3x3x3 | KnownTransform::NestedCube3x3x3 | KnownTransform::Spiral3x3x3 => {
                 "Designed for 3x3x3 cubes, can run on any size cube"
             }
             KnownTransform::NestedCube4x4x4 => {
@@ -86,6 +93,7 @@ impl KnownTransform {
             KnownTransform::Spots3x3x3 => SPOTS_3X3X3,
             KnownTransform::NestedCube3x3x3 => NESTED_CUBE_3X3X3,
             KnownTransform::NestedCube4x4x4 => NESTED_CUBE_4X4X4,
+            KnownTransform::Spiral3x3x3 => SPIRAL_3X3X3,
         }
         .to_owned()
     }
