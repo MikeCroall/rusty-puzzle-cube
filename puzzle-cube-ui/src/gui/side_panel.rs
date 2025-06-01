@@ -2,256 +2,252 @@ use std::fmt::Display;
 
 use circular_buffer::CircularBuffer;
 use rusty_puzzle_cube::{
-    cube::{PuzzleCube, rotation::Rotation, side_lengths::SideLength},
+    cube::{rotation::Rotation, side_lengths::SideLength},
     known_transforms::KnownTransform,
 };
 use strum::IntoEnumIterator;
 use three_d::{
-    Camera, ColorMaterial, Gm, InstancedMesh, Mesh, Viewport,
+    Camera, ColorMaterial, Gm, InstancedMesh, Viewport,
     egui::{
         Button, Checkbox, ComboBox, Rgba, ScrollArea, SidePanel, Slider, Ui, special_emojis::GITHUB,
     },
 };
-use tracing::{error, info};
 
-#[cfg(not(target_arch = "wasm32"))]
-use super::file_io::save_as_image;
 use super::{cube_3d_ext::PuzzleCube3D, defaults::initial_camera};
 
 const MIN_CUBE_SIZE: usize = 1;
 const MAX_CUBE_SIZE: usize = 100;
 const EXTRA_SPACING: f32 = 10.;
 
-#[expect(clippy::too_many_arguments)]
-pub(super) fn draw_side_panel<C: PuzzleCube3D + Display, const UNDO_SIZE: usize>(
-    side_length: &mut usize,
-    cube: &mut C,
-    undo_queue: &mut CircularBuffer<UNDO_SIZE, Rotation>,
-    selected_transform: &mut KnownTransform,
-    camera: &mut Camera,
-    lock_upright: &mut bool,
-    ctx: &three_d::Context,
-    tiles: &mut Gm<InstancedMesh, ColorMaterial>,
-    pick_cube: &Gm<Mesh, ColorMaterial>,
-    render_axes: &mut bool,
-    animation_speed: &mut f64,
-    viewport: Viewport,
-    gui_ctx: &three_d::egui::Context,
-) {
-    SidePanel::left("side_panel").show(gui_ctx, |ui| {
-        ScrollArea::vertical().show(ui, |ui| {
-            header(ui);
-            ui.separator();
+#[must_use = "You should call .show_ui()"]
+pub(crate) struct CubeSidePanel<'a, C: PuzzleCube3D + Display, const UNDO_SIZE: usize> {
+    pub(crate) side_length: &'a mut usize,
+    pub(crate) cube: &'a mut C,
+    pub(crate) undo_queue: &'a mut CircularBuffer<UNDO_SIZE, Rotation>,
+    pub(crate) selected_transform: &'a mut KnownTransform,
+    pub(crate) camera: &'a mut Camera,
+    pub(crate) lock_upright: &'a mut bool,
+    pub(crate) tiles: &'a mut Gm<InstancedMesh, ColorMaterial>,
+    pub(crate) render_axes: &'a mut bool,
+    pub(crate) animation_speed: &'a mut f64,
+    pub(crate) viewport: Viewport,
+    pub(crate) gui_ctx: &'a three_d::egui::Context,
 
-            initialise_cube(ui, side_length, cube, undo_queue, tiles);
-            ui.separator();
-
-            control_cube(ui, cube, undo_queue, selected_transform, tiles);
-            ui.separator();
-
-            control_camera(
-                ui,
-                camera,
-                lock_upright,
-                viewport,
-                render_axes,
-                animation_speed,
-            );
-            ui.separator();
-
-            #[cfg(not(target_arch = "wasm32"))]
-            debug_ctrls(ui, &*cube, ctx, viewport, &*camera, &*tiles, pick_cube);
-        })
-    });
+    #[cfg(not(target_arch = "wasm32"))]
+    pub(crate) ctx: &'a three_d::Context,
+    #[cfg(not(target_arch = "wasm32"))]
+    pub(crate) pick_cube: &'a Gm<three_d::Mesh, ColorMaterial>,
 }
 
-fn header(ui: &mut Ui) {
-    ui.heading("Rusty Puzzle Cube");
-    ui.label("By Mike Croall");
-    ui.hyperlink_to(
-        format!("{GITHUB} on GitHub"),
-        "https://github.com/MikeCroall/rusty-puzzle-cube/",
-    );
-    ui.add_space(EXTRA_SPACING);
-}
+impl<C: PuzzleCube3D + Display, const UNDO_SIZE: usize> CubeSidePanel<'_, C, UNDO_SIZE> {
+    pub(crate) fn show_ui(mut self) {
+        SidePanel::left("side_panel").show(self.gui_ctx, |ui| {
+            ScrollArea::vertical().show(ui, |ui| {
+                Self::header(ui);
+                ui.separator();
 
-fn initialise_cube<C: PuzzleCube3D, const UNDO_SIZE: usize>(
-    ui: &mut Ui,
-    side_length: &mut usize,
-    cube: &mut C,
-    undo_queue: &mut CircularBuffer<UNDO_SIZE, Rotation>,
-    instanced_square: &mut Gm<InstancedMesh, ColorMaterial>,
-) {
-    ui.add_space(EXTRA_SPACING);
-    ui.heading("Initialise Cube");
-    ui.add_space(EXTRA_SPACING);
+                self.initialise_cube(ui);
+                ui.separator();
 
-    let prev_side_length = *side_length;
-    ui.add(Slider::new(side_length, MIN_CUBE_SIZE..=MAX_CUBE_SIZE));
-    ui.add_space(EXTRA_SPACING);
+                self.control_cube(ui);
+                ui.separator();
 
-    if ui
-        .button(format!(
-            "New {prev_side_length}x{prev_side_length}x{prev_side_length} Cube"
-        ))
-        .clicked()
-    {
-        let side_length = SideLength::try_from(*side_length)
-            .expect("UI is configured to only allow selecting valid side length values");
-        *cube = cube.recreate_at_size(side_length);
-        undo_queue.clear();
-        instanced_square.set_instances(&cube.as_instances());
+                self.control_camera(ui);
+                ui.separator();
+
+                #[cfg(not(target_arch = "wasm32"))]
+                self.debug_ctrls(ui);
+            })
+        });
     }
-    ui.add_space(EXTRA_SPACING);
-}
 
-fn control_cube<C: PuzzleCube3D, const UNDO_SIZE: usize>(
-    ui: &mut Ui,
-    cube: &mut C,
-    undo_queue: &mut CircularBuffer<UNDO_SIZE, Rotation>,
-    selected_transform: &mut KnownTransform,
-    instanced_square: &mut Gm<InstancedMesh, ColorMaterial>,
-) {
-    ui.add_space(EXTRA_SPACING);
-    ui.heading("Cube Controls");
-    ui.label("Click and drag directly on the cube to make a rotation");
-    ui.label("You must only drag across one face of the cube");
-    ui.label(
-        "Dragging to another face, diagonally, or for a very small distance will be cancelled",
-    );
-    ui.add_space(EXTRA_SPACING);
+    fn header(ui: &mut Ui) {
+        ui.heading("Rusty Puzzle Cube");
+        ui.label("By Mike Croall");
+        ui.hyperlink_to(
+            format!("{GITHUB} on GitHub"),
+            "https://github.com/MikeCroall/rusty-puzzle-cube/",
+        );
+        ui.add_space(EXTRA_SPACING);
+    }
 
-    ui.horizontal(|ui| {
-        let undo_text = if undo_queue.is_full() {
-            format!("Undo ({}, at limit)", undo_queue.len())
-        } else if !undo_queue.is_empty() {
-            format!("Undo ({})", undo_queue.len())
-        } else {
-            "Undo".to_owned()
-        };
-        if ui
-            .add_enabled(!undo_queue.is_empty(), Button::new(undo_text))
-            .clicked()
-        {
-            let to_undo = undo_queue
-                .pop_back()
-                .expect("button disabled if queue empty");
-            cube.rotate(!to_undo)
-                .expect("moves on queue must be reversible");
-        }
+    fn initialise_cube(&mut self, ui: &mut Ui) {
+        ui.add_space(EXTRA_SPACING);
+        ui.heading("Initialise Cube");
+        ui.add_space(EXTRA_SPACING);
+
+        let prev_side_length = *self.side_length;
+        ui.add(Slider::new(self.side_length, MIN_CUBE_SIZE..=MAX_CUBE_SIZE));
+        ui.add_space(EXTRA_SPACING);
 
         if ui
-            .add_enabled(!undo_queue.is_empty(), Button::new("Undo all"))
+            .button(format!(
+                "New {prev_side_length}x{prev_side_length}x{prev_side_length} Cube"
+            ))
             .clicked()
         {
-            let moves = undo_queue.to_vec();
-            undo_queue.clear();
-            cube.rotate_seq(moves.into_iter().rev().map(|r| !r))
-                .expect("moves on queue must be reversible");
+            let side_length = SideLength::try_from(*self.side_length)
+                .expect("UI is configured to only allow selecting valid side length values");
+            *self.cube = self.cube.recreate_at_size(side_length);
+            self.undo_queue.clear();
+            self.tiles.set_instances(&self.cube.as_instances());
         }
-    });
-    ui.add_space(EXTRA_SPACING);
-
-    let shuffle_moves = cube.side_length() * 10;
-    if ui
-        .button(format!("Shuffle ({shuffle_moves} moves)"))
-        .clicked()
-    {
-        cube.shuffle(shuffle_moves);
-        cube.cancel_animation();
-        undo_queue.clear();
-        instanced_square.set_instances(&cube.as_instances());
+        ui.add_space(EXTRA_SPACING);
     }
-    ui.add_space(EXTRA_SPACING);
 
-    ui.label("Pre-defined transforms");
-    ComboBox::from_label("")
-        .selected_text(selected_transform.name())
-        .show_ui(ui, |ui| {
-            for known_transform in KnownTransform::iter() {
-                ui.selectable_value(selected_transform, known_transform, known_transform.name());
+    fn control_cube(&mut self, ui: &mut Ui) {
+        ui.add_space(EXTRA_SPACING);
+        ui.heading("Cube Controls");
+        ui.label("Click and drag directly on the cube to make a rotation");
+        ui.label("You must only drag across one face of the cube");
+        ui.label(
+            "Dragging to another face, diagonally, or for a very small distance will be cancelled",
+        );
+        ui.add_space(EXTRA_SPACING);
+
+        ui.horizontal(|ui| {
+            let undo_text = if self.undo_queue.is_full() {
+                format!("Undo ({}, at limit)", self.undo_queue.len())
+            } else if !self.undo_queue.is_empty() {
+                format!("Undo ({})", self.undo_queue.len())
+            } else {
+                "Undo".to_owned()
+            };
+            if ui
+                .add_enabled(!self.undo_queue.is_empty(), Button::new(undo_text))
+                .clicked()
+            {
+                let to_undo = self
+                    .undo_queue
+                    .pop_back()
+                    .expect("button disabled if queue empty");
+                self.cube
+                    .rotate(!to_undo)
+                    .expect("moves on queue must be reversible");
+            }
+
+            if ui
+                .add_enabled(!self.undo_queue.is_empty(), Button::new("Undo all"))
+                .clicked()
+            {
+                let moves = self.undo_queue.to_vec();
+                self.undo_queue.clear();
+                self.cube
+                    .rotate_seq(moves.into_iter().rev().map(|r| !r))
+                    .expect("moves on queue must be reversible");
             }
         });
-    ui.label(selected_transform.description());
-    ui.add_space(EXTRA_SPACING);
+        ui.add_space(EXTRA_SPACING);
 
-    if ui
-        .add_enabled(
-            selected_transform
-                .minimum_side_length()
-                .is_none_or(|min_len| cube.side_length() >= min_len),
-            Button::new("Perform transform"),
-        )
-        .clicked()
-    {
-        selected_transform.perform_seq(cube);
+        let shuffle_moves = self.cube.side_length() * 10;
+        if ui
+            .button(format!("Shuffle ({shuffle_moves} moves)"))
+            .clicked()
+        {
+            self.cube.shuffle(shuffle_moves);
+            self.cube.cancel_animation();
+            self.undo_queue.clear();
+            self.tiles.set_instances(&self.cube.as_instances());
+        }
+        ui.add_space(EXTRA_SPACING);
+
+        ui.label("Pre-defined transforms");
+        ComboBox::from_label("")
+            .selected_text(self.selected_transform.name())
+            .show_ui(ui, |ui| {
+                for known_transform in KnownTransform::iter() {
+                    ui.selectable_value(
+                        self.selected_transform,
+                        known_transform,
+                        known_transform.name(),
+                    );
+                }
+            });
+        ui.label(self.selected_transform.description());
+        ui.add_space(EXTRA_SPACING);
+
+        if ui
+            .add_enabled(
+                self.selected_transform
+                    .minimum_side_length()
+                    .is_none_or(|min_len| self.cube.side_length() >= min_len),
+                Button::new("Perform transform"),
+            )
+            .clicked()
+        {
+            self.selected_transform.perform_seq(self.cube);
+        }
+        ui.add_space(EXTRA_SPACING);
     }
-    ui.add_space(EXTRA_SPACING);
-}
 
-fn control_camera(
-    ui: &mut Ui,
-    camera: &mut Camera,
-    lock_upright: &mut bool,
-    viewport: Viewport,
-    render_axes: &mut bool,
-    animation_speed: &mut f64,
-) {
-    ui.add_space(EXTRA_SPACING);
-    ui.heading("Camera and Rendering");
-    ui.label("The camera can be moved with a click and drag starting from the blank space around the cube, or by dragging from one face to any other face or empty space");
-    ui.add_space(EXTRA_SPACING);
+    fn control_camera(&mut self, ui: &mut Ui) {
+        ui.add_space(EXTRA_SPACING);
+        ui.heading("Camera and Rendering");
+        ui.label("The camera can be moved with a click and drag starting from the blank space around the cube, or by dragging from one face to any other face or empty space");
+        ui.add_space(EXTRA_SPACING);
 
-    if ui.button("Reset camera").clicked() {
-        *camera = initial_camera(viewport);
+        if ui.button("Reset camera").clicked() {
+            *self.camera = initial_camera(self.viewport);
+        }
+        ui.add_space(EXTRA_SPACING);
+
+        if ui
+            .add(Checkbox::new(self.lock_upright, "Lock upright"))
+            .changed()
+            && *self.lock_upright
+        {
+            *self.camera = initial_camera(self.viewport);
+        }
+        ui.add_space(EXTRA_SPACING);
+
+        ui.add(Checkbox::new(self.render_axes, "Show axes"));
+        if *self.render_axes {
+            ui.colored_label(Rgba::from_rgb(0.15, 0.15, 1.), "F is the blue axis");
+            ui.colored_label(Rgba::RED, "R is the red axis");
+            ui.colored_label(Rgba::GREEN, "U is the green axis");
+        }
+        ui.add_space(EXTRA_SPACING);
+
+        ui.label("Animation speed");
+        ui.add(Slider::new(self.animation_speed, 0.1..=3.0));
+        ui.add_space(EXTRA_SPACING);
     }
-    ui.add_space(EXTRA_SPACING);
-
-    if ui
-        .add(Checkbox::new(lock_upright, "Lock upright"))
-        .changed()
-        && *lock_upright
-    {
-        *camera = initial_camera(viewport);
-    }
-    ui.add_space(EXTRA_SPACING);
-
-    ui.add(Checkbox::new(render_axes, "Show axes"));
-    if *render_axes {
-        ui.colored_label(Rgba::from_rgb(0.15, 0.15, 1.), "F is the blue axis");
-        ui.colored_label(Rgba::RED, "R is the red axis");
-        ui.colored_label(Rgba::GREEN, "U is the green axis");
-    }
-    ui.add_space(EXTRA_SPACING);
-
-    ui.label("Animation speed");
-    ui.add(Slider::new(animation_speed, 0.1..=3.0));
-    ui.add_space(EXTRA_SPACING);
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-fn debug_ctrls<C: PuzzleCube + Display>(
-    ui: &mut Ui,
-    cube: &C,
-    ctx: &three_d::Context,
-    viewport: Viewport,
-    camera: &Camera,
-    tiles: &Gm<InstancedMesh, ColorMaterial>,
-    inner_cube: &Gm<Mesh, ColorMaterial>,
-) {
-    ui.add_space(EXTRA_SPACING);
-    ui.heading("Debug");
-    ui.add_space(EXTRA_SPACING);
+mod non_wasm {
+    use std::fmt::Display;
 
-    if ui.button("Print cube to terminal").clicked() {
-        info!("\n{cube}");
-    }
-    ui.add_space(EXTRA_SPACING);
+    use crate::gui::{cube_3d_ext::PuzzleCube3D, file_io};
 
-    if ui.button("Save as image").clicked() {
-        if let Err(e) = save_as_image(ctx, viewport, camera, tiles, inner_cube) {
-            error!("Could not save image file: {}", e);
+    use super::{CubeSidePanel, EXTRA_SPACING};
+
+    use three_d::egui::Ui;
+    use tracing::{error, info};
+
+    impl<C: PuzzleCube3D + Display, const UNDO_SIZE: usize> CubeSidePanel<'_, C, UNDO_SIZE> {
+        pub(crate) fn debug_ctrls(&mut self, ui: &mut Ui) {
+            ui.add_space(EXTRA_SPACING);
+            ui.heading("Debug");
+            ui.add_space(EXTRA_SPACING);
+
+            if ui.button("Print cube to terminal").clicked() {
+                info!("\n{}", self.cube);
+            }
+            ui.add_space(EXTRA_SPACING);
+
+            if ui.button("Save as image").clicked() {
+                if let Err(e) = file_io::save_as_image(
+                    self.ctx,
+                    self.viewport,
+                    self.camera,
+                    self.tiles,
+                    self.pick_cube,
+                ) {
+                    error!("Could not save image file: {}", e);
+                }
+            }
+            ui.add_space(EXTRA_SPACING);
         }
     }
-    ui.add_space(EXTRA_SPACING);
 }

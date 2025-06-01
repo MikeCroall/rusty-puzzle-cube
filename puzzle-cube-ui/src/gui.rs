@@ -3,11 +3,12 @@ mod colours;
 mod cube_3d_ext;
 mod decided_move;
 mod defaults;
-#[cfg(not(target_arch = "wasm32"))]
-mod file_io;
 mod mouse_control;
 mod side_panel;
 mod transforms;
+
+#[cfg(not(target_arch = "wasm32"))]
+mod file_io;
 
 use crate::gui::{
     cube_3d_ext::PuzzleCube3D,
@@ -21,7 +22,7 @@ use rusty_puzzle_cube::{
     cube::{Cube, rotation::Rotation},
     known_transforms::KnownTransform,
 };
-use side_panel::draw_side_panel;
+use side_panel::CubeSidePanel;
 use three_d::{
     Axes, ColorMaterial, Context, CpuMesh, Cull, FrameOutput, GUI, Gm, InstancedMesh, Mesh, Object,
     RenderStates, Srgba, Viewport,
@@ -64,21 +65,24 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
             frame_input.viewport,
             frame_input.device_pixel_ratio,
             |gui_ctx| {
-                draw_side_panel(
-                    &mut side_length,
-                    &mut cube,
-                    &mut undo_queue,
-                    &mut selected_transform,
-                    &mut camera,
-                    &mut lock_upright,
-                    &ctx,
-                    &mut tiles,
-                    &pick_cube,
-                    &mut render_axes,
-                    &mut animation_speed,
-                    frame_input.viewport,
+                CubeSidePanel {
+                    side_length: &mut side_length,
+                    cube: &mut cube,
+                    undo_queue: &mut undo_queue,
+                    selected_transform: &mut selected_transform,
+                    camera: &mut camera,
+                    lock_upright: &mut lock_upright,
+                    tiles: &mut tiles,
+                    render_axes: &mut render_axes,
+                    animation_speed: &mut animation_speed,
+                    viewport: frame_input.viewport,
                     gui_ctx,
-                );
+                    #[cfg(not(target_arch = "wasm32"))]
+                    ctx: &ctx,
+                    #[cfg(not(target_arch = "wasm32"))]
+                    pick_cube: &pick_cube,
+                }
+                .show_ui();
                 panel_width = gui_ctx.used_rect().width();
             },
         );
