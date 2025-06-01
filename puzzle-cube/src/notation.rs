@@ -63,12 +63,16 @@ fn parse_token(original_token: &str) -> anyhow::Result<Vec<Rotation>> {
         .with_context(|| format!("Failed parsing token: [{original_token}]"))?
         .or(if multi_layer { Some(2) } else { None });
 
-    let mut rotations = vec![rotation(face, anticlockwise)];
+    let mut rotations = vec![];
 
     if let Some(multi_layer_limit) = multi_layer_count {
-        for layer in 1..multi_layer_limit {
-            rotations.push(rotation_inner(face, anticlockwise, layer));
-        }
+        rotations.push(rotation_multilayer(
+            face,
+            anticlockwise,
+            multi_layer_limit - 1,
+        ));
+    } else {
+        rotations.push(rotation(face, anticlockwise));
     }
 
     if turn_twice {
@@ -118,11 +122,11 @@ fn rotation(face: Face, anticlockwise: bool) -> Rotation {
     }
 }
 
-fn rotation_inner(face: Face, anticlockwise: bool, layer: usize) -> Rotation {
+fn rotation_multilayer(face: Face, anticlockwise: bool, layer: usize) -> Rotation {
     if anticlockwise {
-        Rotation::anticlockwise_setback_from(face, layer)
+        Rotation::anticlockwise_multilayer_from(face, layer)
     } else {
-        Rotation::clockwise_setback_from(face, layer)
+        Rotation::clockwise_multilayer_from(face, layer)
     }
 }
 
@@ -334,10 +338,7 @@ Caused by:
         let rotations = parse_token("Uw")?;
 
         assert_eq!(
-            vec![
-                Rotation::clockwise(Face::Up),
-                Rotation::clockwise_setback_from(Face::Up, 1),
-            ],
+            vec![Rotation::clockwise_multilayer_from(Face::Up, 1),],
             rotations
         );
 
@@ -349,11 +350,7 @@ Caused by:
         let rotations = parse_token("3Fw")?;
 
         assert_eq!(
-            vec![
-                Rotation::clockwise(Face::Front),
-                Rotation::clockwise_setback_from(Face::Front, 1),
-                Rotation::clockwise_setback_from(Face::Front, 2),
-            ],
+            vec![Rotation::clockwise_multilayer_from(Face::Front, 2),],
             rotations
         );
 
@@ -365,11 +362,7 @@ Caused by:
         let rotations = parse_token("3Rw'")?;
 
         assert_eq!(
-            vec![
-                Rotation::anticlockwise(Face::Right),
-                Rotation::anticlockwise_setback_from(Face::Right, 1),
-                Rotation::anticlockwise_setback_from(Face::Right, 2),
-            ],
+            vec![Rotation::anticlockwise_multilayer_from(Face::Right, 2),],
             rotations
         );
 
@@ -382,12 +375,8 @@ Caused by:
 
         assert_eq!(
             vec![
-                Rotation::clockwise(Face::Back),
-                Rotation::clockwise_setback_from(Face::Back, 1),
-                Rotation::clockwise_setback_from(Face::Back, 2),
-                Rotation::clockwise(Face::Back),
-                Rotation::clockwise_setback_from(Face::Back, 1),
-                Rotation::clockwise_setback_from(Face::Back, 2),
+                Rotation::clockwise_multilayer_from(Face::Back, 2),
+                Rotation::clockwise_multilayer_from(Face::Back, 2),
             ],
             rotations
         );
