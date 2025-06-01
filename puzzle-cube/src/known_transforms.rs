@@ -14,15 +14,15 @@ const NESTED_CUBE_4X4X4: &str = "B' Lw2 L2 Rw2 R2 U2 Lw2 L2 Rw2 R2 B F2 R U' R U
 pub enum KnownTransform {
     /// Turns a 3x3x3 cube into a checkerboard.
     ///
-    /// This is safe to apply to any cube size, but will pretend the cube is a 3x3x3.
+    /// This can be applied to any cube size, but will pretend the cube is a 3x3x3.
     CheckerboardCorners3x3x3,
     /// Turns a 3x3x3 cube into 3 nested cubes (cube within a cube within a cube).
     ///
-    /// This is safe to apply to any cube size, but will pretend the cube is a 3x3x3.
+    /// This can be applied to any cube size, but will pretend the cube is a 3x3x3.
     NestedCube3x3x3,
     /// Turns a 4x4x4 cube into 4 nested cubes (cube within a cube within a cube within a cube).
     ///
-    /// This is safe to apply to any cube that is 4x4x4 or larger, but will not have the desired effect on cubes larger than 4x4x4.
+    /// This can be applied to any cube that is 4x4x4 or larger, but will not have the desired effect on cubes larger than 4x4x4.
     NestedCube4x4x4,
 }
 
@@ -43,10 +43,10 @@ impl KnownTransform {
     pub fn description(&self) -> String {
         match self {
             KnownTransform::CheckerboardCorners3x3x3 | KnownTransform::NestedCube3x3x3 => {
-                "Designed for 3x3x3 cubes, safe to run on any size cube"
+                "Designed for 3x3x3 cubes, can run on any size cube"
             }
             KnownTransform::NestedCube4x4x4 => {
-                "Designed for 4x4x4 cubes, safe to run on any cube 4x4x4 or larger, but will not have the desired effect on cubes larger than 4x4x4"
+                "Designed for 4x4x4 cubes, can run on any cube 4x4x4 or larger, but will not have the desired effect on cubes larger than 4x4x4"
             }
         }
         .to_owned()
