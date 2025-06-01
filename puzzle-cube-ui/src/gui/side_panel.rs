@@ -3,13 +3,14 @@ use std::fmt::Display;
 use circular_buffer::CircularBuffer;
 use rusty_puzzle_cube::{
     cube::{PuzzleCube, rotation::Rotation, side_lengths::SideLength},
-    known_transforms::{
-        checkerboard_corners_seq, cube_in_cube_in_cube_in_cube_seq, cube_in_cube_in_cube_seq,
-    },
+    known_transforms::KnownTransform,
 };
+use strum::IntoEnumIterator;
 use three_d::{
     Camera, ColorMaterial, Gm, InstancedMesh, Mesh, Viewport,
-    egui::{Button, Checkbox, Rgba, ScrollArea, SidePanel, Slider, Ui, special_emojis::GITHUB},
+    egui::{
+        Button, Checkbox, ComboBox, Rgba, ScrollArea, SidePanel, Slider, Ui, special_emojis::GITHUB,
+    },
 };
 use tracing::{error, info};
 
@@ -26,6 +27,7 @@ pub(super) fn draw_side_panel<C: PuzzleCube3D + Display, const UNDO_SIZE: usize>
     side_length: &mut usize,
     cube: &mut C,
     undo_queue: &mut CircularBuffer<UNDO_SIZE, Rotation>,
+    selected_transform: &mut KnownTransform,
     camera: &mut Camera,
     lock_upright: &mut bool,
     ctx: &three_d::Context,
@@ -44,7 +46,7 @@ pub(super) fn draw_side_panel<C: PuzzleCube3D + Display, const UNDO_SIZE: usize>
             initialise_cube(ui, side_length, cube, undo_queue, tiles);
             ui.separator();
 
-            control_cube(ui, cube, undo_queue, tiles);
+            control_cube(ui, cube, undo_queue, selected_transform, tiles);
             ui.separator();
 
             control_camera(
@@ -107,6 +109,7 @@ fn control_cube<C: PuzzleCube3D, const UNDO_SIZE: usize>(
     ui: &mut Ui,
     cube: &mut C,
     undo_queue: &mut CircularBuffer<UNDO_SIZE, Rotation>,
+    selected_transform: &mut KnownTransform,
     instanced_square: &mut Gm<InstancedMesh, ColorMaterial>,
 ) {
     ui.add_space(EXTRA_SPACING);
@@ -161,34 +164,28 @@ fn control_cube<C: PuzzleCube3D, const UNDO_SIZE: usize>(
     }
     ui.add_space(EXTRA_SPACING);
 
-    ui.collapsing("Pre-defined sequences", |ui| {
-        if ui
-            .button("Checkerboard corners 3x3x3\nsafe for any")
-            .clicked()
-        {
-            cube.rotate_seq(checkerboard_corners_seq())
-                .expect("known transforms must be valid, sequence is valid on any cube");
-        }
-        ui.add_space(EXTRA_SPACING);
+    ui.label("Pre-defined transforms");
+    ComboBox::from_label("")
+        .selected_text(selected_transform.name())
+        .show_ui(ui, |ui| {
+            for known_transform in KnownTransform::iter() {
+                ui.selectable_value(selected_transform, known_transform, known_transform.name());
+            }
+        });
+    ui.label(selected_transform.description());
+    ui.add_space(EXTRA_SPACING);
 
-        if ui.button("Nested cubes 3x3x3\nsafe for any").clicked() {
-            cube.rotate_seq(cube_in_cube_in_cube_seq())
-                .expect("known transforms must be valid, sequence is valid on any cube");
-        }
-        ui.add_space(EXTRA_SPACING);
-
-        if ui
-            .add_enabled(
-                cube.side_length() >= 4,
-                Button::new("Nested cubes 4x4x4\nsafe but wrong above"),
-            )
-            .clicked()
-        {
-            cube.rotate_seq(cube_in_cube_in_cube_in_cube_seq()).expect(
-                "known transforms must be valid, button is disabled if side length too small",
-            );
-        }
-    });
+    if ui
+        .add_enabled(
+            selected_transform
+                .minimum_side_length()
+                .is_none_or(|min_len| cube.side_length() >= min_len),
+            Button::new("Perform transform"),
+        )
+        .clicked()
+    {
+        selected_transform.perform_seq(cube);
+    }
     ui.add_space(EXTRA_SPACING);
 }
 

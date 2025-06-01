@@ -48,8 +48,8 @@ Demos of basic notation being parsed and applied to a newly created cube
 
 ```rust
 let mut cube = Cube::create(3.try_into()?);
-let sequence = "F R' U' F' U L' B U' B2 U' F' R' B R2 F U L U";
-perform_sequence(sequence, &mut cube)?;
+let notation = "F R' U' F' U L' B U' B2 U' F' R' B R2 F U L U";
+perform_notation(notation, &mut cube)?;
 print!("{cube}");
 ```
 
@@ -59,8 +59,8 @@ print!("{cube}");
 
 ```rust
 let mut cube = Cube::create(3.try_into()?);
-let sequence = "R2 L2 F2 B2 U2 D2";
-perform_sequence(sequence, &mut cube)?;
+let notation = "R2 L2 F2 B2 U2 D2";
+perform_notation(notation, &mut cube)?;
 print!("{cube}");
 ```
 

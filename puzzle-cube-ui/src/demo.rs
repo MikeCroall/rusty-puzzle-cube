@@ -4,7 +4,7 @@ use std::time::Instant;
 
 use rusty_puzzle_cube::{
     cube::{Cube, PuzzleCube as _, face::Face, rotation::Rotation},
-    known_transforms::{checkerboard_corners, cube_in_cube_in_cube},
+    known_transforms::KnownTransform,
 };
 use tracing::error;
 
@@ -121,7 +121,7 @@ fn demo_checkerboard() -> anyhow::Result<()> {
     demo_timing!(
         "Demo of checkerboard pattern",
         (|cube| -> anyhow::Result<()> {
-            checkerboard_corners(cube);
+            KnownTransform::CheckerboardCorners3x3x3.perform_instantly(cube);
             Ok(())
         })
     )
@@ -131,7 +131,7 @@ fn demo_cube_in_cube_in_cube() -> anyhow::Result<()> {
     demo_timing!(
         "Demo of cube in cube in cube",
         (|cube| -> anyhow::Result<()> {
-            cube_in_cube_in_cube(cube);
+            KnownTransform::NestedCube3x3x3.perform_instantly(cube);
             Ok(())
         })
     )

@@ -10,23 +10,38 @@ const CHAR_FOR_MULTI_LAYER: char = 'w';
 /// Parse a sequence of moves.
 ///
 /// # Errors
-/// Will return an Err variant when the input `token_sequence` is malformed.
-pub fn parse_sequence(token_sequence: &str) -> anyhow::Result<Vec<Rotation>> {
-    token_sequence
+/// Will return an `Err` variant when the input `notation` is malformed.
+pub fn parse_sequence(notation: &str) -> anyhow::Result<Vec<Rotation>> {
+    notation
         .split_whitespace()
         .map(parse_token)
         .flatten_ok()
         .collect()
 }
 
-/// Parse a sequence of moves and perform them on a provided Cube instance.
+/// Perform a sequence of moves on a provided `PuzzleCube` instance.
 ///
 /// # Errors
-/// Will return an Err variant when the input `token_sequence` is malformed or references layers of the cube that the given cube does not have e.g. 4Uw on a 3x3x3 cube.
-pub fn perform_sequence<C: PuzzleCube>(token_sequence: &str, cube: &mut C) -> anyhow::Result<()> {
-    parse_sequence(token_sequence)?
+/// Will return an `Err` variant when the input `sequence` references layers of the cube that the given cube does not have e.g. 4Uw on a 3x3x3 cube.
+///
+/// If the given moves are intended for a larger cube than provided but only references faces directly and not inner layers, or only references inner layers that are still within the size of the cube, these will be applied without error.
+pub fn perform_sequence<C: PuzzleCube>(
+    sequence: Vec<Rotation>,
+    cube: &mut C,
+) -> anyhow::Result<()> {
+    sequence
         .into_iter()
         .try_for_each(|rotation_result| cube.rotate(rotation_result))
+}
+
+/// Parse a sequence of moves and perform them on a provided `PuzzleCube` instance.
+///
+/// # Errors
+/// Will return an `Err` variant when the input `notation` is malformed or references layers of the cube that the given cube does not have e.g. 4Uw on a 3x3x3 cube.
+///
+/// If the given moves are intended for a larger cube than provided but only references faces directly and not inner layers, or only references inner layers that are still within the size of the cube, these will be applied without error.
+pub fn perform_notation<C: PuzzleCube>(notation: &str, cube: &mut C) -> anyhow::Result<()> {
+    perform_sequence(parse_sequence(notation)?, cube)
 }
 
 fn parse_token(original_token: &str) -> anyhow::Result<Vec<Rotation>> {
@@ -137,7 +152,7 @@ mod tests {
                 #[test]
                 fn $name() {
                     let mut cube = Cube::create(3.try_into().expect("known good value"));
-                    let error = perform_sequence($value, &mut cube).unwrap_err();
+                    let error = perform_notation($value, &mut cube).unwrap_err();
                     assert!(format!("{:?}", error).starts_with($err_text));
                 }
             )*
@@ -241,11 +256,11 @@ Caused by:
     );
 
     #[test]
-    fn test_perform_3x3_sequence() -> anyhow::Result<()> {
+    fn test_perform_3x3_notation() -> anyhow::Result<()> {
         let mut cube_under_test = Cube::create(3.try_into().expect("known good value"));
         let mut control_cube = Cube::create(3.try_into().expect("known good value"));
 
-        perform_sequence("F2 R U' F", &mut cube_under_test)
+        perform_notation("F2 R U' F", &mut cube_under_test)
             .expect("Sequence in test should be valid");
 
         control_cube.rotate(Rotation::clockwise(Face::Front))?;
@@ -259,11 +274,11 @@ Caused by:
     }
 
     #[test]
-    fn test_perform_3x3_sequence_every_token_once() {
+    fn test_perform_3x3_notation_every_token_once() {
         let sequence = "F R U L B D F2 R2 U2 L2 B2 D2 F' R' U' L' B' D'";
         let mut cube_under_test = Cube::create(3.try_into().expect("known good value"));
 
-        perform_sequence(sequence, &mut cube_under_test).expect("Sequence in test should be valid");
+        perform_notation(sequence, &mut cube_under_test).expect("Sequence in test should be valid");
 
         let expected_cube = create_cube_from_sides!(
             up: create_cube_side!(
@@ -302,11 +317,11 @@ Caused by:
     }
 
     #[test]
-    fn test_perform_sequence_cube_too_small() {
+    fn test_perform_notation_cube_too_small() {
         let sequence = "4Uw";
         let mut cube = Cube::create(3.try_into().expect("known good value"));
 
-        let error = perform_sequence(sequence, &mut cube).unwrap_err();
+        let error = perform_notation(sequence, &mut cube).unwrap_err();
 
         assert!(
             format!("{:?}", error)

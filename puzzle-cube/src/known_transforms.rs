@@ -1,69 +1,102 @@
-use crate::{cube::rotation::Rotation, notation::parse_sequence};
+use crate::{
+    cube::{PuzzleCube, rotation::Rotation},
+    notation::{parse_sequence, perform_sequence},
+};
 
-use super::{cube::PuzzleCube, notation::perform_sequence};
+use strum::EnumIter;
 
 const CHECKERBOARD_CORNERS: &str = "R2 L2 F2 B2 U2 D2";
-
-/// Get a sequence of moves that will turn a 3x3x3 cube into a checkerboard.
-///
-/// Can be used on cubes larger than 3x3x3, but only the faces themselves will be rotated. Inner rows/columns will not be rotated.
-/// # Panics
-/// Will panic if local variable `sequence` contains a malformed sequence. This would be considered a bug.
-#[must_use]
-pub fn checkerboard_corners_seq() -> Vec<Rotation> {
-    parse_sequence(CHECKERBOARD_CORNERS).expect("Known transforms must use valid sequences")
-}
-
-/// Apply a sequence to the provided cube that will turn a 3x3x3 cube into a checkerboard.
-///
-/// Can be used on cubes larger than 3x3x3, but only the faces themselves will be rotated. Inner rows/columns will not be rotated.
-/// # Panics
-/// Will panic if local variable `sequence` contains a malformed sequence. This would be considered a bug.
-pub fn checkerboard_corners<C: PuzzleCube>(cube: &mut C) {
-    perform_sequence(CHECKERBOARD_CORNERS, cube)
-        .expect("Known transforms must use valid sequences");
-}
-
 const NESTED_CUBE_3X3X3: &str = "F R' U' F' U L' B U' B2 U' F' R' B R2 F U L U";
-
-/// Get a sequence of moves that will turn a 3x3x3 cube into a cube within a cube within a cube pattern.
-///
-/// Can be used on cubes larger than 3x3x3, but only the faces themselves will be rotated. Inner rows/columns will not be rotated.
-/// # Panics
-/// Will panic if local variable `sequence` contains a malformed sequence. This would be considered a bug.
-#[must_use]
-pub fn cube_in_cube_in_cube_seq() -> Vec<Rotation> {
-    parse_sequence(NESTED_CUBE_3X3X3).expect("Known transforms must use valid sequences")
-}
-
-/// Apply a sequence to the provided cube that will turn a 3x3x3 cube into a cube within a cube within a cube pattern.
-///
-/// Can be used on cubes larger than 3x3x3, but only the faces themselves will be rotated. Inner rows/columns will not be rotated.
-/// # Panics
-/// Will panic if local variable `sequence` contains a malformed sequence. This would be considered a bug.
-pub fn cube_in_cube_in_cube<C: PuzzleCube>(cube: &mut C) {
-    perform_sequence(NESTED_CUBE_3X3X3, cube).expect("Known transforms must use valid sequences");
-}
-
 const NESTED_CUBE_4X4X4: &str = "B' Lw2 L2 Rw2 R2 U2 Lw2 L2 Rw2 R2 B F2 R U' R U R2 U R2 F' U F' Uw Lw Uw' Fw2 Dw Rw' Uw Fw Dw2 Rw2";
 
-/// Get a sequence of moves that will turn a 4x4x4 cube into a cube within a cube within a cube pattern.
-///
-/// Will not produce the desired result on cubes larger than 4x4x4. Stick to the 3x3x3 version for larger cubes, as that is compatible.
-/// # Panics
-/// Will panic if local variable `sequence` contains a malformed sequence. This would be considered a bug.
-#[must_use]
-pub fn cube_in_cube_in_cube_in_cube_seq() -> Vec<Rotation> {
-    parse_sequence(NESTED_CUBE_4X4X4).expect("Known transforms must use valid sequences")
+/// A collection of pre-defined sequences that can be applied to `PuzzleCube` instances to achieve visually pleasing patterns.
+#[derive(Debug, Copy, Clone, PartialEq, EnumIter)]
+pub enum KnownTransform {
+    /// Turns a 3x3x3 cube into a checkerboard.
+    ///
+    /// This is safe to apply to any cube size, but will pretend the cube is a 3x3x3.
+    CheckerboardCorners3x3x3,
+    /// Turns a 3x3x3 cube into 3 nested cubes (cube within a cube within a cube).
+    ///
+    /// This is safe to apply to any cube size, but will pretend the cube is a 3x3x3.
+    NestedCube3x3x3,
+    /// Turns a 4x4x4 cube into 4 nested cubes (cube within a cube within a cube within a cube).
+    ///
+    /// This is safe to apply to any cube that is 4x4x4 or larger, but will not have the desired effect on cubes larger than 4x4x4.
+    NestedCube4x4x4,
 }
 
-/// Apply a sequence to the provided cube that will turn a 4x4x4 cube into a cube within a cube within a cube pattern.
-///
-/// Will not produce the desired result on cubes larger than 4x4x4. Stick to the 3x3x3 version for larger cubes, as that is compatible.
-/// # Panics
-/// Will panic if local variable `sequence` contains a malformed sequence. This would be considered a bug.
-pub fn cube_in_cube_in_cube_in_cube<C: PuzzleCube>(cube: &mut C) {
-    perform_sequence(NESTED_CUBE_4X4X4, cube).expect("Known transforms must use valid sequences");
+impl KnownTransform {
+    /// A short name to represent what the transform does.
+    #[must_use]
+    pub fn name(&self) -> String {
+        match self {
+            KnownTransform::CheckerboardCorners3x3x3 => "Checkerboard Corners",
+            KnownTransform::NestedCube3x3x3 => "Nested Cubes (3)",
+            KnownTransform::NestedCube4x4x4 => "Nested Cubes (4)",
+        }
+        .to_owned()
+    }
+
+    /// A blurb to add extra information for users to better understand what the transform does.
+    #[must_use]
+    pub fn description(&self) -> String {
+        match self {
+            KnownTransform::CheckerboardCorners3x3x3 | KnownTransform::NestedCube3x3x3 => {
+                "Designed for 3x3x3 cubes, safe to run on any size cube"
+            }
+            KnownTransform::NestedCube4x4x4 => {
+                "Designed for 4x4x4 cubes, safe to run on any cube 4x4x4 or larger, but will not have the desired effect on cubes larger than 4x4x4"
+            }
+        }
+        .to_owned()
+    }
+
+    /// Some transforms are invalid on too-small cube sizes. In such cases, the minimum valid cube size is given here.
+    #[must_use]
+    pub fn minimum_side_length(&self) -> Option<usize> {
+        match self {
+            KnownTransform::NestedCube4x4x4 => Some(4),
+            _ => None,
+        }
+    }
+
+    /// The written notation version of this transform that can be parsed and applied to a `PuzzleCube`.
+    #[must_use]
+    pub fn notation(&self) -> String {
+        match self {
+            KnownTransform::CheckerboardCorners3x3x3 => CHECKERBOARD_CORNERS,
+            KnownTransform::NestedCube3x3x3 => NESTED_CUBE_3X3X3,
+            KnownTransform::NestedCube4x4x4 => NESTED_CUBE_4X4X4,
+        }
+        .to_owned()
+    }
+
+    /// The parsed version of this transform's `notation`.
+    ///
+    /// # Panics
+    /// Will panic if the hard-coded notation is invalid.
+    #[must_use]
+    pub fn sequence(&self) -> Vec<Rotation> {
+        parse_sequence(&self.notation()).expect("Known transforms must use valid sequences")
+    }
+
+    /// Parse this transform's `notation` and immediately perform the resulting sequence on `cube`.
+    ///
+    /// # Panics
+    /// Will panic if the hard-coded notation is invalid, or performed on a `cube` with a too-short side length. Use `minimum_side_length` to ensure the `cube` has a large enough `side_length` first.
+    pub fn perform_instantly<C: PuzzleCube>(&self, cube: &mut C) {
+        perform_sequence(self.sequence(), cube).expect("Known transforms must use valid sequences");
+    }
+
+    /// Parse this transform's `notation` and perform the resulting sequence on `cube` as a sequence controlled by the `cube` itself.
+    ///
+    /// # Panics
+    /// Will panic if the hard-coded notation is invalid, or performed on a `cube` with a too-short side length. Use `minimum_side_length` to ensure the `cube` has a large enough `side_length` first.
+    pub fn perform_seq<C: PuzzleCube>(&self, cube: &mut C) {
+        cube.rotate_seq(self.sequence())
+            .expect("Known transforms must use valid sequences");
+    }
 }
 
 #[cfg(test)]
@@ -77,12 +110,15 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     #[test]
-    fn test_checkerboard_corners() {
-        let _does_not_panic = checkerboard_corners_seq();
+    fn test_checkerboard_corners_3x3x3() {
+        assert_eq!(
+            None,
+            KnownTransform::CheckerboardCorners3x3x3.minimum_side_length()
+        );
 
         let mut cube = Cube::create(3.try_into().expect("known good value"));
 
-        checkerboard_corners(&mut cube);
+        KnownTransform::CheckerboardCorners3x3x3.perform_instantly(&mut cube);
 
         let expected_cube = create_cube_from_sides!(
             up: create_cube_side!(
@@ -121,12 +157,12 @@ mod tests {
     }
 
     #[test]
-    fn test_cube_in_cube_in_cube() {
-        let _does_not_panic = cube_in_cube_in_cube_seq();
+    fn test_nested_cube_3x3x3() {
+        assert_eq!(None, KnownTransform::NestedCube3x3x3.minimum_side_length());
 
         let mut cube = Cube::create(3.try_into().expect("known good value"));
 
-        cube_in_cube_in_cube(&mut cube);
+        KnownTransform::NestedCube3x3x3.perform_instantly(&mut cube);
 
         let expected_cube = create_cube_from_sides!(
             up: create_cube_side!(
@@ -165,12 +201,15 @@ mod tests {
     }
 
     #[test]
-    fn test_cube_in_cube_in_cube_in_cube() {
-        let _does_not_panic = cube_in_cube_in_cube_in_cube_seq();
+    fn test_nested_cube_4x4x4() {
+        assert_eq!(
+            Some(4),
+            KnownTransform::NestedCube4x4x4.minimum_side_length()
+        );
 
         let mut cube = Cube::create(4.try_into().expect("known good value"));
 
-        cube_in_cube_in_cube_in_cube(&mut cube);
+        KnownTransform::NestedCube4x4x4.perform_instantly(&mut cube);
 
         let expected_cube = create_cube_from_sides!(
             up: create_cube_side!(

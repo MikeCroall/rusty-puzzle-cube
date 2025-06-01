@@ -19,7 +19,7 @@ use circular_buffer::CircularBuffer;
 use mouse_control::MouseControlOutput;
 use rusty_puzzle_cube::{
     cube::{Cube, rotation::Rotation},
-    known_transforms::cube_in_cube_in_cube_in_cube,
+    known_transforms::KnownTransform,
 };
 use side_panel::draw_side_panel;
 use three_d::{
@@ -53,6 +53,7 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
     let mut animation_speed = 1.0;
 
     let mut undo_queue = CircularBuffer::<UNDO_QUEUE_MAX_SIZE, Rotation>::new();
+    let mut selected_transform = KnownTransform::CheckerboardCorners3x3x3;
 
     window.render_loop(move |mut frame_input| {
         let mut panel_width = 0.;
@@ -67,6 +68,7 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
                     &mut side_length,
                     &mut cube,
                     &mut undo_queue,
+                    &mut selected_transform,
                     &mut camera,
                     &mut lock_upright,
                     &ctx,
@@ -135,7 +137,7 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
 fn initial_anim_cube(side_length: usize) -> anyhow::Result<AnimCube<Cube>> {
     let mut cube = AnimCube::new(Cube::create(side_length.try_into()?));
 
-    cube_in_cube_in_cube_in_cube(&mut cube);
+    KnownTransform::NestedCube4x4x4.perform_instantly(&mut cube);
     cube.cancel_animation();
 
     Ok(cube)
