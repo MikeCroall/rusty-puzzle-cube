@@ -169,17 +169,27 @@ fn should_apply_anim(
     y: usize,
     rotation: Rotation,
 ) -> bool {
-    if face == rotation.relative_to && rotation.layer == 0 {
+    if face == rotation.relative_to && (rotation.multilayer || rotation.layer == 0) {
         return true;
     }
 
+    let opposite_end_minus_layer = side_length - 1 - rotation.layer;
     let adjacents = rotation.relative_to.adjacent_faces_clockwise();
     if let Some((_, index_alignment)) = adjacents.iter().find(|(f, _)| f == &face) {
-        return match index_alignment {
-            IndexAlignment::OuterStart => x == rotation.layer,
-            IndexAlignment::OuterEnd => x == side_length - 1 - rotation.layer,
-            IndexAlignment::InnerFirst => y == rotation.layer,
-            IndexAlignment::InnerLast => y == side_length - 1 - rotation.layer,
+        return if rotation.multilayer {
+            match index_alignment {
+                IndexAlignment::OuterStart => x <= rotation.layer,
+                IndexAlignment::OuterEnd => x >= opposite_end_minus_layer,
+                IndexAlignment::InnerFirst => y <= rotation.layer,
+                IndexAlignment::InnerLast => y >= opposite_end_minus_layer,
+            }
+        } else {
+            match index_alignment {
+                IndexAlignment::OuterStart => x == rotation.layer,
+                IndexAlignment::OuterEnd => x == opposite_end_minus_layer,
+                IndexAlignment::InnerFirst => y == rotation.layer,
+                IndexAlignment::InnerLast => y == opposite_end_minus_layer,
+            }
         };
     }
 
