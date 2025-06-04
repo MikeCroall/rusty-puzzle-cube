@@ -3,6 +3,7 @@ mod colours;
 mod cube_3d_ext;
 mod decided_move;
 mod defaults;
+mod gui_state;
 mod mouse_control;
 mod side_panel;
 mod transforms;
@@ -13,48 +14,25 @@ mod file_io;
 use crate::gui::{
     cube_3d_ext::PuzzleCube3D,
     defaults::{clear_state, initial_camera, initial_window},
+    gui_state::GuiState,
     mouse_control::MouseControl,
 };
 use anim_cube::AnimCube;
-use circular_buffer::CircularBuffer;
 use mouse_control::MouseControlOutput;
-use rusty_puzzle_cube::{
-    cube::{Cube, rotation::Rotation},
-    known_transforms::KnownTransform,
-};
-use side_panel::CubeSidePanel;
+use rusty_puzzle_cube::{cube::Cube, known_transforms::KnownTransform};
 use three_d::{
     Axes, ColorMaterial, Context, CpuMesh, Cull, FrameOutput, GUI, Gm, InstancedMesh, Mesh, Object,
     RenderStates, Srgba, Viewport,
 };
-use tracing::{debug, error, info};
+use tracing::{debug, error};
 
 const UNDO_QUEUE_MAX_SIZE: usize = 100;
 
 pub(super) fn start_gui() -> anyhow::Result<()> {
-    info!("Initialising default cube");
-    let mut side_length = 4;
-    let mut cube = initial_anim_cube(side_length)?;
-
-    info!("Initialising GUI");
     let window = initial_window()?;
-    let mut camera = initial_camera(window.viewport());
-    let mut lock_upright = false;
-    let mut mouse_control = MouseControl::new(camera.target(), 1.0, 80.0);
-
-    let ctx = window.gl();
-    let mut gui = GUI::new(&ctx);
-
-    let mut tiles = initial_instances(&ctx, &cube);
-
-    let pick_cube = inner_cube(&ctx);
-
-    let mut render_axes = false;
-    let axes = Axes::new(&ctx, 0.05, 2.);
-    let mut animation_speed = 1.0;
-
-    let mut undo_queue = CircularBuffer::<UNDO_QUEUE_MAX_SIZE, Rotation>::new();
-    let mut selected_transform = KnownTransform::CheckerboardCorners3x3x3;
+    let mut state = GuiState::<AnimCube<Cube>, UNDO_QUEUE_MAX_SIZE>::init(&window)?;
+    let mut mouse_control = MouseControl::new(state.camera.target(), 1.0, 80.0);
+    let mut gui = GUI::new(&state.ctx);
 
     window.render_loop(move |mut frame_input| {
         let mut panel_width = 0.;
@@ -65,29 +43,12 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
             frame_input.viewport,
             frame_input.device_pixel_ratio,
             |gui_ctx| {
-                CubeSidePanel {
-                    side_length: &mut side_length,
-                    cube: &mut cube,
-                    undo_queue: &mut undo_queue,
-                    selected_transform: &mut selected_transform,
-                    camera: &mut camera,
-                    lock_upright: &mut lock_upright,
-                    tiles: &mut tiles,
-                    render_axes: &mut render_axes,
-                    animation_speed: &mut animation_speed,
-                    viewport: frame_input.viewport,
-                    gui_ctx,
-                    #[cfg(not(target_arch = "wasm32"))]
-                    ctx: &ctx,
-                    #[cfg(not(target_arch = "wasm32"))]
-                    pick_cube: &pick_cube,
-                }
-                .show_ui();
+                state.show_ui(gui_ctx, frame_input.viewport);
                 panel_width = gui_ctx.used_rect().width();
             },
         );
 
-        redraw |= camera.set_viewport(calc_viewport(
+        redraw |= state.camera.set_viewport(calc_viewport(
             panel_width,
             frame_input.viewport,
             frame_input.device_pixel_ratio,
@@ -96,33 +57,25 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
         let MouseControlOutput {
             redraw: needs_redraw_from_mouse,
             updated_cube,
-        } = mouse_control.handle_events(
-            &ctx,
-            &pick_cube,
-            side_length,
-            &mut camera,
-            lock_upright,
-            &mut frame_input.events,
-            &mut cube,
-            &mut undo_queue,
-        );
-        if updated_cube || cube.is_animating() {
-            cube.progress_animation(animation_speed * frame_input.elapsed_time);
-            tiles.set_instances(&cube.as_instances());
+        } = mouse_control.handle_events(&mut state, &mut frame_input.events);
+        if updated_cube || state.cube.is_animating() {
+            state
+                .cube
+                .progress_animation(state.animation_speed * frame_input.elapsed_time);
+            state.tiles.set_instances(&state.cube.as_instances());
         }
-        redraw |= needs_redraw_from_mouse | cube.is_animating();
+        redraw |= needs_redraw_from_mouse | state.cube.is_animating();
 
         if redraw {
             debug!("Drawing cube");
             let screen = frame_input.screen();
             if let Err(e) = screen
                 .clear(clear_state())
-                .render(&camera, &tiles, &[])
+                .render(&state.camera, &state.tiles, &[])
                 .write(|| {
-                    if render_axes {
-                        axes.render(&camera, &[]);
+                    if state.render_axes {
+                        Axes::new(&state.ctx, 0.05, 2.).render(&state.camera, &[]);
                     }
-
                     gui.render()
                 })
             {

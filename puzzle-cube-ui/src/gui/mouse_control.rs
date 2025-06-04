@@ -1,14 +1,14 @@
 use std::f32::consts::PI;
 
-use circular_buffer::CircularBuffer;
-use rusty_puzzle_cube::cube::{PuzzleCube, face::Face, rotation::Rotation};
+use crate::gui::{
+    GuiState, anim_cube::AnimCube, decided_move::DecidedMove, transforms::move_face_into_place,
+};
+use rusty_puzzle_cube::cube::{Cube, face::Face};
 use three_d::{
-    Camera, ColorMaterial, Context, Event, FreeOrbitControl, Gm, InnerSpace, Mesh, MouseButton,
-    OrbitControl, Rad, Transform, Vec3, Vector3, pick, radians,
+    Event, FreeOrbitControl, InnerSpace, MouseButton, OrbitControl, Rad, Transform, Vec3, Vector3,
+    pick, radians,
 };
 use tracing::{error, warn};
-
-use crate::gui::{decided_move::DecidedMove, transforms::move_face_into_place};
 
 const MOVE_TOO_SMALL_THRESHOLD: f32 = 0.15;
 const DIAGONAL_MOVE_THRESHOLD: Rad<f32> = radians(0.125 * PI);
@@ -43,17 +43,10 @@ impl MouseControl {
         }
     }
 
-    #[expect(clippy::too_many_arguments)]
-    pub(super) fn handle_events<C: PuzzleCube, const UNDO_SIZE: usize>(
+    pub(super) fn handle_events(
         &mut self,
-        ctx: &Context,
-        inner_cube: &Gm<Mesh, ColorMaterial>,
-        side_length: usize,
-        camera: &mut Camera,
-        lock_upright: bool,
+        state: &mut GuiState<AnimCube<Cube>, 100>,
         events: &mut [Event],
-        cube: &mut C,
-        undo_queue: &mut CircularBuffer<UNDO_SIZE, Rotation>,
     ) -> MouseControlOutput {
         let mut updated_cube = false;
         for event in events.iter_mut() {
@@ -64,7 +57,9 @@ impl MouseControl {
                     handled,
                     ..
                 } => {
-                    let Some(start_pick) = pick(ctx, camera, *position, inner_cube) else {
+                    let Some(start_pick) =
+                        pick(&state.ctx, &state.camera, *position, &state.pick_cube)
+                    else {
                         continue;
                     };
                     let Some(face) = pick_to_face(start_pick.position) else {
@@ -85,7 +80,8 @@ impl MouseControl {
                     let Some(FaceDrag { face, .. }) = self.drag else {
                         continue;
                     };
-                    let Some(pick) = pick(ctx, camera, *position, inner_cube) else {
+                    let Some(pick) = pick(&state.ctx, &state.camera, *position, &state.pick_cube)
+                    else {
                         continue;
                     };
                     let Some(new_face) = pick_to_face(pick.position) else {
@@ -106,14 +102,16 @@ impl MouseControl {
                     let Some(FaceDrag { start_pick, face }) = &self.drag else {
                         continue;
                     };
-                    let Some(end_pick) = pick(ctx, camera, *position, inner_cube) else {
+                    let Some(end_pick) =
+                        pick(&state.ctx, &state.camera, *position, &state.pick_cube)
+                    else {
                         continue;
                     };
                     if let Some(decided_move) =
-                        picks_to_move(side_length, *start_pick, end_pick.position, *face)
+                        picks_to_move(state.side_length, *start_pick, end_pick.position, *face)
                     {
-                        if let Some(applied_rotation) = decided_move.apply(cube) {
-                            undo_queue.push_back(applied_rotation);
+                        if let Some(applied_rotation) = decided_move.apply(&mut state.cube) {
+                            state.undo_queue.push_back(applied_rotation);
                         }
                         updated_cube = true;
                         *handled = true;
@@ -126,10 +124,10 @@ impl MouseControl {
         MouseControlOutput {
             updated_cube,
             redraw: updated_cube
-                || if lock_upright {
-                    self.upright_orbit.handle_events(camera, events)
+                || if state.lock_upright {
+                    self.upright_orbit.handle_events(&mut state.camera, events)
                 } else {
-                    self.free_orbit.handle_events(camera, events)
+                    self.free_orbit.handle_events(&mut state.camera, events)
                 },
         }
     }

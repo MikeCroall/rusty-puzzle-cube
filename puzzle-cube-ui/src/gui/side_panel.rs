@@ -1,47 +1,23 @@
 use std::fmt::Display;
 
-use circular_buffer::CircularBuffer;
-use rusty_puzzle_cube::{
-    cube::{rotation::Rotation, side_lengths::SideLength},
-    known_transforms::KnownTransform,
-};
+use crate::gui::{GuiState, cube_3d_ext::PuzzleCube3D, initial_camera};
+use rusty_puzzle_cube::{cube::side_lengths::SideLength, known_transforms::KnownTransform};
 use strum::IntoEnumIterator;
 use three_d::{
-    Camera, ColorMaterial, Gm, InstancedMesh, Viewport,
+    Viewport,
     egui::{
-        Button, Checkbox, ComboBox, Rgba, ScrollArea, SidePanel, Slider, Ui, special_emojis::GITHUB,
+        Button, Checkbox, ComboBox, Context, Rgba, ScrollArea, SidePanel, Slider, Ui,
+        special_emojis::GITHUB,
     },
 };
-
-use super::{cube_3d_ext::PuzzleCube3D, defaults::initial_camera};
 
 const MIN_CUBE_SIZE: usize = 1;
 const MAX_CUBE_SIZE: usize = 100;
 const EXTRA_SPACING: f32 = 10.;
 
-#[must_use = "You should call .show_ui()"]
-pub(crate) struct CubeSidePanel<'a, C: PuzzleCube3D + Display, const UNDO_SIZE: usize> {
-    pub(crate) side_length: &'a mut usize,
-    pub(crate) cube: &'a mut C,
-    pub(crate) undo_queue: &'a mut CircularBuffer<UNDO_SIZE, Rotation>,
-    pub(crate) selected_transform: &'a mut KnownTransform,
-    pub(crate) camera: &'a mut Camera,
-    pub(crate) lock_upright: &'a mut bool,
-    pub(crate) tiles: &'a mut Gm<InstancedMesh, ColorMaterial>,
-    pub(crate) render_axes: &'a mut bool,
-    pub(crate) animation_speed: &'a mut f64,
-    pub(crate) viewport: Viewport,
-    pub(crate) gui_ctx: &'a three_d::egui::Context,
-
-    #[cfg(not(target_arch = "wasm32"))]
-    pub(crate) ctx: &'a three_d::Context,
-    #[cfg(not(target_arch = "wasm32"))]
-    pub(crate) pick_cube: &'a Gm<three_d::Mesh, ColorMaterial>,
-}
-
-impl<C: PuzzleCube3D + Display, const UNDO_SIZE: usize> CubeSidePanel<'_, C, UNDO_SIZE> {
-    pub(crate) fn show_ui(mut self) {
-        SidePanel::left("side_panel").show(self.gui_ctx, |ui| {
+impl<C: PuzzleCube3D + Display, const UNDO_SIZE: usize> GuiState<C, UNDO_SIZE> {
+    pub(crate) fn show_ui(&mut self, gui_ctx: &Context, viewport: Viewport) {
+        SidePanel::left("side_panel").show(gui_ctx, |ui| {
             ScrollArea::vertical().show(ui, |ui| {
                 Self::header(ui);
                 ui.separator();
@@ -52,11 +28,11 @@ impl<C: PuzzleCube3D + Display, const UNDO_SIZE: usize> CubeSidePanel<'_, C, UND
                 self.control_cube(ui);
                 ui.separator();
 
-                self.control_camera(ui);
+                self.control_camera(ui, viewport);
                 ui.separator();
 
                 #[cfg(not(target_arch = "wasm32"))]
-                self.debug_ctrls(ui);
+                self.debug_ctrls(ui, viewport);
             })
         });
     }
@@ -76,8 +52,11 @@ impl<C: PuzzleCube3D + Display, const UNDO_SIZE: usize> CubeSidePanel<'_, C, UND
         ui.heading("Initialise Cube");
         ui.add_space(EXTRA_SPACING);
 
-        let prev_side_length = *self.side_length;
-        ui.add(Slider::new(self.side_length, MIN_CUBE_SIZE..=MAX_CUBE_SIZE));
+        let prev_side_length = self.side_length;
+        ui.add(Slider::new(
+            &mut self.side_length,
+            MIN_CUBE_SIZE..=MAX_CUBE_SIZE,
+        ));
         ui.add_space(EXTRA_SPACING);
 
         if ui
@@ -86,9 +65,9 @@ impl<C: PuzzleCube3D + Display, const UNDO_SIZE: usize> CubeSidePanel<'_, C, UND
             ))
             .clicked()
         {
-            let side_length = SideLength::try_from(*self.side_length)
+            let side_length = SideLength::try_from(self.side_length)
                 .expect("UI is configured to only allow selecting valid side length values");
-            *self.cube = self.cube.recreate_at_size(side_length);
+            self.cube = self.cube.recreate_at_size(side_length);
             self.undo_queue.clear();
             self.tiles.set_instances(&self.cube.as_instances());
         }
@@ -157,7 +136,7 @@ impl<C: PuzzleCube3D + Display, const UNDO_SIZE: usize> CubeSidePanel<'_, C, UND
             .show_ui(ui, |ui| {
                 for known_transform in KnownTransform::iter() {
                     ui.selectable_value(
-                        self.selected_transform,
+                        &mut self.selected_transform,
                         known_transform,
                         known_transform.name(),
                     );
@@ -175,33 +154,33 @@ impl<C: PuzzleCube3D + Display, const UNDO_SIZE: usize> CubeSidePanel<'_, C, UND
             )
             .clicked()
         {
-            self.selected_transform.perform_seq(self.cube);
+            self.selected_transform.perform_seq(&mut self.cube);
         }
         ui.add_space(EXTRA_SPACING);
     }
 
-    fn control_camera(&mut self, ui: &mut Ui) {
+    fn control_camera(&mut self, ui: &mut Ui, viewport: Viewport) {
         ui.add_space(EXTRA_SPACING);
         ui.heading("Camera and Rendering");
         ui.label("The camera can be moved with a click and drag starting from the blank space around the cube, or by dragging from one face to any other face or empty space");
         ui.add_space(EXTRA_SPACING);
 
         if ui.button("Reset camera").clicked() {
-            *self.camera = initial_camera(self.viewport);
+            self.camera = initial_camera(viewport);
         }
         ui.add_space(EXTRA_SPACING);
 
         if ui
-            .add(Checkbox::new(self.lock_upright, "Lock upright"))
+            .add(Checkbox::new(&mut self.lock_upright, "Lock upright"))
             .changed()
-            && *self.lock_upright
+            && self.lock_upright
         {
-            *self.camera = initial_camera(self.viewport);
+            self.camera = initial_camera(viewport);
         }
         ui.add_space(EXTRA_SPACING);
 
-        ui.add(Checkbox::new(self.render_axes, "Show axes"));
-        if *self.render_axes {
+        ui.add(Checkbox::new(&mut self.render_axes, "Show axes"));
+        if self.render_axes {
             ui.colored_label(Rgba::from_rgb(0.15, 0.15, 1.), "F is the blue axis");
             ui.colored_label(Rgba::RED, "R is the red axis");
             ui.colored_label(Rgba::GREEN, "U is the green axis");
@@ -209,7 +188,7 @@ impl<C: PuzzleCube3D + Display, const UNDO_SIZE: usize> CubeSidePanel<'_, C, UND
         ui.add_space(EXTRA_SPACING);
 
         ui.label("Animation speed");
-        ui.add(Slider::new(self.animation_speed, 0.1..=3.0));
+        ui.add(Slider::new(&mut self.animation_speed, 0.1..=3.0));
         ui.add_space(EXTRA_SPACING);
     }
 }
@@ -218,15 +197,12 @@ impl<C: PuzzleCube3D + Display, const UNDO_SIZE: usize> CubeSidePanel<'_, C, UND
 mod non_wasm {
     use std::fmt::Display;
 
-    use crate::gui::{cube_3d_ext::PuzzleCube3D, file_io};
-
-    use super::{CubeSidePanel, EXTRA_SPACING};
-
-    use three_d::egui::Ui;
+    use crate::gui::{GuiState, cube_3d_ext::PuzzleCube3D, file_io, side_panel::EXTRA_SPACING};
+    use three_d::{Viewport, egui::Ui};
     use tracing::{error, info};
 
-    impl<C: PuzzleCube3D + Display, const UNDO_SIZE: usize> CubeSidePanel<'_, C, UNDO_SIZE> {
-        pub(crate) fn debug_ctrls(&mut self, ui: &mut Ui) {
+    impl<C: PuzzleCube3D + Display, const UNDO_SIZE: usize> GuiState<C, UNDO_SIZE> {
+        pub(crate) fn debug_ctrls(&mut self, ui: &mut Ui, viewport: Viewport) {
             ui.add_space(EXTRA_SPACING);
             ui.heading("Debug");
             ui.add_space(EXTRA_SPACING);
@@ -238,11 +214,11 @@ mod non_wasm {
 
             if ui.button("Save as image").clicked() {
                 if let Err(e) = file_io::save_as_image(
-                    self.ctx,
-                    self.viewport,
-                    self.camera,
-                    self.tiles,
-                    self.pick_cube,
+                    &self.ctx,
+                    viewport,
+                    &self.camera,
+                    &self.tiles,
+                    &self.pick_cube,
                 ) {
                     error!("Could not save image file: {}", e);
                 }
