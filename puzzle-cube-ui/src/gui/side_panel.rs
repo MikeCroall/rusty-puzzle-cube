@@ -213,13 +213,9 @@ mod non_wasm {
             ui.add_space(EXTRA_SPACING);
 
             if ui.button("Save as image").clicked() {
-                if let Err(e) = file_io::save_as_image(
-                    &self.ctx,
-                    viewport,
-                    &self.camera,
-                    &self.tiles,
-                    &self.pick_cube,
-                ) {
+                if let Err(e) =
+                    file_io::save_as_image(&self.ctx, viewport, &self.camera, &self.tiles)
+                {
                     error!("Could not save image file: {}", e);
                 }
             }

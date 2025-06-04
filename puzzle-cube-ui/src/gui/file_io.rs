@@ -2,7 +2,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use three_d::{
     Camera, ColorMaterial, Context, CpuTexture, DepthTexture2D, Gm, InstancedMesh, Interpolation,
-    Mesh, RenderTarget, Texture2D, TextureData, Viewport, Wrapping,
+    RenderTarget, Texture2D, TextureData, Viewport, Wrapping,
 };
 use three_d_asset::{Error, io::Serialize as _};
 
@@ -13,7 +13,6 @@ pub(super) fn save_as_image(
     viewport: Viewport,
     camera: &Camera,
     tiles: &Gm<InstancedMesh, ColorMaterial>,
-    inner_cube: &Gm<Mesh, ColorMaterial>,
 ) -> Result<(), Error> {
     let mut texture = Texture2D::new_empty::<[u8; 4]>(
         ctx,
@@ -37,7 +36,7 @@ pub(super) fn save_as_image(
         depth_texture.as_depth_target(),
     )
     .clear(clear_state())
-    .render(camera, tiles.into_iter().chain(inner_cube), &[])
+    .render(camera, tiles, &[])
     .read_color();
 
     three_d_asset::io::save(
