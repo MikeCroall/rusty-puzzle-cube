@@ -59,22 +59,22 @@ fn parse_token(original_token: &str) -> anyhow::Result<Vec<Rotation>> {
     let (token, face) = strip_face_suffix(token)
         .with_context(|| format!("Failed parsing token: [{original_token}]"))?;
 
-    let multi_layer_count = parse_multi_layer_count(token)
+    let chosen_layer = parse_multi_layer_count(token)
         .with_context(|| format!("Failed parsing token: [{original_token}]"))?
-        .or(if multi_layer { Some(2) } else { None });
+        .map(|layer| layer - 1)
+        .or(if multi_layer { Some(1) } else { None });
 
-    let mut rotations = vec![];
-
-    if let Some(multi_layer_limit) = multi_layer_count {
-        rotations.push(rotation_multilayer(
-            face,
-            anticlockwise,
-            multi_layer_limit - 1,
-        ));
+    let rotation = if let Some(chosen_layer) = chosen_layer {
+        if multi_layer {
+            rotation_multilayer(face, anticlockwise, chosen_layer)
+        } else {
+            rotation_setback(face, anticlockwise, chosen_layer)
+        }
     } else {
-        rotations.push(rotation(face, anticlockwise));
-    }
+        rotation(face, anticlockwise)
+    };
 
+    let mut rotations = vec![rotation];
     if turn_twice {
         rotations.extend_from_within(..);
     }
@@ -119,6 +119,14 @@ fn rotation(face: Face, anticlockwise: bool) -> Rotation {
         Rotation::anticlockwise(face)
     } else {
         Rotation::clockwise(face)
+    }
+}
+
+fn rotation_setback(face: Face, anticlockwise: bool, layer: usize) -> Rotation {
+    if anticlockwise {
+        Rotation::anticlockwise_setback_from(face, layer)
+    } else {
+        Rotation::clockwise_setback_from(face, layer)
     }
 }
 
@@ -378,6 +386,18 @@ Caused by:
                 Rotation::clockwise_multilayer_from(Face::Back, 2),
                 Rotation::clockwise_multilayer_from(Face::Back, 2),
             ],
+            rotations
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn parse_token_large_cubes_4_l_prime() -> anyhow::Result<()> {
+        let rotations = parse_token("4L'")?;
+
+        assert_eq!(
+            vec![Rotation::anticlockwise_setback_from(Face::Left, 3)],
             rotations
         );
 
