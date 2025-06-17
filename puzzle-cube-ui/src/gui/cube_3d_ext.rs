@@ -3,7 +3,7 @@ use rusty_puzzle_cube::cube::{
     cubie_face::CubieFace,
     direction::Direction,
     face::{Face, IndexAlignment},
-    rotation::Rotation,
+    rotation::{Rotation, RotationKind},
 };
 use three_d::{Instances, Mat4, Matrix4, Srgba};
 
@@ -169,25 +169,38 @@ fn should_apply_anim(
     y: usize,
     rotation: Rotation,
 ) -> bool {
-    if face == rotation.relative_to && (rotation.multilayer || rotation.layer == 0) {
+    if face == rotation.relative_to
+        && matches!(
+            rotation.kind,
+            RotationKind::Multilayer { .. }
+                | RotationKind::Setback { layer: 0 }
+                | RotationKind::FaceOnly
+        )
+    {
         return true;
     }
 
-    let opposite_end_minus_layer = side_length - 1 - rotation.layer;
+    let rotation_layer = match rotation.kind {
+        RotationKind::Multilayer { layer } | RotationKind::Setback { layer } => layer,
+        RotationKind::FaceOnly => 0,
+    };
+    let multilayer = matches!(rotation.kind, RotationKind::Multilayer { .. });
+
+    let opposite_end_minus_layer = side_length - 1 - rotation_layer;
     let adjacents = rotation.relative_to.adjacent_faces_clockwise();
     if let Some((_, index_alignment)) = adjacents.iter().find(|(f, _)| f == &face) {
-        return if rotation.multilayer {
+        return if multilayer {
             match index_alignment {
-                IndexAlignment::OuterStart => x <= rotation.layer,
+                IndexAlignment::OuterStart => x <= rotation_layer,
                 IndexAlignment::OuterEnd => x >= opposite_end_minus_layer,
-                IndexAlignment::InnerFirst => y <= rotation.layer,
+                IndexAlignment::InnerFirst => y <= rotation_layer,
                 IndexAlignment::InnerLast => y >= opposite_end_minus_layer,
             }
         } else {
             match index_alignment {
-                IndexAlignment::OuterStart => x == rotation.layer,
+                IndexAlignment::OuterStart => x == rotation_layer,
                 IndexAlignment::OuterEnd => x == opposite_end_minus_layer,
-                IndexAlignment::InnerFirst => y == rotation.layer,
+                IndexAlignment::InnerFirst => y == rotation_layer,
                 IndexAlignment::InnerLast => y == opposite_end_minus_layer,
             }
         };

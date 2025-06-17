@@ -9,7 +9,7 @@ use self::face::{Face as F, IndexAlignment as IA};
 use self::helpers::{
     create_side, create_side_with_unique_characters, get_clockwise_slice_of_side_setback,
 };
-use self::rotation::Rotation;
+use self::rotation::{Rotation, RotationKind};
 use self::side_lengths::{SideLength, UniqueCharsSideLength};
 
 mod helpers;
@@ -141,29 +141,32 @@ impl PuzzleCube for Cube {
             }
             Rotation {
                 relative_to,
-                layer,
                 direction: Direction::Clockwise,
-                multilayer: true,
+                kind: RotationKind::Multilayer { layer },
             } => {
                 for active_layer in 0..=layer {
                     self.rotate(Rotation {
                         relative_to,
-                        layer: active_layer,
                         direction: Direction::Clockwise,
-                        multilayer: false,
+                        kind: RotationKind::Setback {
+                            layer: active_layer,
+                        },
                     })?;
                 }
             }
             Rotation {
                 relative_to,
-                layer,
                 direction: Direction::Clockwise,
-                ..
+                kind: RotationKind::Setback { layer },
             } => {
-                if layer == 0 {
-                    self.rotate_face_90_degrees_clockwise_without_adjacents(relative_to);
-                }
-                self.rotate_adjacents_90_deg_clockwise_setback(relative_to, layer)?;
+                self.rotate_layer(relative_to, layer)?;
+            }
+            Rotation {
+                relative_to,
+                direction: Direction::Clockwise,
+                kind: RotationKind::FaceOnly,
+            } => {
+                self.rotate_layer(relative_to, 0)?;
             }
         }
         Ok(())
@@ -217,6 +220,13 @@ impl Cube {
             F::Back => &mut self.back,
             F::Left => &mut self.left,
         }
+    }
+
+    fn rotate_layer(&mut self, face: F, layers_back: usize) -> anyhow::Result<()> {
+        if layers_back == 0 {
+            self.rotate_face_90_degrees_clockwise_without_adjacents(face);
+        }
+        self.rotate_adjacents_90_deg_clockwise_setback(face, layers_back)
     }
 
     fn rotate_face_90_degrees_clockwise_without_adjacents(&mut self, face: F) {

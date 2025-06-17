@@ -1,6 +1,11 @@
 #[cfg(test)]
 mod quickcheck_tests {
-    use crate::cube::{Cube, PuzzleCube, direction::Direction, face::Face, rotation::Rotation};
+    use crate::cube::{
+        Cube, PuzzleCube,
+        direction::Direction,
+        face::Face,
+        rotation::{Rotation, RotationKind},
+    };
 
     use quickcheck::Arbitrary;
     use quickcheck_macros::quickcheck;
@@ -30,11 +35,20 @@ mod quickcheck_tests {
 
     impl Arbitrary for Rotation {
         fn arbitrary(g: &mut quickcheck::Gen) -> Self {
+            let layer = usize::arbitrary(g) % CUBE_SIZE;
+
+            let kind = if layer == 0 {
+                RotationKind::FaceOnly
+            } else if bool::arbitrary(g) {
+                RotationKind::Multilayer { layer }
+            } else {
+                RotationKind::Setback { layer }
+            };
+
             Rotation {
                 relative_to: Face::arbitrary(g),
-                layer: usize::arbitrary(g) % CUBE_SIZE,
                 direction: Direction::arbitrary(g),
-                multilayer: bool::arbitrary(g),
+                kind,
             }
         }
     }

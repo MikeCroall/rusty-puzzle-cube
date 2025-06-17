@@ -5,32 +5,57 @@ use rand::Rng;
 use super::{direction::Direction, face::Face};
 
 /// A struct representing the rotation of a 'slice' of cube.
-/// That is, a rotation of a set of cubies where none of the cubies lie on the edges of the cube.
+///
+/// Uses a specific face as an anchor point for the direction of the rotation, as well for which layers should be included.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Rotation {
     /// The face from which the reference frame is anchored.
-    /// `layer` will determine how many layers 'behind' this face the desired slice to rotate is.
     pub relative_to: Face,
-
-    /// How far 'in' to the cube the layer to rotate is.
-    ///
-    /// A value of 0 would be the face itself, which would not technically be a slice twist, but a whole face twist. This is a special case.
-    ///
-    /// A value of 1 would be the layer immediately behind the face layer.
-    ///
-    /// A value of 2 would be the layer behind layer 1, further away from the `relative_to` face.
-    ///
-    /// A value equal to side length - 1 would be the opposite face, which is also a special case.
-    pub layer: usize,
 
     /// Whether the rotation should be clockwise, using the reference frame of the face `relative_to`.
     pub direction: Direction,
 
-    /// If true, the semantics of this rotation is to rotate all layers between the face layer at `relative_to` and the internal `layer` (how far 'in' to the cube), inclusive,
-    /// as opposed to only the specified `layer`.
+    /// Specifies which layer(s) are included in this `Rotation`.
+    pub kind: RotationKind,
+}
+
+/// Represents the layer(s) that are included in a given `Rotation`.
+///
+/// Some variants will include indices of layers which are all in the reference frame of `relative_to` from the outer `Rotation` struct.
+/// Here are some examples of what different layer indices mean.
+///
+/// A value of `0` would be the face itself, which would typically not be used as `FaceOnly` represents this case more simply.
+///
+/// A value of `1` would be the layer immediately behind the face layer. This would be the middle layer on a 3x3x3 cube.
+///
+/// A value of `2` would be the layer behind layer `1`, further away from the `relative_to` face.
+///
+/// A value equal to `side length - 1` would be the opposite face to that specified by `relative_to`.
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum RotationKind {
+    /// Only the layer of the `relative_to` face will be affected.
     ///
-    /// This is useful for creating rotations from notation, where e.g. 3Rw means rotate `Direction::Clockwise` relative to `Face::Right`, on layers `0`, `1`, and `2`.
-    pub multilayer: bool,
+    /// An example rotation of this kind is `R`.
+    FaceOnly,
+
+    /// All layers from the `relative_to` face to the `layer` index inclusive will be affected.
+    /// This is sometimes called a wide rotation.
+    ///
+    /// An example rotation of this kind is `Rw` where `layer` would be `1`, or `3Rw` where `layer` would be `2`.
+    Multilayer {
+        /// How far 'in' to the cube the final layer to rotate is. Layer indices between `0` and `layer` inclusive will be included in this rotation.
+        layer: usize,
+    },
+
+    /// One layer will be affected, determined by the `layer` index and the `relative_to` face.
+    ///
+    /// An example rotation of this kind is `3R` where `layer` would be `2`.
+    Setback {
+        /// How far 'in' to the cube the layer to rotate is. Only layer index `layer` will be included in this rotation.
+        layer: usize,
+    },
+    //
+    // todo: MultiSetback{pub start_layer: usize, pub end_layer: usize} for e.g. `3-5R` which would be indices start layer `2` end layer `4`
 }
 
 impl Rotation {
@@ -39,9 +64,8 @@ impl Rotation {
     pub fn clockwise(face: Face) -> Rotation {
         Rotation {
             relative_to: face,
-            layer: 0,
             direction: Direction::Clockwise,
-            multilayer: false,
+            kind: RotationKind::FaceOnly,
         }
     }
 
@@ -50,9 +74,8 @@ impl Rotation {
     pub fn anticlockwise(face: Face) -> Rotation {
         Rotation {
             relative_to: face,
-            layer: 0,
             direction: Direction::Anticlockwise,
-            multilayer: false,
+            kind: RotationKind::FaceOnly,
         }
     }
 
@@ -61,9 +84,8 @@ impl Rotation {
     pub fn clockwise_setback_from(relative_to: Face, layers_back: usize) -> Rotation {
         Rotation {
             relative_to,
-            layer: layers_back,
             direction: Direction::Clockwise,
-            multilayer: false,
+            kind: RotationKind::Setback { layer: layers_back },
         }
     }
 
@@ -72,9 +94,8 @@ impl Rotation {
     pub fn anticlockwise_setback_from(relative_to: Face, layers_back: usize) -> Rotation {
         Rotation {
             relative_to,
-            layer: layers_back,
             direction: Direction::Anticlockwise,
-            multilayer: false,
+            kind: RotationKind::Setback { layer: layers_back },
         }
     }
 
@@ -83,9 +104,8 @@ impl Rotation {
     pub fn clockwise_multilayer_from(relative_to: Face, layers_back: usize) -> Rotation {
         Rotation {
             relative_to,
-            layer: layers_back,
             direction: Direction::Clockwise,
-            multilayer: true,
+            kind: RotationKind::Multilayer { layer: layers_back },
         }
     }
 
@@ -94,9 +114,8 @@ impl Rotation {
     pub fn anticlockwise_multilayer_from(relative_to: Face, layers_back: usize) -> Rotation {
         Rotation {
             relative_to,
-            layer: layers_back,
             direction: Direction::Anticlockwise,
-            multilayer: true,
+            kind: RotationKind::Multilayer { layer: layers_back },
         }
     }
 
@@ -113,11 +132,19 @@ impl Rotation {
             Direction::Anticlockwise
         };
         let multilayer = rng.random_bool(0.333);
+
+        let kind = if layer == 0 {
+            RotationKind::FaceOnly
+        } else if multilayer {
+            RotationKind::Multilayer { layer }
+        } else {
+            RotationKind::Setback { layer }
+        };
+
         Rotation {
             relative_to,
-            layer,
             direction,
-            multilayer,
+            kind,
         }
     }
 
@@ -128,7 +155,10 @@ impl Rotation {
     #[must_use]
     pub fn normalise(self, side_length: usize) -> Rotation {
         let furthest_layer = side_length - 1;
-        if side_length > 1 && !self.multilayer && self.layer == furthest_layer {
+
+        if side_length > 1
+            && matches!(self.kind, RotationKind::Setback { layer } if layer == furthest_layer)
+        {
             self.as_layer_0_of_opposite_face()
         } else {
             self
@@ -138,9 +168,8 @@ impl Rotation {
     pub(crate) fn as_layer_0_of_opposite_face(self) -> Rotation {
         Rotation {
             relative_to: !self.relative_to,
-            layer: 0,
             direction: !self.direction,
-            multilayer: false,
+            kind: RotationKind::FaceOnly,
         }
     }
 }
@@ -166,9 +195,8 @@ mod tests {
         let cw = Rotation::clockwise(Face::Back);
         let expected_output = Rotation {
             relative_to: Face::Back,
-            layer: 0,
             direction: Direction::Clockwise,
-            multilayer: false,
+            kind: RotationKind::FaceOnly,
         };
         assert_eq!(expected_output, cw);
     }
@@ -178,9 +206,8 @@ mod tests {
         let acw = Rotation::anticlockwise(Face::Right);
         let expected_output = Rotation {
             relative_to: Face::Right,
-            layer: 0,
             direction: Direction::Anticlockwise,
-            multilayer: false,
+            kind: RotationKind::FaceOnly,
         };
         assert_eq!(expected_output, acw);
     }
@@ -190,9 +217,8 @@ mod tests {
         let cwsb = Rotation::clockwise_setback_from(Face::Down, 3);
         let expected_output = Rotation {
             relative_to: Face::Down,
-            layer: 3,
             direction: Direction::Clockwise,
-            multilayer: false,
+            kind: RotationKind::Setback { layer: 3 },
         };
         assert_eq!(expected_output, cwsb);
     }
@@ -202,9 +228,8 @@ mod tests {
         let acwsb = Rotation::anticlockwise_setback_from(Face::Front, 4);
         let expected_output = Rotation {
             relative_to: Face::Front,
-            layer: 4,
             direction: Direction::Anticlockwise,
-            multilayer: false,
+            kind: RotationKind::Setback { layer: 4 },
         };
         assert_eq!(expected_output, acwsb);
     }
@@ -214,9 +239,8 @@ mod tests {
         let cwsb = Rotation::clockwise_multilayer_from(Face::Down, 3);
         let expected_output = Rotation {
             relative_to: Face::Down,
-            layer: 3,
             direction: Direction::Clockwise,
-            multilayer: true,
+            kind: RotationKind::Multilayer { layer: 3 },
         };
         assert_eq!(expected_output, cwsb);
     }
@@ -226,9 +250,8 @@ mod tests {
         let acwsb = Rotation::anticlockwise_multilayer_from(Face::Front, 4);
         let expected_output = Rotation {
             relative_to: Face::Front,
-            layer: 4,
             direction: Direction::Anticlockwise,
-            multilayer: true,
+            kind: RotationKind::Multilayer { layer: 4 },
         };
         assert_eq!(expected_output, acwsb);
     }
@@ -237,9 +260,8 @@ mod tests {
     fn normalise_already_normalised() {
         let input = Rotation {
             relative_to: Face::Up,
-            layer: 7,
             direction: Direction::Clockwise,
-            multilayer: false,
+            kind: RotationKind::Setback { layer: 7 },
         };
         let expected_output = input;
         assert_eq!(expected_output, input.normalise(9));
@@ -249,9 +271,8 @@ mod tests {
     fn normalise_already_normalised_only_because_multilayer() {
         let input = Rotation {
             relative_to: Face::Up,
-            layer: 7,
             direction: Direction::Clockwise,
-            multilayer: true,
+            kind: RotationKind::Multilayer { layer: 7 },
         };
         let expected_output = input;
         assert_eq!(expected_output, input.normalise(8));
@@ -261,15 +282,13 @@ mod tests {
     fn normalise_not_already_normalised() {
         let input = Rotation {
             relative_to: Face::Up,
-            layer: 7,
             direction: Direction::Clockwise,
-            multilayer: false,
+            kind: RotationKind::Setback { layer: 7 },
         };
         let expected_output = Rotation {
             relative_to: Face::Down,
-            layer: 0,
             direction: Direction::Anticlockwise,
-            multilayer: false,
+            kind: RotationKind::FaceOnly,
         };
         assert_eq!(expected_output, input.normalise(8));
     }
@@ -278,15 +297,13 @@ mod tests {
     fn as_layer_0_of_opposite_face() {
         let input = Rotation {
             relative_to: Face::Up,
-            layer: 7,
             direction: Direction::Clockwise,
-            multilayer: false,
+            kind: RotationKind::Setback { layer: 7 },
         };
         let expected_output = Rotation {
             relative_to: Face::Down,
-            layer: 0,
             direction: Direction::Anticlockwise,
-            multilayer: false,
+            kind: RotationKind::FaceOnly,
         };
         assert_eq!(expected_output, input.as_layer_0_of_opposite_face());
     }
@@ -295,15 +312,13 @@ mod tests {
     fn as_layer_0_of_opposite_face_multilayer() {
         let input = Rotation {
             relative_to: Face::Up,
-            layer: 7,
             direction: Direction::Clockwise,
-            multilayer: true,
+            kind: RotationKind::Multilayer { layer: 7 },
         };
         let expected_output = Rotation {
             relative_to: Face::Down,
-            layer: 0,
             direction: Direction::Anticlockwise,
-            multilayer: false,
+            kind: RotationKind::FaceOnly,
         };
         assert_eq!(expected_output, input.as_layer_0_of_opposite_face());
     }
@@ -314,15 +329,13 @@ mod tests {
         let layer = 4;
         let input = Rotation {
             relative_to,
-            layer,
             direction: Direction::Anticlockwise,
-            multilayer: true,
+            kind: RotationKind::Multilayer { layer },
         };
         let expected_output = Rotation {
             relative_to,
-            layer,
             direction: Direction::Clockwise,
-            multilayer: true,
+            kind: RotationKind::Multilayer { layer },
         };
         assert_eq!(expected_output, !input);
     }
@@ -333,7 +346,11 @@ mod tests {
 
         for _ in 0..25 {
             let rotation = Rotation::random(side_length);
-            assert!(rotation.layer < side_length);
+
+            assert!(
+                matches!(rotation.kind, RotationKind::Setback { layer } | RotationKind::Multilayer { layer } if layer < side_length)
+                    || matches!(rotation.kind, RotationKind::FaceOnly)
+            );
         }
     }
 }
