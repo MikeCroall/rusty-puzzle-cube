@@ -1,7 +1,14 @@
+use std::fmt::Display;
+
 use anyhow::{Context, anyhow};
 use itertools::Itertools;
 
-use super::cube::{PuzzleCube, face::Face, rotation::Rotation};
+use super::cube::{
+    PuzzleCube,
+    direction::Direction,
+    face::Face,
+    rotation::{Rotation, RotationKind},
+};
 
 const CHAR_FOR_ANTICLOCKWISE: char = '\'';
 const CHAR_FOR_TURN_TWICE: char = '2';
@@ -135,6 +142,38 @@ fn rotation_multilayer(face: Face, anticlockwise: bool, layer: usize) -> Rotatio
         Rotation::anticlockwise_multilayer_from(face, layer)
     } else {
         Rotation::clockwise_multilayer_from(face, layer)
+    }
+}
+
+impl Display for Rotation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut out = String::new();
+
+        match self.kind {
+            RotationKind::Multilayer { layer } if layer > 1 => {
+                out.push_str(&format!("{}", layer + 1))
+            }
+            RotationKind::Setback { layer } if layer > 0 => out.push_str(&format!("{}", layer + 1)),
+            _ => {}
+        };
+        out.push(match self.relative_to {
+            Face::Front => 'F',
+            Face::Right => 'R',
+            Face::Up => 'U',
+            Face::Left => 'L',
+            Face::Back => 'B',
+            Face::Down => 'D',
+        });
+        match self.kind {
+            RotationKind::Multilayer { layer } if layer > 0 => out.push(CHAR_FOR_MULTI_LAYER),
+            _ => {}
+        };
+
+        if self.direction == Direction::Anticlockwise {
+            out.push(CHAR_FOR_ANTICLOCKWISE)
+        };
+
+        write!(f, "{out}")
     }
 }
 
@@ -346,8 +385,13 @@ Caused by:
         let rotations = parse_token("Uw")?;
 
         assert_eq!(
-            vec![Rotation::clockwise_multilayer_from(Face::Up, 1),],
+            vec![Rotation::clockwise_multilayer_from(Face::Up, 1)],
             rotations
+        );
+
+        assert_eq!(
+            "Uw",
+            Rotation::clockwise_multilayer_from(Face::Up, 1).to_string()
         );
 
         Ok(())
@@ -358,8 +402,13 @@ Caused by:
         let rotations = parse_token("3Fw")?;
 
         assert_eq!(
-            vec![Rotation::clockwise_multilayer_from(Face::Front, 2),],
+            vec![Rotation::clockwise_multilayer_from(Face::Front, 2)],
             rotations
+        );
+
+        assert_eq!(
+            "3Fw",
+            Rotation::clockwise_multilayer_from(Face::Front, 2).to_string()
         );
 
         Ok(())
@@ -370,8 +419,13 @@ Caused by:
         let rotations = parse_token("3Rw'")?;
 
         assert_eq!(
-            vec![Rotation::anticlockwise_multilayer_from(Face::Right, 2),],
+            vec![Rotation::anticlockwise_multilayer_from(Face::Right, 2)],
             rotations
+        );
+
+        assert_eq!(
+            "3Rw'",
+            Rotation::anticlockwise_multilayer_from(Face::Right, 2).to_string()
         );
 
         Ok(())
@@ -389,6 +443,11 @@ Caused by:
             rotations
         );
 
+        assert_eq!(
+            "3Bw",
+            Rotation::clockwise_multilayer_from(Face::Back, 2).to_string()
+        );
+
         Ok(())
     }
 
@@ -399,6 +458,11 @@ Caused by:
         assert_eq!(
             vec![Rotation::anticlockwise_setback_from(Face::Left, 3)],
             rotations
+        );
+
+        assert_eq!(
+            "4L'",
+            Rotation::anticlockwise_setback_from(Face::Left, 3).to_string()
         );
 
         Ok(())

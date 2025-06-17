@@ -1,10 +1,13 @@
 #[cfg(test)]
 mod quickcheck_tests {
-    use crate::cube::{
-        Cube, PuzzleCube,
-        direction::Direction,
-        face::Face,
-        rotation::{Rotation, RotationKind},
+    use crate::{
+        cube::{
+            Cube, PuzzleCube,
+            direction::Direction,
+            face::Face,
+            rotation::{Rotation, RotationKind},
+        },
+        notation::parse_sequence,
     };
 
     use quickcheck::Arbitrary;
@@ -73,5 +76,14 @@ mod quickcheck_tests {
         cube.rotate_seq(inverse_rotations).unwrap();
 
         cube == original_cube
+    }
+
+    #[quickcheck]
+    fn rotations_to_string_then_parsed_are_the_same(rotation: Rotation) -> bool {
+        let to_string = rotation.to_string();
+
+        let parsed_back = parse_sequence(&to_string).unwrap();
+
+        parsed_back.len() == 1 && rotation == *parsed_back.first().unwrap()
     }
 }
