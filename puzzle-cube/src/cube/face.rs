@@ -1,11 +1,12 @@
 use std::ops::Not;
 
 use rand::distr::{Distribution, StandardUniform};
+use strum::EnumIter;
 
 use self::{Face as F, IndexAlignment as IA};
 
 /// An enum representing the six sides of the cube.
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter)]
 pub enum Face {
     /// The Up face starts as white cubies
     Up,
