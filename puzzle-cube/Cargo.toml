@@ -16,6 +16,7 @@ strum = { version = "0.27.1", features = ["derive"] }
 getrandom = { version = "0.3", features = ["wasm_js"] }
 
 [dev-dependencies]
+criterion = { version = "0.6.0", features = ["html_reports"] }
 paste = "1.0.15"
 pretty_assertions = "1.4.1"
 quickcheck = "1.0.3"
@@ -23,3 +24,7 @@ quickcheck_macros = "1.1.0"
 
 [lints.clippy]
 allow_attributes = "deny"
+
+[[bench]]
+name = "cube_rotations"
+harness = false
