@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::fmt::{Display, Write as _};
 
 use anyhow::{Context, anyhow};
 use itertools::Itertools;
@@ -151,11 +151,13 @@ impl Display for Rotation {
 
         match self.kind {
             RotationKind::Multilayer { layer } if layer > 1 => {
-                out.push_str(&format!("{}", layer + 1))
+                let _ = write!(out, "{}", layer + 1);
             }
-            RotationKind::Setback { layer } if layer > 0 => out.push_str(&format!("{}", layer + 1)),
+            RotationKind::Setback { layer } if layer > 0 => {
+                let _ = write!(out, "{}", layer + 1);
+            }
             _ => {}
-        };
+        }
         out.push(match self.relative_to {
             Face::Front => 'F',
             Face::Right => 'R',
@@ -167,11 +169,11 @@ impl Display for Rotation {
         match self.kind {
             RotationKind::Multilayer { layer } if layer > 0 => out.push(CHAR_FOR_MULTI_LAYER),
             _ => {}
-        };
+        }
 
         if self.direction == Direction::Anticlockwise {
-            out.push(CHAR_FOR_ANTICLOCKWISE)
-        };
+            let _ = write!(out, "{CHAR_FOR_ANTICLOCKWISE}");
+        }
 
         write!(f, "{out}")
     }
