@@ -169,44 +169,69 @@ fn should_apply_anim(
     y: usize,
     rotation: Rotation,
 ) -> bool {
-    if face == rotation.relative_to
-        && matches!(
-            rotation.kind,
-            RotationKind::Multilayer { .. }
-                | RotationKind::Setback { layer: 0 }
-                | RotationKind::FaceOnly
-        )
-    {
-        return true;
+    let opposite_end_minus_layer = |layer| side_length - 1 - layer;
+
+    match rotation.kind {
+        RotationKind::MultiSetback { start_layer: 0, .. }
+        | RotationKind::Multilayer { .. }
+        | RotationKind::Setback { layer: 0 }
+        | RotationKind::FaceOnly
+            if face == rotation.relative_to =>
+        {
+            true
+        }
+        RotationKind::Multilayer { layer }
+            if face == !rotation.relative_to && layer == opposite_end_minus_layer(0) =>
+        {
+            true
+        }
+        RotationKind::MultiSetback { end_layer, .. }
+            if face == !rotation.relative_to && end_layer == opposite_end_minus_layer(0) =>
+        {
+            true
+        }
+        _ => match rotation
+            .relative_to
+            .adjacent_faces_clockwise()
+            .iter()
+            .find(|(f, _)| f == &face)
+        {
+            Some((_, index_alignment)) => match rotation.kind {
+                RotationKind::FaceOnly => match index_alignment {
+                    IndexAlignment::OuterStart => x == 0,
+                    IndexAlignment::OuterEnd => x == opposite_end_minus_layer(0),
+                    IndexAlignment::InnerFirst => y == 0,
+                    IndexAlignment::InnerLast => y == opposite_end_minus_layer(0),
+                },
+                RotationKind::Setback { layer } => match index_alignment {
+                    IndexAlignment::OuterStart => x == layer,
+                    IndexAlignment::OuterEnd => x == opposite_end_minus_layer(layer),
+                    IndexAlignment::InnerFirst => y == layer,
+                    IndexAlignment::InnerLast => y == opposite_end_minus_layer(layer),
+                },
+                RotationKind::Multilayer { layer } => match index_alignment {
+                    IndexAlignment::OuterStart => x <= layer,
+                    IndexAlignment::OuterEnd => x >= opposite_end_minus_layer(layer),
+                    IndexAlignment::InnerFirst => y <= layer,
+                    IndexAlignment::InnerLast => y >= opposite_end_minus_layer(layer),
+                },
+                RotationKind::MultiSetback {
+                    start_layer,
+                    end_layer,
+                } => match index_alignment {
+                    IndexAlignment::OuterStart => (start_layer..=end_layer).contains(&x),
+                    IndexAlignment::OuterEnd => (opposite_end_minus_layer(end_layer)
+                        ..=opposite_end_minus_layer(start_layer))
+                        .contains(&x),
+                    IndexAlignment::InnerFirst => (start_layer..=end_layer).contains(&y),
+                    IndexAlignment::InnerLast => (opposite_end_minus_layer(end_layer)
+                        ..=opposite_end_minus_layer(start_layer))
+                        .contains(&y),
+                },
+            },
+            _ => side_length == 1 && face == !rotation.relative_to,
+        },
     }
-
-    let rotation_layer = match rotation.kind {
-        RotationKind::Multilayer { layer } | RotationKind::Setback { layer } => layer,
-        RotationKind::FaceOnly => 0,
-    };
-    let multilayer = matches!(rotation.kind, RotationKind::Multilayer { .. });
-
-    let opposite_end_minus_layer = side_length - 1 - rotation_layer;
-    let adjacents = rotation.relative_to.adjacent_faces_clockwise();
-    if let Some((_, index_alignment)) = adjacents.iter().find(|(f, _)| f == &face) {
-        return if multilayer {
-            match index_alignment {
-                IndexAlignment::OuterStart => x <= rotation_layer,
-                IndexAlignment::OuterEnd => x >= opposite_end_minus_layer,
-                IndexAlignment::InnerFirst => y <= rotation_layer,
-                IndexAlignment::InnerLast => y >= opposite_end_minus_layer,
-            }
-        } else {
-            match index_alignment {
-                IndexAlignment::OuterStart => x == rotation_layer,
-                IndexAlignment::OuterEnd => x == opposite_end_minus_layer,
-                IndexAlignment::InnerFirst => y == rotation_layer,
-                IndexAlignment::InnerLast => y == opposite_end_minus_layer,
-            }
-        };
-    }
-
-    side_length == 1 && face == !rotation.relative_to
 }
 
 fn cubie_face_to_colour(cubie_face: CubieFace) -> Srgba {

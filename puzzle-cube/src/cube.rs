@@ -142,17 +142,9 @@ impl PuzzleCube for Cube {
             Rotation {
                 relative_to,
                 direction: Direction::Clockwise,
-                kind: RotationKind::Multilayer { layer },
+                kind: RotationKind::FaceOnly,
             } => {
-                for active_layer in 0..=layer {
-                    self.rotate(Rotation {
-                        relative_to,
-                        direction: Direction::Clockwise,
-                        kind: RotationKind::Setback {
-                            layer: active_layer,
-                        },
-                    })?;
-                }
+                self.rotate_layer(relative_to, 0)?;
             }
             Rotation {
                 relative_to,
@@ -161,12 +153,33 @@ impl PuzzleCube for Cube {
             } => {
                 self.rotate_layer(relative_to, layer)?;
             }
-            Rotation {
-                relative_to,
+            r @ Rotation {
                 direction: Direction::Clockwise,
-                kind: RotationKind::FaceOnly,
+                kind: RotationKind::Multilayer { layer },
+                ..
             } => {
-                self.rotate_layer(relative_to, 0)?;
+                for layer in 0..=layer {
+                    self.rotate(Rotation {
+                        kind: RotationKind::Setback { layer },
+                        ..r
+                    })?;
+                }
+            }
+            r @ Rotation {
+                direction: Direction::Clockwise,
+                kind:
+                    RotationKind::MultiSetback {
+                        start_layer,
+                        end_layer,
+                    },
+                ..
+            } => {
+                for layer in start_layer..=end_layer {
+                    self.rotate(Rotation {
+                        kind: RotationKind::Setback { layer },
+                        ..r
+                    })?;
+                }
             }
         }
         Ok(())
@@ -717,6 +730,53 @@ mod tests {
                 vec![CubieFace::Red(Some('0')), CubieFace::Yellow(Some('3')), CubieFace::Yellow(Some('0'))],
                 vec![CubieFace::Red(Some('3')), CubieFace::Yellow(Some('4')), CubieFace::Yellow(Some('1'))],
                 vec![CubieFace::Red(Some('6')), CubieFace::Yellow(Some('5')), CubieFace::Yellow(Some('2'))],
+            ],
+        );
+        assert_eq!(expected_cube, cube);
+        Ok(())
+    }
+
+    #[test]
+    fn rotate_multisetback() -> anyhow::Result<()> {
+        let mut cube = Cube::create_with_unique_characters(4.try_into()?);
+        cube.rotate(Rotation::clockwise_multisetback_from(Face::Left, 1, 2))?;
+
+        let expected_cube = create_cube_from_sides!(
+            up: vec![
+                vec![CubieFace::White(Some('0')), CubieFace::Green(Some('>')), CubieFace::Green(Some('=')), CubieFace::White(Some('3'))],
+                vec![CubieFace::White(Some('4')), CubieFace::Green(Some(':')), CubieFace::Green(Some('9')), CubieFace::White(Some('7'))],
+                vec![CubieFace::White(Some('8')), CubieFace::Green(Some('6')), CubieFace::Green(Some('5')), CubieFace::White(Some(';'))],
+                vec![CubieFace::White(Some('<')), CubieFace::Green(Some('2')), CubieFace::Green(Some('1')), CubieFace::White(Some('?'))],
+            ],
+            down: vec![
+                vec![CubieFace::Yellow(Some('0')), CubieFace::Blue(Some('1')), CubieFace::Blue(Some('2')), CubieFace::Yellow(Some('3'))],
+                vec![CubieFace::Yellow(Some('4')), CubieFace::Blue(Some('5')), CubieFace::Blue(Some('6')), CubieFace::Yellow(Some('7'))],
+                vec![CubieFace::Yellow(Some('8')), CubieFace::Blue(Some('9')), CubieFace::Blue(Some(':')), CubieFace::Yellow(Some(';'))],
+                vec![CubieFace::Yellow(Some('<')), CubieFace::Blue(Some('=')), CubieFace::Blue(Some('>')), CubieFace::Yellow(Some('?'))],
+            ],
+            front: vec![
+                vec![CubieFace::Blue(Some('0')), CubieFace::White(Some('1')), CubieFace::White(Some('2')), CubieFace::Blue(Some('3'))],
+                vec![CubieFace::Blue(Some('4')), CubieFace::White(Some('5')), CubieFace::White(Some('6')), CubieFace::Blue(Some('7'))],
+                vec![CubieFace::Blue(Some('8')), CubieFace::White(Some('9')), CubieFace::White(Some(':')), CubieFace::Blue(Some(';'))],
+                vec![CubieFace::Blue(Some('<')), CubieFace::White(Some('=')), CubieFace::White(Some('>')), CubieFace::Blue(Some('?'))],
+            ],
+            right: vec![
+                vec![CubieFace::Orange(Some('0')), CubieFace::Orange(Some('1')), CubieFace::Orange(Some('2')), CubieFace::Orange(Some('3'))],
+                vec![CubieFace::Orange(Some('4')), CubieFace::Orange(Some('5')), CubieFace::Orange(Some('6')), CubieFace::Orange(Some('7'))],
+                vec![CubieFace::Orange(Some('8')), CubieFace::Orange(Some('9')), CubieFace::Orange(Some(':')), CubieFace::Orange(Some(';'))],
+                vec![CubieFace::Orange(Some('<')), CubieFace::Orange(Some('=')), CubieFace::Orange(Some('>')), CubieFace::Orange(Some('?'))],
+            ],
+            back: vec![
+                vec![CubieFace::Green(Some('0')), CubieFace::Yellow(Some('>')), CubieFace::Yellow(Some('=')), CubieFace::Green(Some('3'))],
+                vec![CubieFace::Green(Some('4')), CubieFace::Yellow(Some(':')), CubieFace::Yellow(Some('9')), CubieFace::Green(Some('7'))],
+                vec![CubieFace::Green(Some('8')), CubieFace::Yellow(Some('6')), CubieFace::Yellow(Some('5')), CubieFace::Green(Some(';'))],
+                vec![CubieFace::Green(Some('<')), CubieFace::Yellow(Some('2')), CubieFace::Yellow(Some('1')), CubieFace::Green(Some('?'))],
+            ],
+            left: vec![
+                vec![CubieFace::Red(Some('0')), CubieFace::Red(Some('1')), CubieFace::Red(Some('2')), CubieFace::Red(Some('3'))],
+                vec![CubieFace::Red(Some('4')), CubieFace::Red(Some('5')), CubieFace::Red(Some('6')), CubieFace::Red(Some('7'))],
+                vec![CubieFace::Red(Some('8')), CubieFace::Red(Some('9')), CubieFace::Red(Some(':')), CubieFace::Red(Some(';'))],
+                vec![CubieFace::Red(Some('<')), CubieFace::Red(Some('=')), CubieFace::Red(Some('>')), CubieFace::Red(Some('?'))],
             ],
         );
         assert_eq!(expected_cube, cube);

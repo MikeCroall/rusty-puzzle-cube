@@ -66,16 +66,26 @@ fn parse_token(original_token: &str) -> anyhow::Result<Vec<Rotation>> {
     let (token, face) = strip_face_suffix(token)
         .with_context(|| format!("Failed parsing token: [{original_token}]"))?;
 
-    let chosen_layer = parse_multi_layer_count(token)
+    let multilayer_count = parse_multilayer_count(token)
         .with_context(|| format!("Failed parsing token: [{original_token}]"))?
-        .map(|layer| layer - 1)
-        .or(if multi_layer { Some(1) } else { None });
-
-    let rotation = if let Some(chosen_layer) = chosen_layer {
-        if multi_layer {
-            rotation_multilayer(face, anticlockwise, chosen_layer)
+        .or(if multi_layer {
+            Some(MultilayerCount::Single(1))
         } else {
-            rotation_setback(face, anticlockwise, chosen_layer)
+            None
+        });
+
+    let rotation = if let Some(multilayer_count) = multilayer_count {
+        match multilayer_count {
+            MultilayerCount::Single(chosen_layer) => {
+                if multi_layer {
+                    rotation_multilayer(face, anticlockwise, chosen_layer)
+                } else {
+                    rotation_setback(face, anticlockwise, chosen_layer)
+                }
+            }
+            MultilayerCount::Range(chosen_layer_start, chosen_layer_end) => {
+                rotation_multisetback(face, anticlockwise, chosen_layer_start, chosen_layer_end)
+            }
         }
     } else {
         rotation(face, anticlockwise)
@@ -111,14 +121,35 @@ fn strip_face_suffix(string: &str) -> anyhow::Result<(&str, Face)> {
     Ok((&string[..(string.len() - 1)], face))
 }
 
-fn parse_multi_layer_count(string: &str) -> anyhow::Result<Option<usize>> {
+enum MultilayerCount {
+    Single(usize),
+    Range(usize, usize),
+}
+
+fn parse_multilayer_count(string: &str) -> anyhow::Result<Option<MultilayerCount>> {
     if string.is_empty() {
-        Ok(None)
-    } else {
-        Ok(Some(string.parse::<usize>().with_context(|| {
-            format!("Invalid multi-layer count: [{string}]")
-        })?))
+        return Ok(None);
     }
+
+    let mut split = string.split('-');
+    if let (Some(left), Some(right)) = (split.next(), split.next()) {
+        return Ok(Some(MultilayerCount::Range(
+            left.parse::<usize>()
+                .with_context(|| format!("Invalid multi-layer count: [{string}]"))?
+                - 1,
+            right
+                .parse::<usize>()
+                .with_context(|| format!("Invalid multi-layer count: [{string}]"))?
+                - 1,
+        )));
+    }
+
+    Ok(Some(MultilayerCount::Single(
+        string
+            .parse::<usize>()
+            .with_context(|| format!("Invalid multi-layer count: [{string}]"))?
+            - 1,
+    )))
 }
 
 fn rotation(face: Face, anticlockwise: bool) -> Rotation {
@@ -145,6 +176,19 @@ fn rotation_multilayer(face: Face, anticlockwise: bool, layer: usize) -> Rotatio
     }
 }
 
+fn rotation_multisetback(
+    face: Face,
+    anticlockwise: bool,
+    chosen_layer_start: usize,
+    chosen_layer_end: usize,
+) -> Rotation {
+    if anticlockwise {
+        Rotation::anticlockwise_multisetback_from(face, chosen_layer_start, chosen_layer_end)
+    } else {
+        Rotation::clockwise_multisetback_from(face, chosen_layer_start, chosen_layer_end)
+    }
+}
+
 impl Display for Rotation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut out = String::new();
@@ -155,6 +199,12 @@ impl Display for Rotation {
             }
             RotationKind::Setback { layer } if layer > 0 => {
                 let _ = write!(out, "{}", layer + 1);
+            }
+            RotationKind::MultiSetback {
+                start_layer,
+                end_layer,
+            } => {
+                let _ = write!(out, "{}-{}", start_layer + 1, end_layer + 1);
             }
             RotationKind::FaceOnly
             | RotationKind::Multilayer { .. }
@@ -172,7 +222,8 @@ impl Display for Rotation {
             RotationKind::Multilayer { layer } if layer > 0 => out.push(CHAR_FOR_MULTI_LAYER),
             RotationKind::FaceOnly
             | RotationKind::Multilayer { .. }
-            | RotationKind::Setback { .. } => {}
+            | RotationKind::Setback { .. }
+            | RotationKind::MultiSetback { .. } => {}
         }
 
         match self.direction {
@@ -293,6 +344,16 @@ Failed parsing token: [3]
 
 Caused by:
     Invalid face character: [3]",
+        test_invalid_token_2_dash_f: "2-F", "\
+Failed parsing token: [2-F]
+
+Caused by:
+    0: Invalid multi-layer count: [2-]",
+        test_invalid_token_dash_2_f: "-2F", "\
+Failed parsing token: [-2F]
+
+Caused by:
+    0: Invalid multi-layer count: [-2]"
     );
 
     test_invalid_sequence!(
@@ -472,6 +533,23 @@ Caused by:
         assert_eq!(
             "4L'",
             Rotation::anticlockwise_setback_from(Face::Left, 3).to_string()
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn parse_token_large_cubes_multisetback() -> anyhow::Result<()> {
+        let rotations = parse_token("3-6U'")?;
+
+        assert_eq!(
+            vec![Rotation::anticlockwise_multisetback_from(Face::Up, 2, 5)],
+            rotations
+        );
+
+        assert_eq!(
+            "3-6U'",
+            Rotation::anticlockwise_multisetback_from(Face::Up, 2, 5).to_string()
         );
 
         Ok(())

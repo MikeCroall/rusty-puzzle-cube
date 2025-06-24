@@ -54,8 +54,17 @@ pub enum RotationKind {
         /// How far 'in' to the cube the layer to rotate is. Only layer index `layer` will be included in this rotation.
         layer: usize,
     },
-    //
-    // todo: MultiSetback{pub start_layer: usize, pub end_layer: usize} for e.g. `3-5R` which would be indices start layer `2` end layer `4`
+
+    /// All layers from `start_layer` index to `end_layer` index inclusive will be affected.
+    /// This is effectively the same as having a `Setback` rotation for each `layer` in the range `start_layer..=end_layer`.
+    ///
+    /// An example rotation of this kind is `2-4R` where `start_layer` would be `1` and `end_layer` would be `3`.
+    MultiSetback {
+        /// How far 'in' to the cube the first layer to rotate is. This index is treated as the inclusive lower bound.
+        start_layer: usize,
+        /// How far 'in' to the cube the last layer to rotate is. This index is treated as the inclusive upper bound.
+        end_layer: usize,
+    },
 }
 
 impl Rotation {
@@ -119,6 +128,40 @@ impl Rotation {
         }
     }
 
+    /// Construct a `Rotation` that will turn multiple layers of the cube 90° clockwise from the perspective of looking directly at `face` from outside the cube. The layers start from the `start_layer` layer and extend to the `end_layer` where `face` itself is 0, the layer immediately behind it is 1, and so on.
+    #[must_use]
+    pub fn clockwise_multisetback_from(
+        relative_to: Face,
+        start_layer: usize,
+        end_layer: usize,
+    ) -> Rotation {
+        Rotation {
+            relative_to,
+            direction: Direction::Clockwise,
+            kind: RotationKind::MultiSetback {
+                start_layer,
+                end_layer,
+            },
+        }
+    }
+
+    /// Construct a `Rotation` that will turn multiple layers of the cube 90° anticlockwise from the perspective of looking directly at `face` from outside the cube. The layers start from the `start_layer` layer and extend to the `end_layer` where `face` itself is 0, the layer immediately behind it is 1, and so on.
+    #[must_use]
+    pub fn anticlockwise_multisetback_from(
+        relative_to: Face,
+        start_layer: usize,
+        end_layer: usize,
+    ) -> Rotation {
+        Rotation {
+            relative_to,
+            direction: Direction::Anticlockwise,
+            kind: RotationKind::MultiSetback {
+                start_layer,
+                end_layer,
+            },
+        }
+    }
+
     /// Construct a randomly generated `Rotation`. The `Rotation` will be valid for a `Cube` of at least `side_length` cubies wide.
     /// This `Rotation` is expected to be used via `rotate` on a `Cube`, meaning it makes no attempt to avoid unusual edge cases such as picking the furthest layer away from `relative_to`.
     #[must_use]
@@ -132,9 +175,16 @@ impl Rotation {
             Direction::Anticlockwise
         };
         let multilayer = rng.random_bool(0.333);
+        let setback = rng.random_bool(0.333);
 
         let kind = if layer == 0 {
             RotationKind::FaceOnly
+        } else if multilayer && setback {
+            let other_layer = rng.random_range(0..side_length);
+            RotationKind::MultiSetback {
+                start_layer: layer.min(other_layer),
+                end_layer: layer.max(other_layer),
+            }
         } else if multilayer {
             RotationKind::Multilayer { layer }
         } else {
@@ -148,20 +198,32 @@ impl Rotation {
         }
     }
 
-    /// Ensure that this `Rotation` does not have a `layer` that corresponds to the `Face` opposite to the one this `Rotation` is `relative_to`.
-    /// That is, if this `Rotation` is `relative_to` the `Front` face, with a `layer` that means it actually turns the `Back` face, return a `Rotation` that is `relative_to` the `Back` face with a `layer` of 0.
+    /// Ensure that this `Rotation` does not have a `layer` that corresponds to the `Face` opposite to the one this `Rotation` is `relative_to`, and that any range of layers is correctly ordered.
+    ///
+    /// That is, if this `Rotation` is a `Setback` `relative_to` the `Front` face, with a `layer` that means it actually turns the `Back` face, return a `Rotation` that is `relative_to` the `Back` face with a `layer` of 0.
     /// The `direction` is also flipped such that the semantics of the rotation are maintained.
     /// This applies to any pair of opposite faces.
+    ///
+    /// If this `Rotation` is a `MultiSetback`, ensure `start_layer` <= `end_layer`.
     #[must_use]
     pub fn normalise(self, side_length: usize) -> Rotation {
         let furthest_layer = side_length - 1;
 
-        if side_length > 1
-            && matches!(self.kind, RotationKind::Setback { layer } if layer == furthest_layer)
-        {
-            self.as_layer_0_of_opposite_face()
-        } else {
-            self
+        match self.kind {
+            RotationKind::MultiSetback {
+                start_layer,
+                end_layer,
+            } if start_layer > end_layer => Rotation {
+                kind: RotationKind::MultiSetback {
+                    start_layer: end_layer,
+                    end_layer: start_layer,
+                },
+                ..self
+            },
+            RotationKind::Setback { layer } if layer == furthest_layer && side_length > 1 => {
+                self.as_layer_0_of_opposite_face()
+            }
+            _ => self,
         }
     }
 
@@ -236,24 +298,52 @@ mod tests {
 
     #[test]
     fn clockwise_multilayer_from() {
-        let cwsb = Rotation::clockwise_multilayer_from(Face::Down, 3);
+        let cwml = Rotation::clockwise_multilayer_from(Face::Down, 3);
         let expected_output = Rotation {
             relative_to: Face::Down,
             direction: Direction::Clockwise,
             kind: RotationKind::Multilayer { layer: 3 },
         };
-        assert_eq!(expected_output, cwsb);
+        assert_eq!(expected_output, cwml);
     }
 
     #[test]
     fn anticlockwise_multilayer_from() {
-        let acwsb = Rotation::anticlockwise_multilayer_from(Face::Front, 4);
+        let acwml = Rotation::anticlockwise_multilayer_from(Face::Front, 4);
         let expected_output = Rotation {
             relative_to: Face::Front,
             direction: Direction::Anticlockwise,
             kind: RotationKind::Multilayer { layer: 4 },
         };
-        assert_eq!(expected_output, acwsb);
+        assert_eq!(expected_output, acwml);
+    }
+
+    #[test]
+    fn clockwise_multisetback_from() {
+        let cwmsb = Rotation::clockwise_multisetback_from(Face::Down, 3, 5);
+        let expected_output = Rotation {
+            relative_to: Face::Down,
+            direction: Direction::Clockwise,
+            kind: RotationKind::MultiSetback {
+                start_layer: 3,
+                end_layer: 5,
+            },
+        };
+        assert_eq!(expected_output, cwmsb);
+    }
+
+    #[test]
+    fn anticlockwise_multisetback_from() {
+        let acwmsb = Rotation::anticlockwise_multisetback_from(Face::Front, 4, 6);
+        let expected_output = Rotation {
+            relative_to: Face::Front,
+            direction: Direction::Anticlockwise,
+            kind: RotationKind::MultiSetback {
+                start_layer: 4,
+                end_layer: 6,
+            },
+        };
+        assert_eq!(expected_output, acwmsb);
     }
 
     #[test]
@@ -291,6 +381,48 @@ mod tests {
             kind: RotationKind::FaceOnly,
         };
         assert_eq!(expected_output, input.normalise(8));
+    }
+
+    #[test]
+    fn normalise_already_normalised_mutlisetback() {
+        let input = Rotation {
+            relative_to: Face::Up,
+            direction: Direction::Clockwise,
+            kind: RotationKind::MultiSetback {
+                start_layer: 3,
+                end_layer: 7,
+            },
+        };
+        let expected_output = Rotation {
+            relative_to: Face::Up,
+            direction: Direction::Clockwise,
+            kind: RotationKind::MultiSetback {
+                start_layer: 3,
+                end_layer: 7,
+            },
+        };
+        assert_eq!(expected_output, input.normalise(10));
+    }
+
+    #[test]
+    fn normalise_not_already_normalised_mutlisetback() {
+        let input = Rotation {
+            relative_to: Face::Up,
+            direction: Direction::Clockwise,
+            kind: RotationKind::MultiSetback {
+                start_layer: 7,
+                end_layer: 3,
+            },
+        };
+        let expected_output = Rotation {
+            relative_to: Face::Up,
+            direction: Direction::Clockwise,
+            kind: RotationKind::MultiSetback {
+                start_layer: 3,
+                end_layer: 7,
+            },
+        };
+        assert_eq!(expected_output, input.normalise(10));
     }
 
     #[test]
@@ -348,7 +480,8 @@ mod tests {
             let rotation = Rotation::random(side_length);
 
             assert!(
-                matches!(rotation.kind, RotationKind::Setback { layer } | RotationKind::Multilayer { layer } if layer < side_length)
+                matches!(rotation.kind, RotationKind::MultiSetback { start_layer, end_layer } if start_layer < side_length && end_layer < side_length)
+                    || matches!(rotation.kind, RotationKind::Setback { layer } | RotationKind::Multilayer { layer } if layer < side_length)
                     || matches!(rotation.kind, RotationKind::FaceOnly)
             );
         }

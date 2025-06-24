@@ -36,22 +36,51 @@ mod quickcheck_tests {
         }
     }
 
-    impl Arbitrary for Rotation {
+    #[derive(Copy, Clone)]
+    enum RotationKindNoFields {
+        FaceOnly,
+        Multilayer,
+        Setback,
+        MultiSetback,
+    }
+
+    impl Arbitrary for RotationKindNoFields {
+        fn arbitrary(g: &mut quickcheck::Gen) -> Self {
+            *g.choose(&[
+                RotationKindNoFields::FaceOnly,
+                RotationKindNoFields::Multilayer,
+                RotationKindNoFields::Setback,
+                RotationKindNoFields::MultiSetback,
+            ])
+            .unwrap()
+        }
+    }
+
+    impl Arbitrary for RotationKind {
         fn arbitrary(g: &mut quickcheck::Gen) -> Self {
             let layer = usize::arbitrary(g) % CUBE_SIZE;
+            if layer == 0 {
+                return RotationKind::FaceOnly;
+            }
 
-            let kind = if layer == 0 {
-                RotationKind::FaceOnly
-            } else if bool::arbitrary(g) {
-                RotationKind::Multilayer { layer }
-            } else {
-                RotationKind::Setback { layer }
-            };
+            match RotationKindNoFields::arbitrary(g) {
+                RotationKindNoFields::FaceOnly => RotationKind::FaceOnly,
+                RotationKindNoFields::Multilayer => RotationKind::Multilayer { layer },
+                RotationKindNoFields::Setback => RotationKind::Setback { layer },
+                RotationKindNoFields::MultiSetback => RotationKind::MultiSetback {
+                    start_layer: layer,
+                    end_layer: usize::arbitrary(g) % CUBE_SIZE,
+                },
+            }
+        }
+    }
 
+    impl Arbitrary for Rotation {
+        fn arbitrary(g: &mut quickcheck::Gen) -> Self {
             Rotation {
                 relative_to: Face::arbitrary(g),
                 direction: Direction::arbitrary(g),
-                kind,
+                kind: RotationKind::arbitrary(g),
             }
         }
     }
