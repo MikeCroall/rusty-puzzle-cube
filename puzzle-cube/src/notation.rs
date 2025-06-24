@@ -156,7 +156,9 @@ impl Display for Rotation {
             RotationKind::Setback { layer } if layer > 0 => {
                 let _ = write!(out, "{}", layer + 1);
             }
-            _ => {}
+            RotationKind::FaceOnly
+            | RotationKind::Multilayer { .. }
+            | RotationKind::Setback { .. } => {}
         }
         out.push(match self.relative_to {
             Face::Front => 'F',
@@ -168,11 +170,16 @@ impl Display for Rotation {
         });
         match self.kind {
             RotationKind::Multilayer { layer } if layer > 0 => out.push(CHAR_FOR_MULTI_LAYER),
-            _ => {}
+            RotationKind::FaceOnly
+            | RotationKind::Multilayer { .. }
+            | RotationKind::Setback { .. } => {}
         }
 
-        if self.direction == Direction::Anticlockwise {
-            let _ = write!(out, "{CHAR_FOR_ANTICLOCKWISE}");
+        match self.direction {
+            Direction::Anticlockwise => {
+                let _ = write!(out, "{CHAR_FOR_ANTICLOCKWISE}");
+            }
+            Direction::Clockwise => {}
         }
 
         write!(f, "{out}")
