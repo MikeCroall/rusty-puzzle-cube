@@ -243,113 +243,149 @@ mod tests {
     use crate::{create_cube_from_sides, create_cube_side};
 
     use super::*;
+    use paste::paste;
     use pretty_assertions::assert_eq;
 
     macro_rules! test_invalid_token {
-        ($($name:ident: $value:expr, $err_text:expr),* $(,)?) => {
+        ($($name:tt: $value:literal, $err_text:literal),* $(,)?) => {
             $(
-                #[test]
-                fn $name() {
-                    let error = parse_token($value).unwrap_err();
-                    assert!(format!("{:?}", error).starts_with($err_text));
+                paste!{
+                    #[test]
+                    fn [<test_invalid_token_ $name:lower>]() {
+                        let error = parse_token($value).unwrap_err();
+                        assert!(format!("{:?}", error).starts_with($err_text));
+                    }
                 }
             )*
         }
     }
 
     macro_rules! test_invalid_sequence {
-        ($($name:ident: $value:expr, $err_text:expr),* $(,)?) => {
+        ($($name:ident: $value:literal, $err_text:literal),* $(,)?) => {
             $(
-                #[test]
-                fn $name() {
-                    let mut cube = Cube::create(3.try_into().expect("known good value"));
-                    let error = perform_notation($value, &mut cube).unwrap_err();
-                    assert!(format!("{:?}", error).starts_with($err_text));
+                paste!{
+                    #[test]
+                    fn [<test_invalid_sequence_ $name:lower>]() {
+                        let mut cube = Cube::create(3.try_into().expect("known good value"));
+                        let error = perform_notation($value, &mut cube).unwrap_err();
+                        assert!(format!("{:?}", error).starts_with($err_text));
+                    }
                 }
             )*
         }
     }
 
+    macro_rules! test_parse_token_and_reverse {
+        ($($name:tt: $token:literal, $expected_rotation:expr),* $(,)?) => {
+            $(
+                test_parse_token_and_reverse!(
+                    $name: $token, vec![$expected_rotation], $token
+                );
+            )*
+        };
+        ($($name:tt: $double_token:literal, twice $expected_rotation:expr, $single_token:literal),* $(,)?) => {
+            $(
+                test_parse_token_and_reverse!(
+                    $name: $double_token, vec![$expected_rotation, $expected_rotation], $single_token
+                );
+            )*
+        };
+        ($name:tt: $token_to_parse:literal, $expected_rotation_vec:expr, $token_to_expect:literal) => {
+            paste! {
+                #[test]
+                fn [<parse_token_ $name:lower _and_reverse>]() -> anyhow::Result<()> {
+                    let rotations = parse_token($token_to_parse)?;
+
+                    assert_eq!($expected_rotation_vec, rotations);
+
+                    assert_eq!($token_to_expect, $expected_rotation_vec[0].to_string());
+
+                    Ok(())
+                }
+            }
+        };
+    }
+
     test_invalid_token!(
-        test_invalid_token_m: "M", "\
+        m: "M", "\
 failed parsing token: [M]
 
 Caused by:
     invalid face character: [M]",
-        test_invalid_token_f_0: "F0", "\
+        f_0: "F0", "\
 failed parsing token: [F0]
 
 Caused by:
     invalid face character: [0]",
-        test_invalid_token_f_1: "F1", "\
+        f_1: "F1", "\
 failed parsing token: [F1]
 
 Caused by:
     invalid face character: [1]",
-        test_invalid_token_f_1_prime: "F1'", "\
+        f_1_prime: "F1'", "\
 failed parsing token: [F1']
 
 Caused by:
     invalid face character: [1]",
-        test_invalid_token_f_2_prime: "F2'", "failed parsing token: [F2'] as 'turn twice' should not be used as well as 'anticlockwise'",
-        test_invalid_token_f_prime_1: "F'1", "\
+        f_2_prime: "F2'", "failed parsing token: [F2'] as 'turn twice' should not be used as well as 'anticlockwise'",
+        f_prime_1: "F'1", "\
 failed parsing token: [F'1]
 
 Caused by:
     invalid face character: [1]",
-        test_invalid_token_f_prime_2: "F'2", "\
+        f_prime_2: "F'2", "\
 failed parsing token: [F'2]
 
 Caused by:
     invalid face character: [']",
-        test_invalid_token_f_3: "F3", "\
+        f_3: "F3", "\
 failed parsing token: [F3]
 
 Caused by:
     invalid face character: [3]",
-        test_invalid_token_f_f: "FF", "\
+        f_f: "FF", "\
 failed parsing token: [FF]
 
 Caused by:
     0: invalid multi-layer count: [F]
     1: invalid digit found in string",
-        test_invalid_token_f_f_1: "FF1", "\
+        f_f_1: "FF1", "\
 failed parsing token: [FF1]
 
 Caused by:
     invalid face character: [1]",
-        test_invalid_token_f_f_2: "FF2", "\
+        f_f_2: "FF2", "\
 failed parsing token: [FF2]
 
 Caused by:
     0: invalid multi-layer count: [F]
     1: invalid digit found in string",
-        test_invalid_token_f_2_2: "F22", "\
+        f_2_2: "F22", "\
 failed parsing token: [F22]
 
 Caused by:
     invalid face character: [2]",
-        test_invalid_token_1: "1", "\
+        1: "1", "\
 failed parsing token: [1]
 
 Caused by:
     invalid face character: [1]",
-        test_invalid_token_2: "2", "\
+        2: "2", "\
 failed parsing token: [2]
 
 Caused by:
     missing face character",
-        test_invalid_token_3: "3", "\
+        3: "3", "\
 failed parsing token: [3]
 
 Caused by:
     invalid face character: [3]",
-        test_invalid_token_2_dash_f: "2-F", "\
+        2_dash_f: "2-F", "\
 failed parsing token: [2-F]
 
 Caused by:
     0: invalid multi-layer range: [2-]",
-        test_invalid_token_dash_2_f: "-2F", "\
+        dash_2_f: "-2F", "\
 failed parsing token: [-2F]
 
 Caused by:
@@ -357,19 +393,19 @@ Caused by:
     );
 
     test_invalid_sequence!(
-        test_invalid_sequence_not_enough_spaces: "FR U", "\
+        not_enough_spaces: "FR U", "\
 failed parsing token: [FR]
 
 Caused by:
     0: invalid multi-layer count: [F]
     1: invalid digit found in string",
-        test_invalid_sequence_multiple_individual_tokens: "F2' R'' UU", "failed parsing token: [F2'] as 'turn twice' should not be used as well as 'anticlockwise'",
-        test_invalid_sequence_invalid_single_char_token: "F2 R G U", "\
+        multiple_individual_tokens: "F2' R'' UU", "failed parsing token: [F2'] as 'turn twice' should not be used as well as 'anticlockwise'",
+        invalid_single_char_token: "F2 R G U", "\
 failed parsing token: [G]
 
 Caused by:
     invalid face character: [G]",
-        test_invalid_sequence_invalid_multi_char_token: "F2 R@ U", "\
+        invalid_multi_char_token: "F2 R@ U", "\
 failed parsing token: [R@]
 
 Caused by:
@@ -450,108 +486,15 @@ Caused by:
         );
     }
 
-    #[test]
-    fn parse_token_large_cubes_uw() -> anyhow::Result<()> {
-        let rotations = parse_token("Uw")?;
-
-        assert_eq!(
-            vec![Rotation::clockwise_multilayer_from(Face::Up, 1)],
-            rotations
-        );
-
-        assert_eq!(
-            "Uw",
-            Rotation::clockwise_multilayer_from(Face::Up, 1).to_string()
-        );
-
-        Ok(())
-    }
-
-    #[test]
-    fn parse_token_large_cubes_3_fw() -> anyhow::Result<()> {
-        let rotations = parse_token("3Fw")?;
-
-        assert_eq!(
-            vec![Rotation::clockwise_multilayer_from(Face::Front, 2)],
-            rotations
-        );
-
-        assert_eq!(
-            "3Fw",
-            Rotation::clockwise_multilayer_from(Face::Front, 2).to_string()
-        );
-
-        Ok(())
-    }
-
-    #[test]
-    fn parse_token_large_cubes_3_rw_prime() -> anyhow::Result<()> {
-        let rotations = parse_token("3Rw'")?;
-
-        assert_eq!(
-            vec![Rotation::anticlockwise_multilayer_from(Face::Right, 2)],
-            rotations
-        );
-
-        assert_eq!(
-            "3Rw'",
-            Rotation::anticlockwise_multilayer_from(Face::Right, 2).to_string()
-        );
-
-        Ok(())
-    }
-
-    #[test]
-    fn parse_token_large_cubes_3_bw_2() -> anyhow::Result<()> {
-        let rotations = parse_token("3Bw2")?;
-
-        assert_eq!(
-            vec![
-                Rotation::clockwise_multilayer_from(Face::Back, 2),
-                Rotation::clockwise_multilayer_from(Face::Back, 2),
-            ],
-            rotations
-        );
-
-        assert_eq!(
-            "3Bw",
-            Rotation::clockwise_multilayer_from(Face::Back, 2).to_string()
-        );
-
-        Ok(())
-    }
-
-    #[test]
-    fn parse_token_large_cubes_4_l_prime() -> anyhow::Result<()> {
-        let rotations = parse_token("4L'")?;
-
-        assert_eq!(
-            vec![Rotation::anticlockwise_setback_from(Face::Left, 3)],
-            rotations
-        );
-
-        assert_eq!(
-            "4L'",
-            Rotation::anticlockwise_setback_from(Face::Left, 3).to_string()
-        );
-
-        Ok(())
-    }
-
-    #[test]
-    fn parse_token_large_cubes_multisetback() -> anyhow::Result<()> {
-        let rotations = parse_token("3-6U'")?;
-
-        assert_eq!(
-            vec![Rotation::anticlockwise_multisetback_from(Face::Up, 2, 5)],
-            rotations
-        );
-
-        assert_eq!(
-            "3-6U'",
-            Rotation::anticlockwise_multisetback_from(Face::Up, 2, 5).to_string()
-        );
-
-        Ok(())
-    }
+    test_parse_token_and_reverse!(
+        uw: "Uw", Rotation::clockwise_multilayer_from(Face::Up, 1),
+        3_fw: "3Fw", Rotation::clockwise_multilayer_from(Face::Front, 2),
+        3_rw_prime: "3Rw'", Rotation::anticlockwise_multilayer_from(Face::Right, 2),
+        4_l_prime: "4L'", Rotation::anticlockwise_setback_from(Face::Left, 3),
+        multisetback: "3-6U'", Rotation::anticlockwise_multisetback_from(Face::Up, 2, 5),
+    );
+    test_parse_token_and_reverse!(
+        3_bw_2: "3Bw2", twice Rotation::clockwise_multilayer_from(Face::Back, 2), "3Bw",
+        4_r_2: "4R2", twice Rotation::clockwise_setback_from(Face::Right, 3), "4R",
+    );
 }
