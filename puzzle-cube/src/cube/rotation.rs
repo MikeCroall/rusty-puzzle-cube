@@ -227,7 +227,7 @@ impl Rotation {
         }
     }
 
-    pub(crate) fn as_layer_0_of_opposite_face(self) -> Rotation {
+    fn as_layer_0_of_opposite_face(self) -> Rotation {
         Rotation {
             relative_to: !self.relative_to,
             direction: !self.direction,

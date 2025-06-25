@@ -13,6 +13,7 @@ const NESTED_CUBE_4X4X4: &str = "B' Lw2 L2 Rw2 R2 U2 Lw2 L2 Rw2 R2 B F2 R U' R U
 const SPIRAL_3X3X3: &str = "L' B' D U R U' R' D2 R2 D L D' L' R' F U";
 
 /// A collection of pre-defined sequences that can be applied to `PuzzleCube` instances to achieve visually pleasing patterns.
+#[non_exhaustive]
 #[derive(Debug, Copy, Clone, PartialEq, EnumIter)]
 pub enum KnownTransform {
     /// Turns a 3x3x3 cube into a checkerboard.
