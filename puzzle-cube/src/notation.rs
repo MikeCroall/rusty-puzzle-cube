@@ -58,16 +58,16 @@ fn parse_token(original_token: &str) -> anyhow::Result<Vec<Rotation>> {
     let (token, turn_twice) = strip_suffix(token, CHAR_FOR_TURN_TWICE);
     if anticlockwise && turn_twice {
         return Err(anyhow!(
-            "Failed parsing token: [{original_token}] as 'turn twice' should not be used as well as 'anticlockwise'"
+            "failed parsing token: [{original_token}] as 'turn twice' should not be used as well as 'anticlockwise'"
         ));
     }
     let (token, multi_layer) = strip_suffix(token, CHAR_FOR_MULTI_LAYER);
 
     let (token, face) = strip_face_suffix(token)
-        .with_context(|| format!("Failed parsing token: [{original_token}]"))?;
+        .with_context(|| format!("failed parsing token: [{original_token}]"))?;
 
     let multilayer_count = parse_multilayer_count(token)
-        .with_context(|| format!("Failed parsing token: [{original_token}]"))?
+        .with_context(|| format!("failed parsing token: [{original_token}]"))?
         .or(if multi_layer {
             Some(MultilayerCount::Single(1))
         } else {
@@ -108,14 +108,14 @@ fn strip_suffix(string: &str, suffix: char) -> (&str, bool) {
 
 fn strip_face_suffix(string: &str) -> anyhow::Result<(&str, Face)> {
     let face = match string.chars().last() {
-        None => return Err(anyhow!("Missing face character")),
+        None => return Err(anyhow!("missing face character")),
         Some('F') => Face::Front,
         Some('R') => Face::Right,
         Some('U') => Face::Up,
         Some('L') => Face::Left,
         Some('B') => Face::Back,
         Some('D') => Face::Down,
-        Some(c) => return Err(anyhow!("Invalid face character: [{c}]")),
+        Some(c) => return Err(anyhow!("invalid face character: [{c}]")),
     };
 
     Ok((&string[..(string.len() - 1)], face))
@@ -135,11 +135,11 @@ fn parse_multilayer_count(string: &str) -> anyhow::Result<Option<MultilayerCount
     if let (Some(left), Some(right)) = (split.next(), split.next()) {
         return Ok(Some(MultilayerCount::Range(
             left.parse::<usize>()
-                .with_context(|| format!("Invalid multi-layer count: [{string}]"))?
+                .with_context(|| format!("invalid multi-layer range: [{string}]"))?
                 - 1,
             right
                 .parse::<usize>()
-                .with_context(|| format!("Invalid multi-layer count: [{string}]"))?
+                .with_context(|| format!("invalid multi-layer range: [{string}]"))?
                 - 1,
         )));
     }
@@ -147,7 +147,7 @@ fn parse_multilayer_count(string: &str) -> anyhow::Result<Option<MultilayerCount
     Ok(Some(MultilayerCount::Single(
         string
             .parse::<usize>()
-            .with_context(|| format!("Invalid multi-layer count: [{string}]"))?
+            .with_context(|| format!("invalid multi-layer count: [{string}]"))?
             - 1,
     )))
 }
@@ -272,108 +272,108 @@ mod tests {
 
     test_invalid_token!(
         test_invalid_token_m: "M", "\
-Failed parsing token: [M]
+failed parsing token: [M]
 
 Caused by:
-    Invalid face character: [M]",
+    invalid face character: [M]",
         test_invalid_token_f_0: "F0", "\
-Failed parsing token: [F0]
+failed parsing token: [F0]
 
 Caused by:
-    Invalid face character: [0]",
+    invalid face character: [0]",
         test_invalid_token_f_1: "F1", "\
-Failed parsing token: [F1]
+failed parsing token: [F1]
 
 Caused by:
-    Invalid face character: [1]",
+    invalid face character: [1]",
         test_invalid_token_f_1_prime: "F1'", "\
-Failed parsing token: [F1']
+failed parsing token: [F1']
 
 Caused by:
-    Invalid face character: [1]",
-        test_invalid_token_f_2_prime: "F2'", "Failed parsing token: [F2'] as 'turn twice' should not be used as well as 'anticlockwise'",
+    invalid face character: [1]",
+        test_invalid_token_f_2_prime: "F2'", "failed parsing token: [F2'] as 'turn twice' should not be used as well as 'anticlockwise'",
         test_invalid_token_f_prime_1: "F'1", "\
-Failed parsing token: [F'1]
+failed parsing token: [F'1]
 
 Caused by:
-    Invalid face character: [1]",
+    invalid face character: [1]",
         test_invalid_token_f_prime_2: "F'2", "\
-Failed parsing token: [F'2]
+failed parsing token: [F'2]
 
 Caused by:
-    Invalid face character: [']",
+    invalid face character: [']",
         test_invalid_token_f_3: "F3", "\
-Failed parsing token: [F3]
+failed parsing token: [F3]
 
 Caused by:
-    Invalid face character: [3]",
+    invalid face character: [3]",
         test_invalid_token_f_f: "FF", "\
-Failed parsing token: [FF]
+failed parsing token: [FF]
 
 Caused by:
-    0: Invalid multi-layer count: [F]
+    0: invalid multi-layer count: [F]
     1: invalid digit found in string",
         test_invalid_token_f_f_1: "FF1", "\
-Failed parsing token: [FF1]
+failed parsing token: [FF1]
 
 Caused by:
-    Invalid face character: [1]",
+    invalid face character: [1]",
         test_invalid_token_f_f_2: "FF2", "\
-Failed parsing token: [FF2]
+failed parsing token: [FF2]
 
 Caused by:
-    0: Invalid multi-layer count: [F]
+    0: invalid multi-layer count: [F]
     1: invalid digit found in string",
         test_invalid_token_f_2_2: "F22", "\
-Failed parsing token: [F22]
+failed parsing token: [F22]
 
 Caused by:
-    Invalid face character: [2]",
+    invalid face character: [2]",
         test_invalid_token_1: "1", "\
-Failed parsing token: [1]
+failed parsing token: [1]
 
 Caused by:
-    Invalid face character: [1]",
+    invalid face character: [1]",
         test_invalid_token_2: "2", "\
-Failed parsing token: [2]
+failed parsing token: [2]
 
 Caused by:
-    Missing face character",
+    missing face character",
         test_invalid_token_3: "3", "\
-Failed parsing token: [3]
+failed parsing token: [3]
 
 Caused by:
-    Invalid face character: [3]",
+    invalid face character: [3]",
         test_invalid_token_2_dash_f: "2-F", "\
-Failed parsing token: [2-F]
+failed parsing token: [2-F]
 
 Caused by:
-    0: Invalid multi-layer count: [2-]",
+    0: invalid multi-layer range: [2-]",
         test_invalid_token_dash_2_f: "-2F", "\
-Failed parsing token: [-2F]
+failed parsing token: [-2F]
 
 Caused by:
-    0: Invalid multi-layer count: [-2]"
+    0: invalid multi-layer range: [-2]"
     );
 
     test_invalid_sequence!(
         test_invalid_sequence_not_enough_spaces: "FR U", "\
-Failed parsing token: [FR]
+failed parsing token: [FR]
 
 Caused by:
-    0: Invalid multi-layer count: [F]
+    0: invalid multi-layer count: [F]
     1: invalid digit found in string",
-        test_invalid_sequence_multiple_individual_tokens: "F2' R'' UU", "Failed parsing token: [F2'] as 'turn twice' should not be used as well as 'anticlockwise'",
+        test_invalid_sequence_multiple_individual_tokens: "F2' R'' UU", "failed parsing token: [F2'] as 'turn twice' should not be used as well as 'anticlockwise'",
         test_invalid_sequence_invalid_single_char_token: "F2 R G U", "\
-Failed parsing token: [G]
+failed parsing token: [G]
 
 Caused by:
-    Invalid face character: [G]",
+    invalid face character: [G]",
         test_invalid_sequence_invalid_multi_char_token: "F2 R@ U", "\
-Failed parsing token: [R@]
+failed parsing token: [R@]
 
 Caused by:
-    Invalid face character: [@]",
+    invalid face character: [@]",
     );
 
     #[test]
