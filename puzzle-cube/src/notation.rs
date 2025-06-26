@@ -481,7 +481,7 @@ Caused by:
         let error = perform_notation(sequence, &mut cube).unwrap_err();
 
         assert!(
-            format!("{:?}", error)
+            format!("{error:?}")
                 .starts_with("side did not have required layer (3 of outer vec of side)")
         );
     }

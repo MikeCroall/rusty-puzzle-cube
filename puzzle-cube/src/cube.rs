@@ -456,6 +456,7 @@ mod impl_for_tests_only {
 
     impl Cube {
         /// Create a new `Cube` instance with pre-made `Side` instances, specifically for easily defining test cases
+        #[must_use]
         pub fn create_from_sides(
             up: DefaultSide,
             down: DefaultSide,
@@ -580,11 +581,11 @@ mod tests {
     fn test_default_3x3_cube_display_and_debug_repr() {
         let cube = Cube::default();
 
-        let display_output = format!("{}", cube);
-        let debug_output = format!("{:?}", cube);
+        let display_output = format!("{cube}");
+        let debug_output = format!("{cube:?}");
 
         let expected_output = format!(
-            r#"      {0} {0} {0}
+            r"      {0} {0} {0}
       {0} {0} {0}
       {0} {0} {0}
 {1} {1} {1} {2} {2} {2} {3} {3} {3} {4} {4} {4}
@@ -593,7 +594,7 @@ mod tests {
       {5} {5} {5}
       {5} {5} {5}
       {5} {5} {5}
-"#,
+",
             CubieFace::White(None).get_coloured_display_char(),
             CubieFace::Red(None).get_coloured_display_char(),
             CubieFace::Blue(None).get_coloured_display_char(),
