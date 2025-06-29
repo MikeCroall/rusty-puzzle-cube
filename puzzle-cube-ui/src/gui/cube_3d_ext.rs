@@ -8,7 +8,7 @@ use rusty_puzzle_cube::cube::{
 use three_d::{Instances, Mat4, Matrix4, Srgba};
 
 use super::{
-    anim_cube::{AnimCube, AnimationState},
+    anim_cube::{AnimCube, AnimationProgress, AnimationState},
     colours::{BLUE, GREEN, ORANGE, RED, WHITE, YELLOW},
     transforms::{
         QUARTER_TURN, cubie_face_to_backing_transformation, cubie_face_to_transformation,
@@ -18,6 +18,11 @@ use super::{
 
 pub(crate) trait PuzzleCube3D: PuzzleCube {
     fn as_instances(&self) -> Instances;
+    fn rotate_seq_with_progress(
+        &mut self,
+        rotations: impl ExactSizeIterator<Item = Rotation> + 'static,
+    ) -> anyhow::Result<()>;
+    fn animation_progress(&self) -> Option<&AnimationProgress>;
     fn cancel_animation(&mut self);
 }
 
@@ -70,6 +75,33 @@ impl<C: PuzzleCube<Side = DefaultSide>> PuzzleCube3D for AnimCube<C> {
         }
     }
 
+    fn rotate_seq_with_progress(
+        &mut self,
+        rotations: impl ExactSizeIterator<Item = Rotation> + 'static,
+    ) -> anyhow::Result<()> {
+        let mut rotations = rotations.into_iter();
+        let sequence_total = Some(rotations.len());
+        if let Some(rotation) = rotations.next() {
+            self.animation = AnimationState::TransitioningToNext {
+                rotation,
+                progress: AnimationProgress {
+                    sequence_total,
+                    ..Default::default()
+                },
+                seq: Some(Box::new(rotations)),
+            };
+        }
+        Ok(())
+    }
+
+    fn animation_progress(&self) -> Option<&AnimationProgress> {
+        match &self.animation {
+            AnimationState::Rotating { progress, .. }
+            | AnimationState::TransitioningToNext { progress, .. } => Some(progress),
+            AnimationState::Stationary => None,
+        }
+    }
+
     fn cancel_animation(&mut self) {
         self.animation = AnimationState::Stationary;
     }
@@ -78,12 +110,10 @@ impl<C: PuzzleCube<Side = DefaultSide>> PuzzleCube3D for AnimCube<C> {
 fn choose_anim_transform(animation: &AnimationState) -> Option<(Rotation, Matrix4<f32>)> {
     match animation {
         AnimationState::Rotating {
-            rotation,
-            progress_linear,
-            ..
+            rotation, progress, ..
         } => {
             // Minus a full quarter turn as the cube has already set itself to the new positions that we want to slowly animate toward
-            let rad = fraction_of_quarter_turn(*progress_linear) - QUARTER_TURN;
+            let rad = fraction_of_quarter_turn(progress.single_rotation_linear) - QUARTER_TURN;
             Some((
                 *rotation,
                 match rotation {

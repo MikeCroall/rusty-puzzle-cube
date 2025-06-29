@@ -1,12 +1,14 @@
 use std::fmt::Display;
 
-use crate::gui::{GuiState, cube_3d_ext::PuzzleCube3D, initial_camera};
+use crate::gui::{
+    GuiState, anim_cube::AnimationProgress, cube_3d_ext::PuzzleCube3D, initial_camera,
+};
 use rusty_puzzle_cube::{cube::side_lengths::SideLength, known_transforms::KnownTransform};
 use strum::IntoEnumIterator;
 use three_d::{
     Viewport,
     egui::{
-        Button, Checkbox, ComboBox, Context, Rgba, ScrollArea, SidePanel, Slider, Ui,
+        Button, Checkbox, ComboBox, Context, ProgressBar, Rgba, ScrollArea, SidePanel, Slider, Ui,
         special_emojis::GITHUB,
     },
 };
@@ -112,7 +114,7 @@ impl<C: PuzzleCube3D + Display, const UNDO_SIZE: usize> GuiState<C, UNDO_SIZE> {
                 let moves = self.undo_queue.to_vec();
                 self.undo_queue.clear();
                 self.cube
-                    .rotate_seq(moves.into_iter().rev().map(|r| !r))
+                    .rotate_seq_with_progress(moves.into_iter().rev().map(|r| !r))
                     .expect("moves on queue must be reversible");
             }
         });
@@ -154,9 +156,20 @@ impl<C: PuzzleCube3D + Display, const UNDO_SIZE: usize> GuiState<C, UNDO_SIZE> {
             )
             .clicked()
         {
-            self.selected_transform.perform_seq(&mut self.cube);
+            self.cube
+                .rotate_seq_with_progress(self.selected_transform.sequence().into_iter())
+                .expect("Known transforms must use valid sequences");
         }
         ui.add_space(EXTRA_SPACING);
+
+        if let Some(progress) = self
+            .cube
+            .animation_progress()
+            .and_then(AnimationProgress::sequence_linear_with_sub_step)
+        {
+            ui.add(ProgressBar::new(progress).show_percentage());
+            ui.add_space(EXTRA_SPACING);
+        }
     }
 
     fn control_camera(&mut self, ui: &mut Ui, viewport: Viewport) {

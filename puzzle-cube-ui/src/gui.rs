@@ -54,6 +54,7 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
             frame_input.device_pixel_ratio,
         ));
 
+        let was_animating_before = state.cube.is_animating();
         let MouseControlOutput {
             redraw: needs_redraw_from_mouse,
             updated_cube,
@@ -64,7 +65,8 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
                 .progress_animation(state.animation_speed * frame_input.elapsed_time);
             state.tiles.set_instances(&state.cube.as_instances());
         }
-        redraw |= needs_redraw_from_mouse | state.cube.is_animating();
+        let was_animating_after = state.cube.is_animating();
+        redraw |= needs_redraw_from_mouse || was_animating_before || was_animating_after;
 
         if redraw {
             debug!("Drawing cube");
