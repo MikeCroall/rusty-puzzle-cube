@@ -55,10 +55,7 @@ impl<C: PuzzleCube3D + Display, const UNDO_SIZE: usize> GuiState<C, UNDO_SIZE> {
         ui.add_space(EXTRA_SPACING);
 
         let prev_side_length = self.side_length;
-        ui.add(Slider::new(
-            &mut self.side_length,
-            MIN_CUBE_SIZE..=MAX_CUBE_SIZE,
-        ));
+        ui.add(Slider::new(&mut self.side_length, MIN_CUBE_SIZE..=MAX_CUBE_SIZE).logarithmic(true));
         ui.add_space(EXTRA_SPACING);
 
         if ui
@@ -201,7 +198,7 @@ impl<C: PuzzleCube3D + Display, const UNDO_SIZE: usize> GuiState<C, UNDO_SIZE> {
         ui.add_space(EXTRA_SPACING);
 
         ui.label("Animation speed");
-        ui.add(Slider::new(&mut self.animation_speed, 0.1..=3.0));
+        ui.add(Slider::new(&mut self.animation_speed, 0.1..=10.0).logarithmic(true));
         ui.add_space(EXTRA_SPACING);
     }
 }
