@@ -88,11 +88,11 @@ impl<C: PuzzleCube3D + Display, const UNDO_SIZE: usize> GuiState<C, UNDO_SIZE> {
 
         ui.horizontal(|ui| {
             let undo_text = if self.undo_queue.is_full() {
-                format!("Undo ({}, at limit)", self.undo_queue.len())
+                format!("⟲ Undo ({}, at limit)", self.undo_queue.len())
             } else if !self.undo_queue.is_empty() {
-                format!("Undo ({})", self.undo_queue.len())
+                format!("⟲ Undo ({})", self.undo_queue.len())
             } else {
-                "Undo".to_owned()
+                "⟲ Undo".to_owned()
             };
             if ui
                 .add_enabled(!self.undo_queue.is_empty(), Button::new(undo_text))
@@ -108,7 +108,7 @@ impl<C: PuzzleCube3D + Display, const UNDO_SIZE: usize> GuiState<C, UNDO_SIZE> {
             }
 
             if ui
-                .add_enabled(!self.undo_queue.is_empty(), Button::new("Undo all"))
+                .add_enabled(!self.undo_queue.is_empty(), Button::new("⟲ Undo all"))
                 .clicked()
             {
                 let moves = self.undo_queue.to_vec();
