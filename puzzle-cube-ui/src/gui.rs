@@ -58,7 +58,12 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
         let MouseControlOutput {
             redraw: needs_redraw_from_mouse,
             updated_cube,
+            rotation_if_released_now,
         } = mouse_control.handle_events(&mut state, &mut frame_input.events);
+
+        redraw |= state.rotation_if_released_now != rotation_if_released_now;
+        state.rotation_if_released_now = rotation_if_released_now;
+
         if updated_cube || state.cube.is_animating() {
             state
                 .cube

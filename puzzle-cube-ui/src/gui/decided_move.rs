@@ -31,7 +31,7 @@ impl DecidedMove {
         }
     }
 
-    fn as_rotation(&self) -> Rotation {
+    pub(super) fn as_rotation(&self) -> Rotation {
         match *self {
             DecidedMove::WholeFace { face, clockwise } => {
                 if clockwise {

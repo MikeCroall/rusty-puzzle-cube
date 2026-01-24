@@ -3,7 +3,7 @@ use std::f32::consts::PI;
 use crate::gui::{
     GuiState, anim_cube::AnimCube, decided_move::DecidedMove, transforms::move_face_into_place,
 };
-use rusty_puzzle_cube::cube::{Cube, face::Face};
+use rusty_puzzle_cube::cube::{Cube, face::Face, rotation::Rotation};
 use three_d::{
     Event, FreeOrbitControl, InnerSpace, MouseButton, OrbitControl, Rad, Transform, Vec3, Vector3,
     pick, radians,
@@ -23,6 +23,7 @@ pub(super) struct MouseControl {
 pub(super) struct MouseControlOutput {
     pub(super) redraw: bool,
     pub(super) updated_cube: bool,
+    pub(super) rotation_if_released_now: Option<Rotation>,
 }
 
 struct FaceDrag {
@@ -49,6 +50,7 @@ impl MouseControl {
         events: &mut [Event],
     ) -> MouseControlOutput {
         let mut updated_cube = false;
+        let mut rotation_if_released_now = None;
         for event in events.iter_mut() {
             match event {
                 Event::MousePress {
@@ -77,19 +79,30 @@ impl MouseControl {
                     handled,
                     ..
                 } => {
-                    let Some(FaceDrag { face, .. }) = self.drag else {
+                    let Some(FaceDrag { start_pick, face }) = self.drag else {
                         continue;
                     };
-                    let Some(pick) = pick(&state.ctx, &state.camera, *position, &state.pick_cube)
+                    let Some(current_pick) =
+                        pick(&state.ctx, &state.camera, *position, &state.pick_cube)
                     else {
                         continue;
                     };
-                    let Some(new_face) = pick_to_face(pick.position) else {
+                    let Some(new_face) = pick_to_face(current_pick.position) else {
                         continue;
                     };
                     if face != new_face {
                         self.drag = None;
                         warn!("Dragged from face {face:?} to {new_face:?}, skipping...");
+                    } else {
+                        rotation_if_released_now = picks_to_move(
+                            state.side_length,
+                            start_pick,
+                            current_pick.position,
+                            face,
+                        )
+                        .map(|decided_move| {
+                            decided_move.as_rotation().normalise(state.side_length)
+                        });
                     }
                     *handled = true;
                 }
@@ -129,6 +142,7 @@ impl MouseControl {
                 } else {
                     self.free_orbit.handle_events(&mut state.camera, events)
                 },
+            rotation_if_released_now,
         }
     }
 }

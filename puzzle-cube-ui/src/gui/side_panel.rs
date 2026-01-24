@@ -8,8 +8,8 @@ use strum::IntoEnumIterator;
 use three_d::{
     Viewport,
     egui::{
-        Button, Checkbox, ComboBox, Context, ProgressBar, Rgba, ScrollArea, SidePanel, Slider, Ui,
-        special_emojis::GITHUB,
+        Button, Checkbox, ComboBox, Context, ProgressBar, Rgba, RichText, ScrollArea, SidePanel,
+        Slider, Ui, special_emojis::GITHUB,
     },
 };
 
@@ -81,6 +81,16 @@ impl<C: PuzzleCube3D + Display, const UNDO_SIZE: usize> GuiState<C, UNDO_SIZE> {
         ui.label(
             "Dragging to another face, diagonally, or for a very small distance will be cancelled",
         );
+        ui.add_space(EXTRA_SPACING);
+
+        let release_now_hint_text = if let Some(rotation_if_released_now) =
+            self.rotation_if_released_now
+        {
+            RichText::new(format!("Release now for: {rotation_if_released_now}")).color(Rgba::GREEN)
+        } else {
+            RichText::new("Start a click and drag").color(Rgba::RED)
+        };
+        ui.label(release_now_hint_text.heading());
         ui.add_space(EXTRA_SPACING);
 
         ui.horizontal(|ui| {
