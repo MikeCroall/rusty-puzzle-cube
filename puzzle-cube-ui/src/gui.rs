@@ -35,18 +35,9 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
     let mut gui = GUI::new(&state.ctx);
 
     window.render_loop(move |mut frame_input| {
+        let was_animating_before = state.cube.is_animating();
         let mut panel_width = 0.;
         let mut redraw = frame_input.first_frame;
-        redraw |= gui.update(
-            &mut frame_input.events,
-            frame_input.accumulated_time,
-            frame_input.viewport,
-            frame_input.device_pixel_ratio,
-            |gui_ctx| {
-                state.show_ui(gui_ctx, frame_input.viewport);
-                panel_width = gui_ctx.used_rect().width();
-            },
-        );
 
         redraw |= state.camera.set_viewport(calc_viewport(
             panel_width,
@@ -54,7 +45,6 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
             frame_input.device_pixel_ratio,
         ));
 
-        let was_animating_before = state.cube.is_animating();
         let MouseControlOutput {
             redraw: needs_redraw_from_mouse,
             updated_cube,
@@ -70,6 +60,18 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
                 .progress_animation(state.animation_speed * frame_input.elapsed_time);
             state.tiles.set_instances(&state.cube.as_instances());
         }
+
+        redraw |= gui.update(
+            &mut frame_input.events,
+            frame_input.accumulated_time,
+            frame_input.viewport,
+            frame_input.device_pixel_ratio,
+            |gui_ctx| {
+                state.show_ui(gui_ctx, frame_input.viewport);
+                panel_width = gui_ctx.used_rect().width();
+            },
+        );
+
         let was_animating_after = state.cube.is_animating();
         redraw |= needs_redraw_from_mouse || was_animating_before || was_animating_after;
 

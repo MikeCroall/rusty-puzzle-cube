@@ -2,6 +2,7 @@ use std::fmt::Display;
 
 use crate::gui::{
     GuiState, anim_cube::AnimationProgress, cube_3d_ext::PuzzleCube3D, initial_camera,
+    mouse_control::RotationIfReleasedNow,
 };
 use rusty_puzzle_cube::{cube::side_lengths::SideLength, known_transforms::KnownTransform};
 use strum::IntoEnumIterator;
@@ -83,12 +84,16 @@ impl<C: PuzzleCube3D + Display, const UNDO_SIZE: usize> GuiState<C, UNDO_SIZE> {
         );
         ui.add_space(EXTRA_SPACING);
 
-        let release_now_hint_text = if let Some(rotation_if_released_now) =
-            self.rotation_if_released_now
-        {
-            RichText::new(format!("Release now for: {rotation_if_released_now}")).color(Rgba::GREEN)
-        } else {
-            RichText::new("Start a click and drag").color(Rgba::RED)
+        let release_now_hint_text = match self.rotation_if_released_now {
+            RotationIfReleasedNow::Valid(rotation) => {
+                RichText::new(format!("Release now for: {rotation}")).color(Rgba::GREEN)
+            }
+            RotationIfReleasedNow::Invalid => {
+                RichText::new("Invalid click and drag!").color(Rgba::RED)
+            }
+            RotationIfReleasedNow::NotAttempted => {
+                RichText::new("Start a click and drag").color(Rgba::from_rgb(1., 0.5, 0.))
+            }
         };
         ui.label(release_now_hint_text.heading());
         ui.add_space(EXTRA_SPACING);

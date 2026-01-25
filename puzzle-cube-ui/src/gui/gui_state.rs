@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use crate::gui::{
     anim_cube::AnimCube, cube_3d_ext::PuzzleCube3D, defaults::initial_camera, initial_anim_cube,
-    initial_instances, inner_cube,
+    initial_instances, inner_cube, mouse_control::RotationIfReleasedNow,
 };
 use circular_buffer::CircularBuffer;
 use rusty_puzzle_cube::{
@@ -24,7 +24,7 @@ pub(crate) struct GuiState<C: PuzzleCube3D + Display, const UNDO_SIZE: usize> {
     pub(crate) animation_speed: f64,
     pub(crate) ctx: Context,
     pub(crate) pick_cube: Gm<three_d::Mesh, ColorMaterial>,
-    pub(crate) rotation_if_released_now: Option<Rotation>,
+    pub(crate) rotation_if_released_now: RotationIfReleasedNow,
 }
 
 impl<const UNDO_SIZE: usize> GuiState<AnimCube<Cube>, UNDO_SIZE> {
@@ -39,7 +39,7 @@ impl<const UNDO_SIZE: usize> GuiState<AnimCube<Cube>, UNDO_SIZE> {
         let camera = initial_camera(window.viewport());
         let pick_cube = inner_cube(&ctx);
         let tiles = initial_instances(&ctx, &cube);
-        let rotation_if_released_now = None;
+        let rotation_if_released_now = RotationIfReleasedNow::NotAttempted;
 
         Ok(Self {
             side_length,

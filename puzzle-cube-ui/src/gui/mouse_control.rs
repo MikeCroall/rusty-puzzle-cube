@@ -23,7 +23,14 @@ pub(super) struct MouseControl {
 pub(super) struct MouseControlOutput {
     pub(super) redraw: bool,
     pub(super) updated_cube: bool,
-    pub(super) rotation_if_released_now: Option<Rotation>,
+    pub(super) rotation_if_released_now: RotationIfReleasedNow,
+}
+
+#[derive(Copy, Clone, PartialEq)]
+pub(super) enum RotationIfReleasedNow {
+    NotAttempted,
+    Invalid,
+    Valid(Rotation),
 }
 
 struct FaceDrag {
@@ -49,8 +56,16 @@ impl MouseControl {
         state: &mut GuiState<AnimCube<Cube>, 100>,
         events: &mut [Event],
     ) -> MouseControlOutput {
+        if events.is_empty() {
+            return MouseControlOutput {
+                redraw: false,
+                updated_cube: false,
+                rotation_if_released_now: state.rotation_if_released_now,
+            };
+        }
+
         let mut updated_cube = false;
-        let mut rotation_if_released_now = None;
+        let mut rotation_if_released_now = RotationIfReleasedNow::NotAttempted;
         for event in events.iter_mut() {
             match event {
                 Event::MousePress {
@@ -93,16 +108,16 @@ impl MouseControl {
                     if face != new_face {
                         self.drag = None;
                         warn!("Dragged from face {face:?} to {new_face:?}, skipping...");
+                        rotation_if_released_now = RotationIfReleasedNow::Invalid;
+                    } else if let Some(rotation) =
+                        picks_to_move(state.side_length, start_pick, current_pick.position, face)
+                            .map(|decided_move| {
+                                decided_move.as_rotation().normalise(state.side_length)
+                            })
+                    {
+                        rotation_if_released_now = RotationIfReleasedNow::Valid(rotation);
                     } else {
-                        rotation_if_released_now = picks_to_move(
-                            state.side_length,
-                            start_pick,
-                            current_pick.position,
-                            face,
-                        )
-                        .map(|decided_move| {
-                            decided_move.as_rotation().normalise(state.side_length)
-                        });
+                        rotation_if_released_now = RotationIfReleasedNow::Invalid;
                     }
                     *handled = true;
                 }
