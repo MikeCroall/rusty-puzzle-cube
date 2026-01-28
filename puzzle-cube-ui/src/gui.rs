@@ -39,6 +39,17 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
         let mut panel_width = 0.;
         let mut redraw = frame_input.first_frame;
 
+        redraw |= gui.update(
+            &mut frame_input.events,
+            frame_input.accumulated_time,
+            frame_input.viewport,
+            frame_input.device_pixel_ratio,
+            |gui_ctx| {
+                state.show_ui(gui_ctx, frame_input.viewport);
+                panel_width = gui_ctx.used_rect().width();
+            },
+        );
+
         redraw |= state.camera.set_viewport(calc_viewport(
             panel_width,
             frame_input.viewport,
@@ -51,8 +62,27 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
             rotation_if_released_now,
         } = mouse_control.handle_events(&mut state, &mut frame_input.events);
 
-        redraw |= state.rotation_if_released_now != rotation_if_released_now;
+        let rotation_if_released_now_changed =
+            state.rotation_if_released_now != rotation_if_released_now;
         state.rotation_if_released_now = rotation_if_released_now;
+        redraw |= rotation_if_released_now_changed;
+
+        // quick-fix: re-update gui if the label for rotation_if_released_now needs to change value.
+        // We still need the GUI update before mouse control to avoid GUI elements 'sticking'.
+        // Alternative approach could be store a bool to say if we need to `redraw` next frame, for this changed value.
+        // This may be removed if rendering rotation_if_released_now as an arrow instead of a GUI label.
+        if rotation_if_released_now_changed {
+            redraw |= gui.update(
+                &mut frame_input.events,
+                frame_input.accumulated_time,
+                frame_input.viewport,
+                frame_input.device_pixel_ratio,
+                |gui_ctx| {
+                    state.show_ui(gui_ctx, frame_input.viewport);
+                    panel_width = gui_ctx.used_rect().width();
+                },
+            );
+        }
 
         if updated_cube || state.cube.is_animating() {
             state
@@ -60,17 +90,6 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
                 .progress_animation(state.animation_speed * frame_input.elapsed_time);
             state.tiles.set_instances(&state.cube.as_instances());
         }
-
-        redraw |= gui.update(
-            &mut frame_input.events,
-            frame_input.accumulated_time,
-            frame_input.viewport,
-            frame_input.device_pixel_ratio,
-            |gui_ctx| {
-                state.show_ui(gui_ctx, frame_input.viewport);
-                panel_width = gui_ctx.used_rect().width();
-            },
-        );
 
         let was_animating_after = state.cube.is_animating();
         redraw |= needs_redraw_from_mouse || was_animating_before || was_animating_after;
