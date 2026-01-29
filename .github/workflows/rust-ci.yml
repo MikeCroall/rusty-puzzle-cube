@@ -70,10 +70,10 @@ jobs:
                   override: true
                   components: rustfmt, clippy
 
-            - name: Use Node.js 18.x
-              uses: actions/setup-node@v3
+            - name: Use Node.js 25.*
+              uses: actions/setup-node@v6
               with:
-                  node-version: 18.x
+                  node-version: 25
 
             - name: Build wasm page
               run: |
