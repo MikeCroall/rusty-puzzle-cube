@@ -12,6 +12,9 @@ env:
 jobs:
     coverage-lib:
         runs-on: ubuntu-latest
+        concurrency:
+            group: coverage-lib-${{ github.ref }}
+            cancel-in-progress: true
         steps:
             - name: Update Rust
               run: rustup update stable
@@ -44,6 +47,9 @@ jobs:
 
     coverage-ui:
         runs-on: ubuntu-latest
+        concurrency:
+            group: coverage-ui-${{ github.ref }}
+            cancel-in-progress: true
         steps:
             - name: Update Rust
               run: rustup update stable
