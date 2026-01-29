@@ -8,7 +8,7 @@ use three_d::{
     Event, FreeOrbitControl, InnerSpace, MouseButton, OrbitControl, Rad, Transform, Vec3, Vector3,
     pick, radians,
 };
-use tracing::{error, warn};
+use tracing::{debug, error};
 
 const MOVE_TOO_SMALL_THRESHOLD: f32 = 0.15;
 const DIAGONAL_MOVE_THRESHOLD: Rad<f32> = radians(0.125 * PI);
@@ -107,7 +107,7 @@ impl MouseControl {
                     };
                     if face != new_face {
                         self.drag = None;
-                        warn!("Dragged from face {face:?} to {new_face:?}, skipping...");
+                        debug!("Dragged from face {face:?} to {new_face:?}, skipping...");
                         rotation_if_released_now = RotationIfReleasedNow::Invalid;
                     } else if let Some(rotation) =
                         picks_to_move(state.side_length, start_pick, current_pick.position, face)
@@ -257,7 +257,7 @@ fn validate_straight_dir(
 ) -> Option<ValidatedStraightDir> {
     let displacement = unrotated_end_pick - unrotated_start_pick;
     if displacement.magnitude() < MOVE_TOO_SMALL_THRESHOLD {
-        warn!("Move was too small, skipping...");
+        debug!("Move was too small, skipping...");
         return None;
     }
 
@@ -270,7 +270,7 @@ fn validate_straight_dir(
     angles.sort_by(|a, b| a.partial_cmp(b).expect("No NaNs here"));
 
     if (angles[0] - angles[1]).abs() < DIAGONAL_MOVE_THRESHOLD.0 {
-        warn!("Move was diagonal, skipping...");
+        debug!("Move was diagonal, skipping...");
         return None;
     }
 
