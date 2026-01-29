@@ -3,6 +3,10 @@ use three_d::{Camera, ClearState, Viewport, Window, WindowSettings, degrees, vec
 pub(super) fn initial_window() -> Result<Window, three_d::WindowError> {
     Window::new(WindowSettings {
         title: "Rusty Puzzle Cube!".to_string(),
+
+        #[cfg(not(target_arch = "wasm32"))]
+        initial_size: Some((1168, 991)),
+
         ..Default::default()
     })
 }
