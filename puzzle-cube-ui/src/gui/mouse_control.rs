@@ -3,7 +3,7 @@ use std::f32::consts::PI;
 use crate::gui::{
     GuiState, anim_cube::AnimCube, decided_move::DecidedMove, transforms::move_face_into_place,
 };
-use rusty_puzzle_cube::cube::{Cube, face::Face, rotation::Rotation};
+use rusty_puzzle_cube::cube::{Cube, direction::Direction, face::Face, rotation::Rotation};
 use three_d::{
     Event, FreeOrbitControl, InnerSpace, MouseButton, OrbitControl, Rad, Transform, Vec3, Vector3,
     pick, radians,
@@ -194,10 +194,16 @@ fn picks_to_move(
     end_pick: Vector3<f32>,
     dragged_face: Face,
 ) -> Option<DecidedMove> {
-    let (start_pick, end_pick) = unrotate_picks(start_pick, end_pick, dragged_face);
-    let (move_along_x, toward_positive) = validate_straight_dir(start_pick, end_pick)?;
+    let UnrotatedPicks {
+        start_pick,
+        end_pick,
+    } = unrotate_picks(start_pick, end_pick, dragged_face);
+    let ValidatedStraightDir {
+        move_along_x,
+        toward_positive,
+    } = validate_straight_dir(start_pick, end_pick)?;
 
-    let (face, clockwise) = if move_along_x {
+    let TranslatedDrag { face, direction } = if move_along_x {
         let row_0_to_1 = f32::midpoint(start_pick.y, 1.);
         let row = (row_0_to_1 * side_length as f32) as usize;
         if row != 0 && row != side_length - 1 {
@@ -220,26 +226,35 @@ fn picks_to_move(
         }
         translate_vertical_drag(col, dragged_face, toward_positive)
     };
-    Some(DecidedMove::WholeFace { face, clockwise })
+    Some(DecidedMove::WholeFace { face, direction })
 }
 
-fn unrotate_picks(
+struct UnrotatedPicks {
     start_pick: Vector3<f32>,
     end_pick: Vector3<f32>,
-    face: Face,
-) -> (Vector3<f32>, Vector3<f32>) {
+}
+
+fn unrotate_picks(start_pick: Vector3<f32>, end_pick: Vector3<f32>, face: Face) -> UnrotatedPicks {
     let unrotate_mat = move_face_into_place(face)
         .inverse_transform()
         .expect("All faces rotations must be invertible");
     let start_pick = (unrotate_mat * start_pick.extend(1.)).truncate();
     let end_pick = (unrotate_mat * end_pick.extend(1.)).truncate();
-    (start_pick, end_pick)
+    UnrotatedPicks {
+        start_pick,
+        end_pick,
+    }
+}
+
+struct ValidatedStraightDir {
+    move_along_x: bool,
+    toward_positive: bool,
 }
 
 fn validate_straight_dir(
     unrotated_start_pick: Vector3<f32>,
     unrotated_end_pick: Vector3<f32>,
-) -> Option<(bool, bool)> {
+) -> Option<ValidatedStraightDir> {
     let displacement = unrotated_end_pick - unrotated_start_pick;
     if displacement.magnitude() < MOVE_TOO_SMALL_THRESHOLD {
         warn!("Move was too small, skipping...");
@@ -265,10 +280,22 @@ fn validate_straight_dir(
     let positive_vertical = (smallest - angle_to_y).abs() < EPSILON;
     let move_along_x = positive_horizontal || negative_horizontal;
     let toward_positive = positive_horizontal || positive_vertical;
-    Some((move_along_x, toward_positive))
+    Some(ValidatedStraightDir {
+        move_along_x,
+        toward_positive,
+    })
 }
 
-fn translate_vertical_drag(col: usize, dragged_face: Face, toward_positive: bool) -> (Face, bool) {
+struct TranslatedDrag {
+    face: Face,
+    direction: Direction,
+}
+
+fn translate_vertical_drag(
+    col: usize,
+    dragged_face: Face,
+    toward_positive: bool,
+) -> TranslatedDrag {
     let col_0 = col == 0;
     let face = match (dragged_face, col_0) {
         (Face::Up | Face::Down | Face::Front, true) | (Face::Back, false) => Face::Left,
@@ -287,14 +314,19 @@ fn translate_vertical_drag(col: usize, dragged_face: Face, toward_positive: bool
         | (Face::Left, Face::Front) => toward_positive,
         _ => unreachable!(),
     };
-    (face, clockwise)
+    let direction = if clockwise {
+        Direction::Clockwise
+    } else {
+        Direction::Anticlockwise
+    };
+    TranslatedDrag { face, direction }
 }
 
 fn translate_horizontal_drag(
     row: usize,
     dragged_face: Face,
     toward_positive: bool,
-) -> (Face, bool) {
+) -> TranslatedDrag {
     let row_0 = row == 0;
     let face = match (dragged_face, row_0) {
         (Face::Up, true) | (Face::Down, false) => Face::Front,
@@ -311,10 +343,34 @@ fn translate_horizontal_drag(
         | (Face::Front | Face::Right | Face::Back | Face::Left, Face::Up) => !toward_positive,
         _ => unreachable!(),
     };
-    (face, clockwise)
+    let direction = if clockwise {
+        Direction::Clockwise
+    } else {
+        Direction::Anticlockwise
+    };
+    TranslatedDrag { face, direction }
 }
 
 #[cfg(test)]
 mod tests {
-    // todo write tests to keep it working!
+    // todo write more tests to keep it working!
+
+    use pretty_assertions::assert_eq;
+    use three_d::Vec3;
+
+    use crate::gui::MouseControl;
+
+    #[test]
+    fn test_inner_camera_controls_target_the_same_point() {
+        let target = Vec3 {
+            x: 1.234,
+            y: 4.321,
+            z: 0.453,
+        };
+
+        let mouse_control = MouseControl::new(target, 0.1, 5.0);
+
+        assert_eq!(target, mouse_control.free_orbit.target);
+        assert_eq!(target, mouse_control.upright_orbit.target);
+    }
 }

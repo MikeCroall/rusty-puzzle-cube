@@ -1,11 +1,11 @@
-use rusty_puzzle_cube::cube::{PuzzleCube, face::Face, rotation::Rotation};
+use rusty_puzzle_cube::cube::{PuzzleCube, direction::Direction, face::Face, rotation::Rotation};
 use tracing::error;
 
 pub(super) enum DecidedMove {
     // todo can/should we remove DecidedMove and go straight to Rotation?
     WholeFace {
         face: Face,
-        clockwise: bool,
+        direction: Direction,
     },
     InnerRow {
         face: Face,
@@ -33,13 +33,10 @@ impl DecidedMove {
 
     pub(super) fn as_rotation(&self) -> Rotation {
         match *self {
-            DecidedMove::WholeFace { face, clockwise } => {
-                if clockwise {
-                    Rotation::clockwise(face)
-                } else {
-                    Rotation::anticlockwise(face)
-                }
-            }
+            DecidedMove::WholeFace { face, direction } => match direction {
+                Direction::Clockwise => Rotation::clockwise(face),
+                Direction::Anticlockwise => Rotation::anticlockwise(face),
+            },
             DecidedMove::InnerRow {
                 face,
                 row,
