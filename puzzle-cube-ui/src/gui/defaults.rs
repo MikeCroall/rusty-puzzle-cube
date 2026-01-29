@@ -31,7 +31,7 @@ pub(super) fn clear_state() -> ClearState {
 mod tests {
     use super::*;
     use pretty_assertions::assert_eq;
-    use three_d::Vector3;
+    use three_d::Vec3;
 
     #[test]
     fn test_initial_camera_targets_origin() {
@@ -42,7 +42,7 @@ mod tests {
             height: 50,
         });
 
-        assert_eq!(camera.target(), Vector3::new(0., 0., 0.));
+        assert_eq!(camera.target(), Vec3::new(0., 0., 0.));
     }
 
     #[test]

@@ -5,7 +5,7 @@ use rusty_puzzle_cube::cube::{
     face::{Face, IndexAlignment},
     rotation::{Rotation, RotationKind},
 };
-use three_d::{Instances, Mat4, Matrix4, Srgba};
+use three_d::{Instances, Mat4, Srgba};
 
 use super::{
     anim_cube::{AnimCube, AnimationProgress, AnimationState},
@@ -107,7 +107,7 @@ impl<C: PuzzleCube<Side = DefaultSide>> PuzzleCube3D for AnimCube<C> {
     }
 }
 
-fn choose_anim_transform(animation: &AnimationState) -> Option<(Rotation, Matrix4<f32>)> {
+fn choose_anim_transform(animation: &AnimationState) -> Option<(Rotation, Mat4)> {
     match animation {
         AnimationState::Rotating {
             rotation, progress, ..
@@ -152,9 +152,9 @@ fn face_to_instances<C: PuzzleCube<Side = DefaultSide>>(
     face: Face,
     cube: &C,
     side_length: usize,
-    rotation_with_anim_transform: Option<(Rotation, Matrix4<f32>)>,
+    rotation_with_anim_transform: Option<(Rotation, Mat4)>,
 ) -> (
-    impl Iterator<Item = Matrix4<f32>> + '_,
+    impl Iterator<Item = Mat4> + '_,
     impl Iterator<Item = Srgba> + '_,
 ) {
     let transformations =
