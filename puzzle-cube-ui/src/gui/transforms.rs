@@ -514,4 +514,84 @@ mod tests {
 
         assert_mat_eq_with_tolerance(expected, actual);
     }
+
+    #[test]
+    fn test_cubie_face_to_backing_transformation_example_1() {
+        let side_length = 3;
+        let face = Face::Front;
+        let x = 0;
+        let y = 1;
+
+        let actual = cubie_face_to_backing_transformation(side_length, face, x, y);
+
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            0.33333334, 0., 0., 0.,
+            0., 0.33333334, 0., 0.,
+            0., 0., 0.33333334, 0.,
+            -0.6666666, 0., 0.6666666, 1.,
+        );
+
+        assert_mat_eq_with_tolerance(expected, actual);
+    }
+
+    #[test]
+    fn test_cubie_face_to_backing_transformation_example_2() {
+        let side_length = 10;
+        let face = Face::Right;
+        let x = 7;
+        let y = 4;
+
+        let actual = cubie_face_to_backing_transformation(side_length, face, x, y);
+
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            0., 0., -0.1, 0.,
+            0., 0.1, 0., 0.,
+            0.1, 0., 0., 0.,
+            0.9, 0.1, -0.5, 1.,
+        );
+
+        assert_mat_eq_with_tolerance(expected, actual);
+    }
+
+    #[test]
+    fn test_cubie_face_to_transformation_example_1() {
+        let side_length = 3;
+        let face = Face::Front;
+        let x = 0;
+        let y = 1;
+
+        let actual = cubie_face_to_transformation(side_length, face, x, y);
+
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            0.3, 0., 0., 0.,
+            0., 0.3, 0., 0.,
+            0., 0., 0.015, 0.,
+            -0.6666666, 0., 1., 1.,
+        );
+
+        assert_mat_eq_with_tolerance(expected, actual);
+    }
+
+    #[test]
+    fn test_cubie_face_to_transformation_example_2() {
+        let side_length = 10;
+        let face = Face::Right;
+        let x = 7;
+        let y = 4;
+
+        let actual = cubie_face_to_transformation(side_length, face, x, y);
+
+        #[rustfmt::skip]
+        let expected = Matrix4::new(
+            0., 0., -0.09, 0.,
+            0., 0.09, 0., 0.,
+            0.0045, 0., 0., 0.,
+            1., 0.1, -0.5, 1.,
+        );
+
+        assert_mat_eq_with_tolerance(expected, actual);
+    }
 }
