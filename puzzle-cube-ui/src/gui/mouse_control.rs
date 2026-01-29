@@ -5,13 +5,13 @@ use crate::gui::{
 };
 use rusty_puzzle_cube::cube::{Cube, direction::Direction, face::Face, rotation::Rotation};
 use three_d::{
-    Event, FreeOrbitControl, InnerSpace, MouseButton, OrbitControl, Rad, Transform, Vec3, Vector3,
-    pick, radians,
+    Event, FreeOrbitControl, InnerSpace, MouseButton, OrbitControl, Radians, Transform, Vec3, pick,
+    radians,
 };
 use tracing::{debug, error};
 
 const MOVE_TOO_SMALL_THRESHOLD: f32 = 0.15;
-const DIAGONAL_MOVE_THRESHOLD: Rad<f32> = radians(0.125 * PI);
+const DIAGONAL_MOVE_THRESHOLD: Radians = radians(0.125 * PI);
 const EPSILON: f32 = 0.01;
 
 pub(super) struct MouseControl {
@@ -34,7 +34,7 @@ pub(super) enum RotationIfReleasedNow {
 }
 
 struct FaceDrag {
-    start_pick: Vector3<f32>,
+    start_pick: Vec3,
     face: Face,
 }
 
@@ -162,7 +162,7 @@ impl MouseControl {
     }
 }
 
-fn pick_to_face(pick: Vector3<f32>) -> Option<Face> {
+fn pick_to_face(pick: Vec3) -> Option<Face> {
     if (pick.x - 1.).abs() < EPSILON {
         Some(Face::Right)
     } else if (pick.x + 1.).abs() < EPSILON {
@@ -190,8 +190,8 @@ fn pick_to_face(pick: Vector3<f32>) -> Option<Face> {
 )]
 fn picks_to_move(
     side_length: usize,
-    start_pick: Vector3<f32>,
-    end_pick: Vector3<f32>,
+    start_pick: Vec3,
+    end_pick: Vec3,
     dragged_face: Face,
 ) -> Option<DecidedMove> {
     let UnrotatedPicks {
@@ -203,7 +203,7 @@ fn picks_to_move(
         toward_positive,
     } = validate_straight_dir(start_pick, end_pick)?;
 
-    let TranslatedDrag { face, direction } = if move_along_x {
+    let TranslatedDragForWholeFace { face, direction } = if move_along_x {
         let row_0_to_1 = f32::midpoint(start_pick.y, 1.);
         let row = (row_0_to_1 * side_length as f32) as usize;
         if row != 0 && row != side_length - 1 {
@@ -213,7 +213,7 @@ fn picks_to_move(
                 toward_positive,
             });
         }
-        translate_horizontal_drag(row, dragged_face, toward_positive)
+        translate_horizontal_drag_for_whole_face(row, dragged_face, toward_positive)
     } else {
         let col_0_to_1 = f32::midpoint(start_pick.x, 1.);
         let col = (col_0_to_1 * side_length as f32) as usize;
@@ -224,17 +224,17 @@ fn picks_to_move(
                 toward_positive,
             });
         }
-        translate_vertical_drag(col, dragged_face, toward_positive)
+        translate_vertical_drag_for_whole_face(col, dragged_face, toward_positive)
     };
     Some(DecidedMove::WholeFace { face, direction })
 }
 
 struct UnrotatedPicks {
-    start_pick: Vector3<f32>,
-    end_pick: Vector3<f32>,
+    start_pick: Vec3,
+    end_pick: Vec3,
 }
 
-fn unrotate_picks(start_pick: Vector3<f32>, end_pick: Vector3<f32>, face: Face) -> UnrotatedPicks {
+fn unrotate_picks(start_pick: Vec3, end_pick: Vec3, face: Face) -> UnrotatedPicks {
     let unrotate_mat = move_face_into_place(face)
         .inverse_transform()
         .expect("All faces rotations must be invertible");
@@ -252,8 +252,8 @@ struct ValidatedStraightDir {
 }
 
 fn validate_straight_dir(
-    unrotated_start_pick: Vector3<f32>,
-    unrotated_end_pick: Vector3<f32>,
+    unrotated_start_pick: Vec3,
+    unrotated_end_pick: Vec3,
 ) -> Option<ValidatedStraightDir> {
     let displacement = unrotated_end_pick - unrotated_start_pick;
     if displacement.magnitude() < MOVE_TOO_SMALL_THRESHOLD {
@@ -261,10 +261,10 @@ fn validate_straight_dir(
         return None;
     }
 
-    let angle_to_x = displacement.angle(Vector3::unit_x()).0.abs();
-    let angle_to_neg_x = displacement.angle(-Vector3::unit_x()).0.abs();
-    let angle_to_y = displacement.angle(Vector3::unit_y()).0.abs();
-    let angle_to_neg_y = displacement.angle(-Vector3::unit_y()).0.abs();
+    let angle_to_x = displacement.angle(Vec3::unit_x()).0.abs();
+    let angle_to_neg_x = displacement.angle(-Vec3::unit_x()).0.abs();
+    let angle_to_y = displacement.angle(Vec3::unit_y()).0.abs();
+    let angle_to_neg_y = displacement.angle(-Vec3::unit_y()).0.abs();
 
     let mut angles = [angle_to_x, angle_to_neg_x, angle_to_y, angle_to_neg_y];
     angles.sort_by(|a, b| a.partial_cmp(b).expect("No NaNs here"));
@@ -286,16 +286,16 @@ fn validate_straight_dir(
     })
 }
 
-struct TranslatedDrag {
+struct TranslatedDragForWholeFace {
     face: Face,
     direction: Direction,
 }
 
-fn translate_vertical_drag(
+fn translate_vertical_drag_for_whole_face(
     col: usize,
     dragged_face: Face,
     toward_positive: bool,
-) -> TranslatedDrag {
+) -> TranslatedDragForWholeFace {
     let col_0 = col == 0;
     let face = match (dragged_face, col_0) {
         (Face::Up | Face::Down | Face::Front, true) | (Face::Back, false) => Face::Left,
@@ -319,14 +319,14 @@ fn translate_vertical_drag(
     } else {
         Direction::Anticlockwise
     };
-    TranslatedDrag { face, direction }
+    TranslatedDragForWholeFace { face, direction }
 }
 
-fn translate_horizontal_drag(
+fn translate_horizontal_drag_for_whole_face(
     row: usize,
     dragged_face: Face,
     toward_positive: bool,
-) -> TranslatedDrag {
+) -> TranslatedDragForWholeFace {
     let row_0 = row == 0;
     let face = match (dragged_face, row_0) {
         (Face::Up, true) | (Face::Down, false) => Face::Front,
@@ -348,15 +348,14 @@ fn translate_horizontal_drag(
     } else {
         Direction::Anticlockwise
     };
-    TranslatedDrag { face, direction }
+    TranslatedDragForWholeFace { face, direction }
 }
 
 #[cfg(test)]
 mod tests {
-    // todo write more tests to keep it working!
+    use super::*;
 
     use pretty_assertions::assert_eq;
-    use three_d::Vec3;
 
     use crate::gui::MouseControl;
 
@@ -372,5 +371,460 @@ mod tests {
 
         assert_eq!(target, mouse_control.free_orbit.target);
         assert_eq!(target, mouse_control.upright_orbit.target);
+    }
+
+    mod pick_to_face {
+        use super::*;
+
+        use pretty_assertions::assert_eq;
+
+        #[test]
+        fn front() {
+            let pick_for_front = Vec3 {
+                x: 0.,
+                y: 0.,
+                z: 1.,
+            };
+
+            let face = pick_to_face(pick_for_front);
+
+            assert_eq!(face, Some(Face::Front));
+        }
+
+        #[test]
+        fn back() {
+            let pick_for_back = Vec3 {
+                x: 0.,
+                y: 0.,
+                z: -1.,
+            };
+
+            let face = pick_to_face(pick_for_back);
+
+            assert_eq!(face, Some(Face::Back));
+        }
+
+        #[test]
+        fn left() {
+            let pick_for_left = Vec3 {
+                x: -1.,
+                y: 0.,
+                z: 0.,
+            };
+
+            let face = pick_to_face(pick_for_left);
+
+            assert_eq!(face, Some(Face::Left));
+        }
+
+        #[test]
+        fn right() {
+            let pick_for_right = Vec3 {
+                x: 1.,
+                y: 0.,
+                z: 0.,
+            };
+
+            let face = pick_to_face(pick_for_right);
+
+            assert_eq!(face, Some(Face::Right));
+        }
+
+        #[test]
+        fn up() {
+            let pick_for_up = Vec3 {
+                x: 0.,
+                y: 1.,
+                z: 0.,
+            };
+
+            let face = pick_to_face(pick_for_up);
+
+            assert_eq!(face, Some(Face::Up));
+        }
+
+        #[test]
+        fn down() {
+            let pick_for_down = Vec3 {
+                x: 0.,
+                y: -1.,
+                z: 0.,
+            };
+
+            let face = pick_to_face(pick_for_down);
+
+            assert_eq!(face, Some(Face::Down));
+        }
+
+        #[test]
+        fn invalid_does_not_panic() {
+            let pick_for_down = Vec3 {
+                x: 0.,
+                y: 0.5,
+                z: 0.,
+            };
+
+            let face = pick_to_face(pick_for_down);
+
+            assert_eq!(face, None);
+        }
+    }
+
+    mod validate_straight_dir {
+        use super::*;
+
+        #[test]
+        fn too_small() {
+            let unrotated_start_pick = Vec3 {
+                x: 1.,
+                y: 1.,
+                z: 1.,
+            };
+            let unrotated_end_pick = Vec3 {
+                x: 1.01,
+                y: 1.,
+                z: 1.,
+            };
+
+            let validated_straight_dir_opt =
+                validate_straight_dir(unrotated_start_pick, unrotated_end_pick);
+
+            assert!(validated_straight_dir_opt.is_none());
+        }
+
+        #[test]
+        fn diagonal() {
+            let unrotated_start_pick = Vec3 {
+                x: 1.,
+                y: 1.,
+                z: 1.,
+            };
+            let unrotated_end_pick = Vec3 {
+                x: -1.,
+                y: -1.,
+                z: 1.,
+            };
+
+            let validated_straight_dir_opt =
+                validate_straight_dir(unrotated_start_pick, unrotated_end_pick);
+
+            assert!(validated_straight_dir_opt.is_none());
+        }
+
+        #[test]
+        fn valid_positive_x() {
+            let unrotated_start_pick = Vec3 {
+                x: -1.,
+                y: 1.,
+                z: 1.,
+            };
+            let unrotated_end_pick = Vec3 {
+                x: 1.,
+                y: 1.,
+                z: 1.,
+            };
+
+            let ValidatedStraightDir {
+                move_along_x,
+                toward_positive,
+            } = validate_straight_dir(unrotated_start_pick, unrotated_end_pick).unwrap();
+
+            assert!(move_along_x);
+            assert!(toward_positive);
+        }
+
+        #[test]
+        fn valid_negative_x() {
+            let unrotated_start_pick = Vec3 {
+                x: 1.,
+                y: 1.,
+                z: 1.,
+            };
+            let unrotated_end_pick = Vec3 {
+                x: -1.,
+                y: 1.,
+                z: 1.,
+            };
+
+            let ValidatedStraightDir {
+                move_along_x,
+                toward_positive,
+            } = validate_straight_dir(unrotated_start_pick, unrotated_end_pick).unwrap();
+
+            assert!(move_along_x);
+            assert!(!toward_positive);
+        }
+
+        #[test]
+        fn valid_positive_y() {
+            let unrotated_start_pick = Vec3 {
+                x: 1.,
+                y: -1.,
+                z: 1.,
+            };
+            let unrotated_end_pick = Vec3 {
+                x: 1.,
+                y: 1.,
+                z: 1.,
+            };
+
+            let ValidatedStraightDir {
+                move_along_x,
+                toward_positive,
+            } = validate_straight_dir(unrotated_start_pick, unrotated_end_pick).unwrap();
+
+            assert!(!move_along_x);
+            assert!(toward_positive);
+        }
+
+        #[test]
+        fn valid_negative_y() {
+            let unrotated_start_pick = Vec3 {
+                x: 1.,
+                y: 1.,
+                z: 1.,
+            };
+            let unrotated_end_pick = Vec3 {
+                x: 1.,
+                y: -1.,
+                z: 1.,
+            };
+
+            let ValidatedStraightDir {
+                move_along_x,
+                toward_positive,
+            } = validate_straight_dir(unrotated_start_pick, unrotated_end_pick).unwrap();
+
+            assert!(!move_along_x);
+            assert!(!toward_positive);
+        }
+    }
+
+    mod picks_to_move {
+        use super::*;
+
+        use pretty_assertions::assert_eq;
+        use rusty_puzzle_cube::cube::rotation::RotationKind;
+
+        #[test]
+        fn too_small() {
+            let side_length = 3;
+            let start_pick = Vec3 {
+                x: 1.,
+                y: 0.,
+                z: 1.,
+            };
+            let end_pick = Vec3 {
+                x: 1.01,
+                y: 0.,
+                z: 1.,
+            };
+
+            let decided_move = picks_to_move(side_length, start_pick, end_pick, Face::Front);
+
+            assert!(decided_move.is_none());
+        }
+
+        #[test]
+        fn diagonal() {
+            let side_length = 3;
+            let start_pick = Vec3 {
+                x: 1.,
+                y: 1.,
+                z: 1.,
+            };
+            let end_pick = Vec3 {
+                x: -1.,
+                y: -1.,
+                z: 1.,
+            };
+
+            let decided_move = picks_to_move(side_length, start_pick, end_pick, Face::Front);
+
+            assert!(decided_move.is_none());
+        }
+
+        #[test]
+        fn dragged_front_along_the_top() {
+            let side_length = 3;
+            let start_pick = Vec3 {
+                x: -0.8,
+                y: 0.95,
+                z: 1.,
+            };
+            let end_pick = Vec3 {
+                x: 0.8,
+                y: 0.95,
+                z: 1.,
+            };
+
+            let decided_move = picks_to_move(side_length, start_pick, end_pick, Face::Front);
+
+            assert!(matches!(
+                decided_move,
+                Some(DecidedMove::WholeFace {
+                    face: Face::Up,
+                    direction: Direction::Anticlockwise,
+                })
+            ));
+
+            let rotation = decided_move.unwrap().as_rotation().normalise(side_length);
+
+            assert_eq!(
+                rotation,
+                Rotation {
+                    relative_to: Face::Up,
+                    direction: Direction::Anticlockwise,
+                    kind: RotationKind::FaceOnly,
+                }
+            );
+        }
+
+        #[test]
+        fn dragged_right_backwards_along_the_middle() {
+            let side_length = 3;
+            let start_pick = Vec3 {
+                x: 1.,
+                y: 0.,
+                z: -0.8,
+            };
+            let end_pick = Vec3 {
+                x: 1.,
+                y: 0.,
+                z: 0.8,
+            };
+
+            let decided_move = picks_to_move(side_length, start_pick, end_pick, Face::Right);
+
+            assert!(matches!(
+                decided_move,
+                Some(DecidedMove::InnerRow {
+                    face: Face::Right,
+                    row: 1,
+                    toward_positive: false,
+                })
+            ));
+
+            let rotation = decided_move.unwrap().as_rotation().normalise(side_length);
+
+            assert_eq!(
+                rotation,
+                Rotation {
+                    relative_to: Face::Down,
+                    direction: Direction::Anticlockwise,
+                    kind: RotationKind::Setback { layer: 1 },
+                }
+            );
+        }
+
+        #[test]
+        fn dragged_up_downwards_along_the_middle() {
+            let side_length = 4;
+            let start_pick = Vec3 {
+                x: 0.1,
+                y: 1.,
+                z: -0.8,
+            };
+            let end_pick = Vec3 {
+                x: 0.1,
+                y: 1.,
+                z: 0.8,
+            };
+
+            let decided_move = picks_to_move(side_length, start_pick, end_pick, Face::Up);
+
+            assert!(matches!(
+                decided_move,
+                Some(DecidedMove::InnerCol {
+                    face: Face::Up,
+                    col: 2,
+                    toward_positive: false,
+                })
+            ));
+
+            let rotation = decided_move.unwrap().as_rotation().normalise(side_length);
+
+            assert_eq!(
+                rotation,
+                Rotation {
+                    relative_to: Face::Left,
+                    direction: Direction::Clockwise,
+                    kind: RotationKind::Setback { layer: 2 },
+                }
+            );
+        }
+
+        #[test]
+        fn dragged_left_upwards_along_the_inner_left() {
+            let side_length = 5;
+            let start_pick = Vec3 {
+                x: -1.,
+                y: -0.9,
+                z: -0.5,
+            };
+            let end_pick = Vec3 {
+                x: -1.,
+                y: 0.9,
+                z: -0.5,
+            };
+
+            let decided_move = picks_to_move(side_length, start_pick, end_pick, Face::Left);
+
+            assert!(matches!(
+                decided_move,
+                Some(DecidedMove::InnerCol {
+                    face: Face::Left,
+                    col: 1,
+                    toward_positive: true,
+                })
+            ));
+
+            let rotation = decided_move.unwrap().as_rotation().normalise(side_length);
+
+            assert_eq!(
+                rotation,
+                Rotation {
+                    relative_to: Face::Back,
+                    direction: Direction::Anticlockwise,
+                    kind: RotationKind::Setback { layer: 1 },
+                }
+            );
+        }
+
+        #[test]
+        fn dragged_left_downwards_along_the_left() {
+            let side_length = 5;
+            let start_pick = Vec3 {
+                x: -1.,
+                y: 0.9,
+                z: -0.8,
+            };
+            let end_pick = Vec3 {
+                x: -1.,
+                y: -0.9,
+                z: -0.8,
+            };
+
+            let decided_move = picks_to_move(side_length, start_pick, end_pick, Face::Left);
+
+            assert!(matches!(
+                decided_move,
+                Some(DecidedMove::WholeFace {
+                    face: Face::Back,
+                    direction: Direction::Clockwise,
+                })
+            ));
+
+            let rotation = decided_move.unwrap().as_rotation().normalise(side_length);
+
+            assert_eq!(
+                rotation,
+                Rotation {
+                    relative_to: Face::Back,
+                    direction: Direction::Clockwise,
+                    kind: RotationKind::FaceOnly,
+                }
+            );
+        }
     }
 }
