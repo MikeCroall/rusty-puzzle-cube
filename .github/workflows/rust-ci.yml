@@ -29,6 +29,8 @@ jobs:
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
+            - name: Machete
+              uses: bnjbvr/cargo-machete@main
             - name: Build
               run: cargo build --verbose
             - name: Install cargo-nextest
