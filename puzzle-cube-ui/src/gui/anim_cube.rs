@@ -56,18 +56,18 @@ impl AnimationState {
                 if progress.single_rotation_linear >= 1. =>
             {
                 let seq = seq.take();
-                if let Some(mut iter) = seq {
-                    if let Some(next_rot) = iter.next() {
-                        debug!(
-                            "progress_animation setting anim state to TransitioningToNext {next_rot:?} and some iter"
-                        );
-                        *self = AnimationState::TransitioningToNext {
-                            rotation: next_rot,
-                            progress: *progress,
-                            seq: Some(iter),
-                        };
-                        return;
-                    }
+                if let Some(mut iter) = seq
+                    && let Some(next_rot) = iter.next()
+                {
+                    debug!(
+                        "progress_animation setting anim state to TransitioningToNext {next_rot:?} and some iter"
+                    );
+                    *self = AnimationState::TransitioningToNext {
+                        rotation: next_rot,
+                        progress: *progress,
+                        seq: Some(iter),
+                    };
+                    return;
                 }
                 debug!("progress_animation setting anim state to Stationary");
                 *self = AnimationState::Stationary;
