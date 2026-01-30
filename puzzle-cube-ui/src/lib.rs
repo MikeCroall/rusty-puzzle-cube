@@ -17,6 +17,10 @@ pub fn start() -> Result<(), JsValue> {
     Ok(())
 }
 
-pub fn main() {
+/// For non-wasm targets, the binary entry point has been moved to a different file.
+/// This start function remains able to run the demo, gui or otherwise, but is
+/// primarily here to avoid tooling thinking almost the entire crate is unused.
+#[cfg(not(target_arch = "wasm32"))]
+pub fn start() {
     demo::run();
 }
