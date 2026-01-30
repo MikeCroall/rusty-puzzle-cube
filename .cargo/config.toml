@@ -1,19 +1,2 @@
 [alias]
-live = [
-    "watch",
-    "-q",
-    "-c",
-    "-w",
-    "puzzle-cube/src/",
-    "-w",
-    "puzzle-cube/Cargo.toml",
-    "-w",
-    "puzzle-cube-ui/src/",
-    "-w",
-    "puzzle-cube-ui/Cargo.toml",
-    "-w",
-    "Cargo.toml",
-    "-x",
-    "run",
-]
 testcov = "llvm-cov nextest --lcov --output-path coverage/lcov.info --no-cfg-coverage"
