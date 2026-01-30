@@ -3,7 +3,9 @@ use std::f32::consts::PI;
 use crate::gui::{
     GuiState, anim_cube::AnimCube, decided_move::DecidedMove, transforms::move_face_into_place,
 };
-use rusty_puzzle_cube::cube::{Cube, direction::Direction, face::Face, rotation::Rotation};
+use rusty_puzzle_cube::cube::{
+    Cube, PuzzleCube as _, direction::Direction, face::Face, rotation::Rotation,
+};
 use three_d::{
     Event, FreeOrbitControl, InnerSpace, MouseButton, OrbitControl, Radians, Transform, Vec3, pick,
     radians,
@@ -185,10 +187,14 @@ impl MouseControl {
         if let Some(decided_move) =
             picks_to_move(state.side_length, *start_pick, end_pick.position, *face)
         {
-            if let Some(applied_rotation) = decided_move.apply(&mut state.cube) {
-                state.undo_queue.push_back(applied_rotation);
+            let rotation = decided_move.as_rotation();
+            match state.cube.rotate(rotation) {
+                Ok(()) => {
+                    state.undo_queue.push_back(rotation);
+                    *updated_cube = true;
+                }
+                Err(e) => error!("Invalid rotation was provided to cube. {e:?}"),
             }
-            *updated_cube = true;
             *handled = true;
         }
     }
