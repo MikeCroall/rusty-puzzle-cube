@@ -8,6 +8,7 @@ use three_d::{
     Event, FreeOrbitControl, InnerSpace, MouseButton, OrbitControl, Radians, Transform, Vec3, pick,
     radians,
 };
+use three_d_asset::PixelPoint;
 use tracing::{debug, error};
 
 const MOVE_TOO_SMALL_THRESHOLD: f32 = 0.15;
@@ -74,19 +75,7 @@ impl MouseControl {
                     handled,
                     ..
                 } => {
-                    let Some(start_pick) =
-                        pick(&state.ctx, &state.camera, *position, &state.pick_cube)
-                    else {
-                        continue;
-                    };
-                    let Some(face) = pick_to_face(start_pick.position) else {
-                        continue;
-                    };
-                    self.drag = Some(FaceDrag {
-                        start_pick: start_pick.position,
-                        face,
-                    });
-                    *handled = true;
+                    self.handle_mouse_press_left_btn(state, *position, handled);
                 }
                 Event::MouseMotion {
                     button: Some(MouseButton::Left),
@@ -94,32 +83,12 @@ impl MouseControl {
                     handled,
                     ..
                 } => {
-                    let Some(FaceDrag { start_pick, face }) = self.drag else {
-                        continue;
-                    };
-                    let Some(current_pick) =
-                        pick(&state.ctx, &state.camera, *position, &state.pick_cube)
-                    else {
-                        continue;
-                    };
-                    let Some(new_face) = pick_to_face(current_pick.position) else {
-                        continue;
-                    };
-                    if face != new_face {
-                        self.drag = None;
-                        debug!("Dragged from face {face:?} to {new_face:?}, skipping...");
-                        rotation_if_released_now = RotationIfReleasedNow::Invalid;
-                    } else if let Some(rotation) =
-                        picks_to_move(state.side_length, start_pick, current_pick.position, face)
-                            .map(|decided_move| {
-                                decided_move.as_rotation().normalise(state.side_length)
-                            })
-                    {
-                        rotation_if_released_now = RotationIfReleasedNow::Valid(rotation);
-                    } else {
-                        rotation_if_released_now = RotationIfReleasedNow::Invalid;
-                    }
-                    *handled = true;
+                    self.handle_mouse_motion_left_btn(
+                        state,
+                        &mut rotation_if_released_now,
+                        *position,
+                        handled,
+                    );
                 }
                 Event::MouseRelease {
                     button: MouseButton::Left,
@@ -127,23 +96,12 @@ impl MouseControl {
                     handled,
                     ..
                 } => {
-                    let Some(FaceDrag { start_pick, face }) = &self.drag else {
-                        continue;
-                    };
-                    let Some(end_pick) =
-                        pick(&state.ctx, &state.camera, *position, &state.pick_cube)
-                    else {
-                        continue;
-                    };
-                    if let Some(decided_move) =
-                        picks_to_move(state.side_length, *start_pick, end_pick.position, *face)
-                    {
-                        if let Some(applied_rotation) = decided_move.apply(&mut state.cube) {
-                            state.undo_queue.push_back(applied_rotation);
-                        }
-                        updated_cube = true;
-                        *handled = true;
-                    }
+                    self.handle_mouse_release_left_btn(
+                        state,
+                        *position,
+                        handled,
+                        &mut updated_cube,
+                    );
                 }
                 _ => {}
             }
@@ -158,6 +116,80 @@ impl MouseControl {
                     self.free_orbit.handle_events(&mut state.camera, events)
                 },
             rotation_if_released_now,
+        }
+    }
+
+    fn handle_mouse_press_left_btn(
+        &mut self,
+        state: &mut GuiState<AnimCube<Cube>, 100>,
+        position: PixelPoint,
+        handled: &mut bool,
+    ) {
+        let Some(start_pick) = pick(&state.ctx, &state.camera, position, &state.pick_cube) else {
+            return;
+        };
+        let Some(face) = pick_to_face(start_pick.position) else {
+            return;
+        };
+        self.drag = Some(FaceDrag {
+            start_pick: start_pick.position,
+            face,
+        });
+        *handled = true;
+    }
+
+    fn handle_mouse_motion_left_btn(
+        &mut self,
+        state: &mut GuiState<AnimCube<Cube>, 100>,
+        rotation_if_released_now: &mut RotationIfReleasedNow,
+        position: PixelPoint,
+        handled: &mut bool,
+    ) {
+        let Some(FaceDrag { start_pick, face }) = self.drag else {
+            return;
+        };
+        let Some(current_pick) = pick(&state.ctx, &state.camera, position, &state.pick_cube) else {
+            return;
+        };
+        let Some(new_face) = pick_to_face(current_pick.position) else {
+            return;
+        };
+        if face != new_face {
+            self.drag = None;
+            debug!("Dragged from face {face:?} to {new_face:?}, skipping...");
+            *rotation_if_released_now = RotationIfReleasedNow::Invalid;
+        } else if let Some(rotation) =
+            picks_to_move(state.side_length, start_pick, current_pick.position, face)
+                .map(|decided_move| decided_move.as_rotation().normalise(state.side_length))
+        {
+            *rotation_if_released_now = RotationIfReleasedNow::Valid(rotation);
+        } else {
+            *rotation_if_released_now = RotationIfReleasedNow::Invalid;
+        }
+        *handled = true;
+    }
+
+    fn handle_mouse_release_left_btn(
+        &mut self,
+        state: &mut GuiState<AnimCube<Cube>, 100>,
+        position: PixelPoint,
+        handled: &mut bool,
+        updated_cube: &mut bool,
+    ) {
+        let Some(FaceDrag { start_pick, face }) = &self.drag else {
+            return;
+        };
+        let Some(end_pick) = pick(&state.ctx, &state.camera, position, &state.pick_cube) else {
+            return;
+        };
+        if let Some(decided_move) =
+            picks_to_move(state.side_length, *start_pick, end_pick.position, *face)
+        {
+            if let Some(applied_rotation) = decided_move.apply(&mut state.cube) {
+                state.undo_queue.push_back(applied_rotation);
+            }
+            *updated_cube = true;
+            *handled = true;
         }
     }
 }
