@@ -20,6 +20,7 @@ pretty_assertions = "1.4.1"
 [[bin]]
 name = "rusty_puzzle_cube"
 path = "./src/lib.rs"
+test = false               # avoid double-running all UI tests
 
 [lib]
 crate-type = ["cdylib"]
