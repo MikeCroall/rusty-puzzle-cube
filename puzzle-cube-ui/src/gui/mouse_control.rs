@@ -33,7 +33,10 @@ pub(super) struct MouseControlOutput {
 pub(super) enum RotationIfReleasedNow {
     NotAttempted,
     Invalid,
-    Valid(Rotation),
+    Valid {
+        rotation: Rotation,
+        dragged_face: Face,
+    },
 }
 
 struct FaceDrag {
@@ -164,7 +167,10 @@ impl MouseControl {
             picks_to_move(state.side_length, start_pick, current_pick.position, face)
                 .map(|decided_move| decided_move.as_rotation().normalise(state.side_length))
         {
-            *rotation_if_released_now = RotationIfReleasedNow::Valid(rotation);
+            *rotation_if_released_now = RotationIfReleasedNow::Valid {
+                rotation,
+                dragged_face: face,
+            };
         } else {
             *rotation_if_released_now = RotationIfReleasedNow::Invalid;
         }

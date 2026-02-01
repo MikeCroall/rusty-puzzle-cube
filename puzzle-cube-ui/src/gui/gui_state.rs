@@ -24,6 +24,7 @@ pub(crate) struct GuiState<C: PuzzleCube3D + Display, const UNDO_SIZE: usize> {
     pub(crate) animation_speed: f64,
     pub(crate) ctx: Context,
     pub(crate) pick_cube: Gm<three_d::Mesh, ColorMaterial>,
+    pub(crate) show_click_and_drag_hints: bool,
     pub(crate) rotation_if_released_now: RotationIfReleasedNow,
 }
 
@@ -39,6 +40,7 @@ impl<const UNDO_SIZE: usize> GuiState<AnimCube<Cube>, UNDO_SIZE> {
         let camera = initial_camera(window.viewport());
         let pick_cube = inner_cube(&ctx);
         let tiles = initial_instances(&ctx, &cube);
+        let show_click_and_drag_hints = true;
         let rotation_if_released_now = RotationIfReleasedNow::NotAttempted;
 
         Ok(Self {
@@ -53,6 +55,7 @@ impl<const UNDO_SIZE: usize> GuiState<AnimCube<Cube>, UNDO_SIZE> {
             animation_speed: 1.0,
             ctx,
             pick_cube,
+            show_click_and_drag_hints,
             rotation_if_released_now,
         })
     }

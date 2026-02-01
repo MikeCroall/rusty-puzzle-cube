@@ -15,7 +15,8 @@ use crate::gui::{
     cube_3d_ext::PuzzleCube3D,
     defaults::{clear_state, initial_camera, initial_window},
     gui_state::GuiState,
-    mouse_control::MouseControl,
+    mouse_control::{MouseControl, RotationIfReleasedNow},
+    transforms::rotation_if_released_now_to_transformation,
 };
 use anim_cube::AnimCube;
 use mouse_control::MouseControlOutput;
@@ -104,6 +105,15 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
                     if state.render_axes {
                         Axes::new(&state.ctx, 0.05, 2.).render(&state.camera, &[]);
                     }
+                    if state.show_click_and_drag_hints
+                        && let Some(rotation_hint_arrow) = rotation_hint_arrow(
+                            &state.ctx,
+                            state.side_length,
+                            state.rotation_if_released_now,
+                        )
+                    {
+                        rotation_hint_arrow.render(&state.camera, &[]);
+                    }
                     gui.render()
                 })
             {
@@ -147,6 +157,30 @@ fn inner_cube(ctx: &Context) -> Gm<Mesh, ColorMaterial> {
         ColorMaterial {
             color: Srgba::BLACK,
             ..Default::default()
+        },
+    )
+}
+
+fn rotation_hint_arrow(
+    ctx: &Context,
+    side_length: usize,
+    rotation_if_released_now: RotationIfReleasedNow,
+) -> Option<Gm<Mesh, ColorMaterial>> {
+    rotation_if_released_now_to_transformation(side_length, rotation_if_released_now).and_then(
+        |transform| {
+            let mut arrow = CpuMesh::arrow(0.7, 0.35, 16);
+            arrow.transform(transform).ok()?;
+            Some(Gm::new(
+                Mesh::new(ctx, &arrow),
+                ColorMaterial {
+                    color: Srgba::new(255, 1, 154, 255),
+                    render_states: RenderStates {
+                        cull: Cull::Back,
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                },
+            ))
         },
     )
 }

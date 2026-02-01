@@ -1,7 +1,13 @@
 use std::f32::consts::PI;
 
-use rusty_puzzle_cube::cube::face::Face;
-use three_d::{Mat4, Radians, Vec3, radians, vec3};
+use rusty_puzzle_cube::cube::{
+    direction::Direction,
+    face::Face,
+    rotation::{Rotation, RotationKind},
+};
+use three_d::{Mat4, Radians, SquareMatrix, Vec3, radians, vec3};
+
+use crate::gui::RotationIfReleasedNow;
 
 pub const QUARTER_TURN: Radians = radians(0.5 * PI);
 const HALF_TURN: Radians = radians(PI);
@@ -27,6 +33,14 @@ pub(super) fn quarter_turn_around_y() -> Mat4 {
 
 pub(super) fn rev_quarter_turn_around_y() -> Mat4 {
     Mat4::from_angle_y(-QUARTER_TURN)
+}
+
+pub(super) fn quarter_turn_around_z() -> Mat4 {
+    Mat4::from_angle_z(QUARTER_TURN)
+}
+
+pub(super) fn rev_quarter_turn_around_z() -> Mat4 {
+    Mat4::from_angle_z(-QUARTER_TURN)
 }
 
 pub(super) fn half_turn_around_y() -> Mat4 {
@@ -115,6 +129,208 @@ pub(super) fn cubie_face_to_transformation(
     move_face_into_place(face)
         * position_from_origin_centered_to(side_length as f32, x as f32, y as f32)
         * scale_down(side_length as f32)
+}
+
+pub(super) fn center_hint_arrow() -> Mat4 {
+    Mat4::from_translation(-TRANSLATE_RIGHT * 0.5)
+}
+
+pub(super) fn move_hint_arrow_to_correct_face(face: Face, side_length: f32) -> Mat4 {
+    let translate = match face {
+        Face::Up => TRANSLATE_UP,
+        Face::Down => -TRANSLATE_UP,
+        Face::Front => TRANSLATE_TOWARD,
+        Face::Right => TRANSLATE_RIGHT,
+        Face::Back => -TRANSLATE_TOWARD,
+        Face::Left => -TRANSLATE_RIGHT,
+    };
+    let rotate = match face {
+        Face::Up => rev_quarter_turn_around_x(),
+        Face::Down => quarter_turn_around_x(),
+        Face::Front => Mat4::identity(),
+        Face::Right => quarter_turn_around_y(),
+        Face::Back => half_turn_around_y(),
+        Face::Left => rev_quarter_turn_around_y(),
+    };
+    Mat4::from_translation(translate * (1. + 0.1 / side_length)) * rotate
+}
+
+pub(super) fn scale_hint_arrow(side_length: f32) -> Mat4 {
+    let scale = 1. / side_length;
+    Mat4::from_nonuniform_scale(2., scale, 0.000_000_1)
+}
+
+/// An intermediate representation to aid in producing the transformation matrix for the hint arrow
+enum Hint {
+    /// Arrow should be positioned above the given row index, pointing towards the positive direction
+    RowPos(usize),
+    /// Arrow should be positioned above the given row index, pointing towards the negative direction
+    RowNeg(usize),
+    /// Arrow should be positioned above the given column index, pointing towards the positive direction
+    ColPos(usize),
+    /// Arrow should be positioned above the given column index, pointing towards the negative direction
+    ColNeg(usize),
+}
+
+impl Hint {
+    #[expect(clippy::cast_precision_loss)]
+    fn as_transform(&self, side_length: f32) -> Mat4 {
+        let rotate = match self {
+            Hint::RowPos(_) => Mat4::identity(),
+            Hint::RowNeg(_) => half_turn_around_y(),
+            Hint::ColPos(_) => quarter_turn_around_z(),
+            Hint::ColNeg(_) => rev_quarter_turn_around_z(),
+        };
+        let x = match self {
+            Hint::RowPos(_) | Hint::RowNeg(_) => (side_length - 1.) / 2.,
+            Hint::ColPos(col) | Hint::ColNeg(col) => *col as f32,
+        };
+        let y = match self {
+            Hint::RowPos(row) | Hint::RowNeg(row) => *row as f32,
+            Hint::ColPos(_) | Hint::ColNeg(_) => (side_length - 1.) / 2.,
+        };
+        position_from_origin_centered_to(side_length, x, y) * rotate
+    }
+}
+
+#[expect(clippy::cast_precision_loss)]
+fn move_hint_arrow_on_face(rotation: Rotation, dragged_face: Face, side_length: usize) -> Mat4 {
+    match rotation.kind {
+        RotationKind::FaceOnly => {
+            move_hint_arrow_on_face_for_face_only(rotation, dragged_face, side_length)
+        }
+        RotationKind::Setback { layer } => {
+            move_hint_arrow_on_face_for_setback(rotation, dragged_face, side_length, layer)
+        }
+        _ => panic!("Unsupported rotation kind for hint arrow"),
+    }
+    .as_transform(side_length as f32)
+}
+
+fn move_hint_arrow_on_face_for_face_only(
+    rotation: Rotation,
+    dragged_face: Face,
+    side_length: usize,
+) -> Hint {
+    let first: usize = 0;
+    let last: usize = side_length - 1;
+    match (dragged_face, rotation.relative_to, rotation.direction) {
+        (Face::Front | Face::Right | Face::Left | Face::Back, Face::Down, Direction::Clockwise)
+        | (Face::Up, Face::Front, Direction::Clockwise)
+        | (Face::Down, Face::Back, Direction::Clockwise) => Hint::RowPos(last),
+
+        (
+            Face::Front | Face::Right | Face::Left | Face::Back,
+            Face::Up,
+            Direction::Anticlockwise,
+        )
+        | (Face::Up, Face::Back, Direction::Anticlockwise)
+        | (Face::Down, Face::Front, Direction::Anticlockwise) => Hint::RowPos(first),
+
+        (
+            Face::Front | Face::Right | Face::Left | Face::Back,
+            Face::Down,
+            Direction::Anticlockwise,
+        )
+        | (Face::Up, Face::Front, Direction::Anticlockwise)
+        | (Face::Down, Face::Back, Direction::Anticlockwise) => Hint::RowNeg(last),
+
+        (Face::Front | Face::Right | Face::Left | Face::Back, Face::Up, Direction::Clockwise)
+        | (Face::Up, Face::Back, Direction::Clockwise)
+        | (Face::Down, Face::Front, Direction::Clockwise) => Hint::RowNeg(first),
+
+        (Face::Up | Face::Front | Face::Down, Face::Right, Direction::Clockwise)
+        | (Face::Right, Face::Back, Direction::Clockwise)
+        | (Face::Left, Face::Front, Direction::Clockwise)
+        | (Face::Back, Face::Left, Direction::Clockwise) => Hint::ColPos(last),
+
+        (Face::Up | Face::Front | Face::Down, Face::Left, Direction::Anticlockwise)
+        | (Face::Right, Face::Front, Direction::Anticlockwise)
+        | (Face::Left, Face::Back, Direction::Anticlockwise)
+        | (Face::Back, Face::Right, Direction::Anticlockwise) => Hint::ColPos(first),
+
+        (Face::Up | Face::Front | Face::Down, Face::Right, Direction::Anticlockwise)
+        | (Face::Right, Face::Back, Direction::Anticlockwise)
+        | (Face::Left, Face::Front, Direction::Anticlockwise)
+        | (Face::Back, Face::Left, Direction::Anticlockwise) => Hint::ColNeg(last),
+
+        (Face::Up | Face::Front | Face::Down, Face::Left, Direction::Clockwise)
+        | (Face::Right, Face::Front, Direction::Clockwise)
+        | (Face::Left, Face::Back, Direction::Clockwise)
+        | (Face::Back, Face::Right, Direction::Clockwise) => Hint::ColNeg(first),
+
+        _ => {
+            panic!("Unsupported dragged face and rotation relative to face combination")
+        }
+    }
+}
+
+fn move_hint_arrow_on_face_for_setback(
+    rotation: Rotation,
+    dragged_face: Face,
+    side_length: usize,
+    layer: usize,
+) -> Hint {
+    match (dragged_face, rotation.relative_to, rotation.direction) {
+        (Face::Front | Face::Right | Face::Back | Face::Left, Face::Down, Direction::Clockwise)
+        | (Face::Up, Face::Front, Direction::Clockwise)
+        | (Face::Down, Face::Back, Direction::Clockwise) => Hint::RowPos(side_length - 1 - layer),
+
+        (
+            Face::Front | Face::Right | Face::Back | Face::Left,
+            Face::Down,
+            Direction::Anticlockwise,
+        )
+        | (Face::Up, Face::Front, Direction::Anticlockwise)
+        | (Face::Down, Face::Back, Direction::Anticlockwise) => {
+            Hint::RowNeg(side_length - 1 - layer)
+        }
+
+        (Face::Up | Face::Down | Face::Front, Face::Left, Direction::Clockwise)
+        | (Face::Right, Face::Front, Direction::Clockwise)
+        | (Face::Back, Face::Right, Direction::Clockwise)
+        | (Face::Left, Face::Back, Direction::Clockwise) => Hint::ColNeg(layer),
+
+        (Face::Up | Face::Down | Face::Front, Face::Left, Direction::Anticlockwise)
+        | (Face::Right, Face::Front, Direction::Anticlockwise)
+        | (Face::Back, Face::Right, Direction::Anticlockwise)
+        | (Face::Left, Face::Back, Direction::Anticlockwise) => Hint::ColPos(layer),
+
+        (Face::Up | Face::Down | Face::Front, Face::Right, _)
+        | (Face::Up | Face::Right, Face::Back, _)
+        | (Face::Down | Face::Left, Face::Front, _)
+        | (Face::Front | Face::Right | Face::Back | Face::Left, Face::Up, _)
+        | (Face::Back, Face::Left, _) => {
+            unimplemented!(
+                "Rotations decide to be relative to opposite face. Unimplemented until/unless that changes"
+            )
+        }
+
+        _ => {
+            panic!("Unsupported dragged face and rotation relative to face combination")
+        }
+    }
+}
+
+#[expect(clippy::cast_precision_loss)]
+pub(super) fn rotation_if_released_now_to_transformation(
+    side_length: usize,
+    rotation_if_released_now: RotationIfReleasedNow,
+) -> Option<Mat4> {
+    let RotationIfReleasedNow::Valid {
+        rotation,
+        dragged_face,
+    } = rotation_if_released_now
+    else {
+        return None;
+    };
+
+    let overall = move_hint_arrow_to_correct_face(dragged_face, side_length as f32)
+        * move_hint_arrow_on_face(rotation, dragged_face, side_length)
+        * scale_hint_arrow(side_length as f32)
+        * center_hint_arrow();
+
+    Some(overall)
 }
 
 #[cfg(test)]

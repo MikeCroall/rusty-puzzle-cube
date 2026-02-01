@@ -74,6 +74,7 @@ impl<C: PuzzleCube3D + Display, const UNDO_SIZE: usize> GuiState<C, UNDO_SIZE> {
         ui.add_space(EXTRA_SPACING);
     }
 
+    #[expect(clippy::too_many_lines)]
     fn control_cube(&mut self, ui: &mut Ui) {
         ui.add_space(EXTRA_SPACING);
         ui.heading("Cube Controls");
@@ -84,19 +85,27 @@ impl<C: PuzzleCube3D + Display, const UNDO_SIZE: usize> GuiState<C, UNDO_SIZE> {
         );
         ui.add_space(EXTRA_SPACING);
 
-        let release_now_hint_text = match self.rotation_if_released_now {
-            RotationIfReleasedNow::Valid(rotation) => {
-                RichText::new(format!("Release now for: {rotation}")).color(Rgba::GREEN)
-            }
-            RotationIfReleasedNow::Invalid => {
-                RichText::new("Invalid click and drag!").color(Rgba::RED)
-            }
-            RotationIfReleasedNow::NotAttempted => {
-                RichText::new("Start a click and drag").color(Rgba::from_rgb(1., 0.5, 0.))
-            }
-        };
-        ui.label(release_now_hint_text.heading());
+        ui.add(Checkbox::new(
+            &mut self.show_click_and_drag_hints,
+            "Show click and drag hints",
+        ));
         ui.add_space(EXTRA_SPACING);
+
+        if self.show_click_and_drag_hints {
+            let release_now_hint_text = match self.rotation_if_released_now {
+                RotationIfReleasedNow::Valid { rotation, .. } => {
+                    RichText::new(format!("Release now for: {rotation}")).color(Rgba::GREEN)
+                }
+                RotationIfReleasedNow::Invalid => {
+                    RichText::new("Invalid click and drag!").color(Rgba::RED)
+                }
+                RotationIfReleasedNow::NotAttempted => {
+                    RichText::new("Start a click and drag").color(Rgba::from_rgb(1., 0.5, 0.))
+                }
+            };
+            ui.label(release_now_hint_text.heading());
+            ui.add_space(EXTRA_SPACING);
+        }
 
         ui.horizontal(|ui| {
             let undo_text = if self.undo_queue.is_full() {
