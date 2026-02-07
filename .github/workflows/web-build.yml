@@ -1,12 +1,12 @@
-name: Web CI
+name: Web Build
 
 on:
     push:
         paths:
+            - "**web-build.yml"
             - "**.html"
             - "**.js"
             - "**.json"
-            - "**web-ci.yml"
 
 env:
     CARGO_TERM_COLOR: always

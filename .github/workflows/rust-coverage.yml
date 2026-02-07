@@ -3,8 +3,8 @@ name: Coverage Upload
 on:
     push:
         paths:
+            - "**rust-coverage.yml"
             - "**.rs"
-            - "**rust-coverage-ci.yml"
 
 env:
     CARGO_TERM_COLOR: always

@@ -1,0 +1,63 @@
+name: Deploy
+
+on:
+    push:
+        branches:
+            - "main"
+
+env:
+    CARGO_TERM_COLOR: always
+
+jobs:
+    publish-github-pages:
+        name: Deploy to GitHub Pages
+        runs-on: ubuntu-latest
+
+        concurrency:
+            group: deploy
+            cancel-in-progress: true
+
+        permissions:
+            id-token: write
+            pages: write
+
+        steps:
+            - name: Wait for build checks to succeed
+              uses: lewagon/wait-on-check-action@v1.5.0
+              with:
+                  ref: ${{ github.ref }}
+                  running-workflow-name: "Deploy to GitHub Pages"
+                  ignore-checks: "coverage-lib,coverage-ui"
+                  repo-token: ${{ secrets.GITHUB_TOKEN }}
+            - name: Update Rust
+              run: rustup update stable
+            - name: Checkout code
+              uses: actions/checkout@v4
+            - name: Use dependencies cache
+              uses: actions/cache@v4
+              with:
+                  path: |
+                      ~/.cargo/bin/
+                      ~/.cargo/registry/index/
+                      ~/.cargo/registry/cache/
+                      ~/.cargo/git/db/
+                      target/
+                  key: ${{ runner.os }}-cargo-wasm-${{ hashFiles('**/Cargo.lock') }}
+                  restore-keys: ${{ runner.os }}-cargo-wasm-
+            - name: Use Node.js 25.*
+              uses: actions/setup-node@v6
+              with:
+                  node-version: 25
+            - name: Build wasm page
+              run: |
+                  RUSTFLAGS='--cfg getrandom_backend="wasm_js"' npx wasm-pack build "puzzle-cube-ui" --target web --out-name web --out-dir ../web/pkg
+                  cd web
+                  npm install
+                  npm run build
+            - name: Upload artifact
+              uses: actions/upload-pages-artifact@v4
+              with:
+                  path: "./web/dist"
+            - name: Deploy to GitHub Pages
+              id: deployment
+              uses: actions/deploy-pages@v4

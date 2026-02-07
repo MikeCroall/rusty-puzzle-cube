@@ -1,0 +1,52 @@
+name: Rust Build
+
+on:
+    push:
+        paths:
+            - "**rust-build.yml"
+            - "**.rs"
+            - "**.toml"
+            - "**.lock"
+
+env:
+    CARGO_TERM_COLOR: always
+
+jobs:
+    build-test-lint-audit:
+        name: Build, test, clippy, audit
+        runs-on: ubuntu-latest
+
+        concurrency:
+            group: build-test-lint-audit-${{ github.ref }}
+            cancel-in-progress: true
+
+        steps:
+            - name: Update Rust
+              run: rustup update stable
+            - name: Checkout code
+              uses: actions/checkout@v4
+            - name: Use dependencies cache
+              uses: actions/cache@v4
+              with:
+                  path: |
+                      ~/.cargo/bin/
+                      ~/.cargo/registry/index/
+                      ~/.cargo/registry/cache/
+                      ~/.cargo/git/db/
+                      target/
+                  key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+                  restore-keys: ${{ runner.os }}-cargo-
+            - name: Machete
+              uses: bnjbvr/cargo-machete@main
+            - name: Install cargo-nextest
+              uses: taiki-e/install-action@nextest
+            - name: Test
+              run: cargo nextest run --verbose
+            - name: Doc tests (skipped by nextest)
+              run: cargo test --doc
+            - name: Clippy
+              run: cargo clippy --verbose -- -D warnings
+            - name: Check fmt
+              run: cargo fmt --all -- --check
+            - name: Audit
+              uses: actions-rust-lang/audit@v1
