@@ -8,13 +8,6 @@ on:
             - "**.json"
             - "**web-ci.yml"
 
-    pull_request:
-        paths:
-            - "**.html"
-            - "**.js"
-            - "**.json"
-            - "**web-ci.yml"
-
 env:
     CARGO_TERM_COLOR: always
 
