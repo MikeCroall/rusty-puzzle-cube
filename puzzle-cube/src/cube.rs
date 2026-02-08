@@ -281,13 +281,12 @@ impl Cube {
             layers_back,
         )?;
 
-        let final_order = {
-            let mut preliminary_order = adjacents.iter();
-            let first_element = preliminary_order.next();
-            preliminary_order
-                .chain(first_element)
-                .collect::<Vec<&(F, IA)>>()
-        };
+        let final_order = adjacents
+            .iter()
+            .cycle()
+            .skip(1)
+            .take(4)
+            .collect::<Vec<&(F, IA)>>();
 
         self.copy_setback_adjacent_over(final_order[0], slice_0, layers_back)?;
         self.copy_setback_adjacent_over(final_order[1], slice_1, layers_back)?;
