@@ -41,10 +41,10 @@ Some controls (debug) are removed on the WASM target
 
 ### Building Puzzle Cube GUI Crate for web
 
-Build command written from inside the `web` dir, with the RUSTFLAGS required since rand 0.9
+Build command written from inside the `web` dir
 
 ```bash
-RUSTFLAGS='--cfg getrandom_backend="wasm_js"' npx wasm-pack build "../puzzle-cube-ui" --target web --out-name web --out-dir ../web/pkg
+npx wasm-pack build "../puzzle-cube-ui" --target web --out-name web --out-dir ../web/pkg
 ```
 
 Files built into `web/pkg/`, which can be hosted by
