@@ -16,7 +16,7 @@ getrandom = { workspace = true, features = ["wasm_js"] }
 
 [dev-dependencies]
 criterion = { workspace = true, features = ["html_reports"] }
-paste.workspace = true
+pastey.workspace = true
 pretty_assertions.workspace = true
 quickcheck_macros.workspace = true
 quickcheck.workspace = true

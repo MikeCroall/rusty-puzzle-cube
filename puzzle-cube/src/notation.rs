@@ -243,7 +243,7 @@ mod tests {
     use crate::{create_cube_from_sides, create_cube_side};
 
     use super::*;
-    use paste::paste;
+    use pastey::paste;
     use pretty_assertions::assert_eq;
 
     macro_rules! test_invalid_token {

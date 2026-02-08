@@ -61,7 +61,7 @@ impl CubieFace {
 mod tests {
     use super::*;
     use colored::Color;
-    use paste::paste;
+    use pastey::paste;
     use pretty_assertions::assert_eq;
 
     #[test]
