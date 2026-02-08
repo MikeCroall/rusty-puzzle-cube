@@ -260,40 +260,18 @@ impl Cube {
         layers_back: usize,
     ) -> anyhow::Result<()> {
         let adjacents = face.adjacent_faces_clockwise();
-        let slice_0 = get_clockwise_slice_of_side_setback(
-            self.side(adjacents[0].0),
-            &adjacents[0].1,
-            layers_back,
-        )?;
-        let slice_1 = get_clockwise_slice_of_side_setback(
-            self.side(adjacents[1].0),
-            &adjacents[1].1,
-            layers_back,
-        )?;
-        let slice_2 = get_clockwise_slice_of_side_setback(
-            self.side(adjacents[2].0),
-            &adjacents[2].1,
-            layers_back,
-        )?;
-        let slice_3 = get_clockwise_slice_of_side_setback(
-            self.side(adjacents[3].0),
-            &adjacents[3].1,
-            layers_back,
-        )?;
 
-        let final_order = adjacents
+        let slices = adjacents
+            .map(|adj| get_clockwise_slice_of_side_setback(self.side(adj.0), &adj.1, layers_back));
+
+        adjacents
             .iter()
             .cycle()
             .skip(1)
-            .take(4)
-            .collect::<Vec<&(F, IA)>>();
-
-        self.copy_setback_adjacent_over(final_order[0], slice_0, layers_back)?;
-        self.copy_setback_adjacent_over(final_order[1], slice_1, layers_back)?;
-        self.copy_setback_adjacent_over(final_order[2], slice_2, layers_back)?;
-        self.copy_setback_adjacent_over(final_order[3], slice_3, layers_back)?;
-
-        Ok(())
+            .zip(slices)
+            .try_for_each(|(adjacent, slice)| {
+                self.copy_setback_adjacent_over(adjacent, slice?, layers_back)
+            })
     }
 
     fn copy_setback_adjacent_over(

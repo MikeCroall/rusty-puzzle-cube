@@ -115,7 +115,7 @@ impl Face {
 /// OuterStart  = 0, 3, 6
 /// OuterEnd    = 2, 5, 8
 /// ```
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum IndexAlignment {
     /// Indicates that for a `Vec<Vec<_>>`, the desired indices are the 0th index of each inner `Vec`.
     ///
