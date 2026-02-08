@@ -157,7 +157,7 @@ pub(super) fn move_hint_arrow_to_correct_face(face: Face, side_length: f32) -> M
 
 pub(super) fn scale_hint_arrow(side_length: f32) -> Mat4 {
     let scale = 1. / side_length;
-    Mat4::from_nonuniform_scale(2., scale, 0.000_000_1)
+    Mat4::from_nonuniform_scale(2., scale, 1e-7)
 }
 
 /// An intermediate representation to aid in producing the transformation matrix for the hint arrow
@@ -360,6 +360,47 @@ mod tests {
     }
 
     #[test]
+    fn test_assert_mat_eq_with_tolerance_within_tolerance() {
+        #[rustfmt::skip]
+        let a = Mat4::new(
+            1., 1e-7, 0., 0.,
+            0., 1., 0., 0.,
+            0., 0., 1., 0.,
+            0., 0., 0., 1.,
+        );
+
+        #[rustfmt::skip]
+        let b = Mat4::new(
+            1., 0., 0., 0.,
+            0., 1., 0., 0.,
+            0., 0., 1., 0.,
+            0., 0., 0., 1.,
+        );
+        assert_mat_eq_with_tolerance(a, b);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_assert_mat_eq_with_tolerance_not_within_tolerance() {
+        #[rustfmt::skip]
+        let a = Mat4::new(
+            1., 1e-6, 0., 0.,
+            0., 1., 0., 0.,
+            0., 0., 1., 0.,
+            0., 0., 0., 1.,
+        );
+
+        #[rustfmt::skip]
+        let b = Mat4::new(
+            1., 0., 0., 0.,
+            0., 1., 0., 0.,
+            0., 0., 1., 0.,
+            0., 0., 0., 1.,
+        );
+        assert_mat_eq_with_tolerance(a, b);
+    }
+
+    #[test]
     fn test_fraction_of_quarter_turn() {
         assert_eq!(radians(0.45 * PI), fraction_of_quarter_turn(0.9));
         assert_eq!(radians(0.25 * PI), fraction_of_quarter_turn(0.5));
@@ -424,6 +465,38 @@ mod tests {
             c, 0., -s, 0.,
             0., 1., 0., 0.,
             s, 0., c, 0.,
+            0., 0., 0., 1.,
+        );
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_quarter_turn_around_z() {
+        let actual = quarter_turn_around_z();
+
+        let (s, c) = Radians::sin_cos(Deg(90.).into());
+        #[rustfmt::skip]
+        let expected = Mat4::new(
+            c, s, 0., 0.,
+            -s, c, 0., 0.,
+            0., 0., 1., 0.,
+            0., 0., 0., 1.,
+        );
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_rev_quarter_turn_around_z() {
+        let actual = rev_quarter_turn_around_z();
+
+        let (s, c) = Radians::sin_cos(Deg(-90.).into());
+        #[rustfmt::skip]
+        let expected = Mat4::new(
+            c, s, 0., 0.,
+            -s, c, 0., 0.,
+            0., 0., 1., 0.,
             0., 0., 0., 1.,
         );
 
@@ -809,5 +882,288 @@ mod tests {
         );
 
         assert_mat_eq_with_tolerance(expected, actual);
+    }
+
+    #[test]
+    fn test_center_hint_arrow() {
+        let actual = center_hint_arrow();
+
+        #[rustfmt::skip]
+        let expected = Mat4::new(
+            1., 0., 0., 0.,
+            0., 1., 0., 0.,
+            0., 0., 1., 0.,
+            -0.5, 0., 0., 1.,
+        );
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_scale_hint_arrow() {
+        let side_length = 10;
+        let actual = scale_hint_arrow(side_length as f32);
+
+        #[rustfmt::skip]
+        let expected = Mat4::new(
+            2., 0., 0., 0.,
+            0., 0.1, 0., 0.,
+            0., 0., 1e-7, 0.,
+            0., 0., 0., 1.,
+        );
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_move_hint_arrow_to_correct_face_up() {
+        let side_length = 10;
+        let actual = move_hint_arrow_to_correct_face(Face::Up, side_length as f32);
+
+        #[rustfmt::skip]
+        let expected = Mat4::new(
+            1., 0., 0., 0.,
+            0., 0., -1., 0.,
+            0., 1., 0., 0.,
+            0., 1.01, 0., 1.,
+        );
+
+        assert_mat_eq_with_tolerance(expected, actual);
+    }
+
+    #[test]
+    fn test_move_hint_arrow_to_correct_face_down() {
+        let side_length = 10;
+        let actual = move_hint_arrow_to_correct_face(Face::Down, side_length as f32);
+
+        #[rustfmt::skip]
+        let expected = Mat4::new(
+            1., 0., 0., 0.,
+            0., 0., 1., 0.,
+            0., -1., 0., 0.,
+            0., -1.01, 0., 1.,
+        );
+
+        assert_mat_eq_with_tolerance(expected, actual);
+    }
+
+    #[test]
+    fn test_move_hint_arrow_to_correct_face_front() {
+        let side_length = 10;
+        let actual = move_hint_arrow_to_correct_face(Face::Front, side_length as f32);
+
+        #[rustfmt::skip]
+        let expected = Mat4::new(
+            1., 0., 0., 0.,
+            0., 1., 0., 0.,
+            0., 0., 1., 0.,
+            0., 0., 1.01, 1.,
+        );
+
+        assert_mat_eq_with_tolerance(expected, actual);
+    }
+
+    #[test]
+    fn test_move_hint_arrow_to_correct_face_right() {
+        let side_length = 10;
+        let actual = move_hint_arrow_to_correct_face(Face::Right, side_length as f32);
+
+        #[rustfmt::skip]
+        let expected = Mat4::new(
+            0., 0., -1., 0.,
+            0., 1., 0., 0.,
+            1., 0., 0., 0.,
+            1.01, 0., 0., 1.,
+        );
+
+        assert_mat_eq_with_tolerance(expected, actual);
+    }
+
+    #[test]
+    fn test_move_hint_arrow_to_correct_face_back() {
+        let side_length = 10;
+        let actual = move_hint_arrow_to_correct_face(Face::Back, side_length as f32);
+
+        #[rustfmt::skip]
+        let expected = Mat4::new(
+            -1., 0., 0., 0.,
+            0., 1., 0., 0.,
+            0., 0., -1., 0.,
+            0., 0., -1.01, 1.,
+        );
+
+        assert_mat_eq_with_tolerance(expected, actual);
+    }
+
+    #[test]
+    fn test_move_hint_arrow_to_correct_face_left() {
+        let side_length = 10;
+        let actual = move_hint_arrow_to_correct_face(Face::Left, side_length as f32);
+
+        #[rustfmt::skip]
+        let expected = Mat4::new(
+            0., 0., 1., 0.,
+            0., 1., 0., 0.,
+            -1., 0., 0., 0.,
+            -1.01, 0., 0., 1.,
+        );
+
+        assert_mat_eq_with_tolerance(expected, actual);
+    }
+
+    #[test]
+    fn test_rotation_if_released_now_to_transformation_example_1() {
+        let side_length = 10;
+        let rotation_if_released_now = RotationIfReleasedNow::Valid {
+            rotation: Rotation {
+                relative_to: Face::Back,
+                direction: Direction::Anticlockwise,
+                kind: RotationKind::Setback { layer: 8 },
+            },
+            dragged_face: Face::Left,
+        };
+        let actual =
+            rotation_if_released_now_to_transformation(side_length, rotation_if_released_now)
+                .expect("should provide a Mat4");
+
+        #[rustfmt::skip]
+        let expected = Mat4::new(
+            0., 2., 0., 0.,
+            0., 0., -0.1, 0.,
+            -1e-7, 0., 0., 0.,
+            -1.01, -1., 0.7000001, 1.,
+        );
+
+        assert_mat_eq_with_tolerance(expected, actual);
+    }
+
+    #[test]
+    fn test_rotation_if_released_now_to_transformation_example_2() {
+        let side_length = 4;
+        let rotation_if_released_now = RotationIfReleasedNow::Valid {
+            rotation: Rotation {
+                relative_to: Face::Right,
+                direction: Direction::Clockwise,
+                kind: RotationKind::FaceOnly,
+            },
+            dragged_face: Face::Up,
+        };
+        let actual =
+            rotation_if_released_now_to_transformation(side_length, rotation_if_released_now)
+                .expect("should provide a Mat4");
+
+        #[rustfmt::skip]
+        let expected = Mat4::new(
+            0., 0., -2., 0.,
+            -0.25, 0., 0., 0.,
+            0., 1e-7, 0., 0.,
+            0.75000006, 1.025, 1., 1.,
+        );
+
+        assert_mat_eq_with_tolerance(expected, actual);
+    }
+
+    #[test]
+    fn test_rotation_if_released_now_to_transformation_example_3() {
+        let side_length = 4;
+        let rotation_if_released_now = RotationIfReleasedNow::Valid {
+            rotation: Rotation {
+                relative_to: Face::Down,
+                direction: Direction::Anticlockwise,
+                kind: RotationKind::FaceOnly,
+            },
+            dragged_face: Face::Front,
+        };
+        let actual =
+            rotation_if_released_now_to_transformation(side_length, rotation_if_released_now)
+                .expect("should provide a Mat4");
+
+        #[rustfmt::skip]
+        let expected = Mat4::new(
+            -2., 0., 1.7484555e-7, 0.,
+            0., 0.25, 0., 0.,
+            0., 0., -1e-7, 0.,
+            1., -0.75, 1.0249999, 1.,
+        );
+
+        assert_mat_eq_with_tolerance(expected, actual);
+    }
+
+    #[test]
+    fn test_rotation_if_released_now_to_transformation_example_4() {
+        let side_length = 23;
+        let rotation_if_released_now = RotationIfReleasedNow::Valid {
+            rotation: Rotation {
+                relative_to: Face::Down,
+                direction: Direction::Anticlockwise,
+                kind: RotationKind::Setback { layer: 18 },
+            },
+            dragged_face: Face::Back,
+        };
+        let actual =
+            rotation_if_released_now_to_transformation(side_length, rotation_if_released_now)
+                .expect("should provide a Mat4");
+
+        #[rustfmt::skip]
+        let expected = Mat4::new(
+            2., 0., -3.496911e-7, 0.,
+            0., 0.04347826, 0., 0.,
+            0., 0., 1e-7, 0.,
+            -1., 0.6086956, -1.0043477, 1.,
+        );
+
+        assert_mat_eq_with_tolerance(expected, actual);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_rotation_if_released_now_to_transformation_when_rotation_itself_is_invalid() {
+        let side_length = 10;
+        let rotation_if_released_now = RotationIfReleasedNow::Valid {
+            rotation: Rotation {
+                relative_to: Face::Right,
+                direction: Direction::Clockwise,
+                kind: RotationKind::FaceOnly,
+            },
+            dragged_face: Face::Left,
+        };
+        let _ = rotation_if_released_now_to_transformation(side_length, rotation_if_released_now);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_rotation_if_released_now_to_transformation_when_rotation_is_unsupported() {
+        let side_length = 10;
+        let rotation_if_released_now = RotationIfReleasedNow::Valid {
+            rotation: Rotation {
+                relative_to: Face::Right,
+                direction: Direction::Clockwise,
+                kind: RotationKind::Multilayer { layer: 5 },
+            },
+            dragged_face: Face::Up,
+        };
+        let _ = rotation_if_released_now_to_transformation(side_length, rotation_if_released_now);
+    }
+
+    #[test]
+    fn test_rotation_if_released_now_to_transformation_invalid() {
+        let side_length = 10;
+        let rotation_if_released_now = RotationIfReleasedNow::Invalid;
+
+        let actual =
+            rotation_if_released_now_to_transformation(side_length, rotation_if_released_now);
+
+        assert!(actual.is_none());
+    }
+
+    #[test]
+    fn test_rotation_if_released_now_to_transformation_not_attempted() {
+        let side_length = 10;
+        let rotation_if_released_now = RotationIfReleasedNow::NotAttempted;
+
+        let actual =
+            rotation_if_released_now_to_transformation(side_length, rotation_if_released_now);
+
+        assert!(actual.is_none());
     }
 }
