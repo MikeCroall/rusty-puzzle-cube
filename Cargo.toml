@@ -3,12 +3,12 @@ resolver = "3"
 members = ["puzzle-cube", "puzzle-cube-ui"]
 
 [workspace.dependencies]
-anyhow = "1.0.100"
+anyhow = "1.0.101"
 circular-buffer = "1.2.0"
 colored = "3.1.1"
 console_error_panic_hook = "0.1.7"
 console_log = "1.0.0"
-criterion = "0.8.1"
+criterion = "0.8.2"
 getrandom = "0.4.1"
 itertools = "0.14.0"
 log = "0.4.29"
