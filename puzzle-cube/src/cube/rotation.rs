@@ -1,6 +1,6 @@
 use std::ops::Not;
 
-use rand::Rng;
+use rand::RngExt as _;
 
 use super::{direction::Direction, face::Face};
 

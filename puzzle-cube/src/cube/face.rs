@@ -1,3 +1,4 @@
+use rand::RngExt as _;
 use std::ops::Not;
 
 use rand::distr::{Distribution, StandardUniform};
