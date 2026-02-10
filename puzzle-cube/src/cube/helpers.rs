@@ -43,7 +43,7 @@ pub(super) fn create_side_with_unique_characters(
 
 pub(super) fn get_clockwise_slice_of_side_setback(
     side: &DefaultSide,
-    index_alignment: &IA,
+    index_alignment: IA,
     layers_back: usize,
 ) -> anyhow::Result<Vec<CubieFace>> {
     let vec = match index_alignment {

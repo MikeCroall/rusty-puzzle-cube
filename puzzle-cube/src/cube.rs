@@ -262,7 +262,7 @@ impl Cube {
         let adjacents = face.adjacent_faces_clockwise();
 
         let slices = adjacents
-            .map(|adj| get_clockwise_slice_of_side_setback(self.side(adj.0), &adj.1, layers_back));
+            .map(|adj| get_clockwise_slice_of_side_setback(self.side(adj.0), adj.1, layers_back));
 
         adjacents
             .iter()
@@ -270,13 +270,13 @@ impl Cube {
             .skip(1)
             .zip(slices)
             .try_for_each(|(adjacent, slice)| {
-                self.copy_setback_adjacent_over(adjacent, slice?, layers_back)
+                self.copy_setback_adjacent_over(*adjacent, slice?, layers_back)
             })
     }
 
     fn copy_setback_adjacent_over(
         &mut self,
-        (target_face, target_alignment): &(F, IA),
+        (target_face, target_alignment): (F, IA),
         unadjusted_values: Vec<CubieFace>,
         layers_back: usize,
     ) -> anyhow::Result<()> {
@@ -290,10 +290,10 @@ impl Cube {
         };
 
         let side_length = self.side_length;
-        let side = self.side_mut(*target_face);
+        let side = self.side_mut(target_face);
         match target_alignment {
             IA::OuterStart | IA::OuterEnd => {
-                let inner_index = if *target_alignment == IA::OuterStart {
+                let inner_index = if target_alignment == IA::OuterStart {
                     layers_back
                 } else {
                     side_length.checked_sub(layers_back + 1).with_context(|| {
@@ -309,7 +309,7 @@ impl Cube {
                 }
             }
             IA::InnerFirst | IA::InnerLast => {
-                let outer_index = if *target_alignment == IA::InnerFirst {
+                let outer_index = if target_alignment == IA::InnerFirst {
                     layers_back
                 } else {
                     side_length.checked_sub(layers_back + 1).with_context(|| {
