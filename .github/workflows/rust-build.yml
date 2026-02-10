@@ -1,12 +1,8 @@
 name: Rust Build
 
 on:
-    push:
-        paths:
-            - "**rust-build.yml"
-            - "**.rs"
-            - "**.toml"
-            - "**.lock"
+    workflow_call:
+    workflow_dispatch:
 
 env:
     CARGO_TERM_COLOR: always
@@ -15,10 +11,6 @@ jobs:
     build-test-lint-audit:
         name: Build, test, clippy, audit
         runs-on: ubuntu-latest
-
-        concurrency:
-            group: build-test-lint-audit-${{ github.ref }}
-            cancel-in-progress: true
 
         steps:
             - name: Update Rust

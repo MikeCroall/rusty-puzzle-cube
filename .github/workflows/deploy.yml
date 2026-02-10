@@ -1,34 +1,22 @@
 name: Deploy
 
 on:
-    push:
-        branches:
-            - "main"
+    workflow_call:
+    workflow_dispatch:
 
 env:
     CARGO_TERM_COLOR: always
 
 jobs:
-    publish-github-pages:
+    deploy-github-pages:
         name: Deploy to GitHub Pages
         runs-on: ubuntu-latest
-
-        concurrency:
-            group: deploy
-            cancel-in-progress: true
 
         permissions:
             id-token: write
             pages: write
 
         steps:
-            - name: Wait for build checks to succeed
-              uses: lewagon/wait-on-check-action@v1.5.0
-              with:
-                  ref: ${{ github.ref }}
-                  running-workflow-name: "Deploy to GitHub Pages"
-                  ignore-checks: "coverage-lib,coverage-ui"
-                  repo-token: ${{ secrets.GITHUB_TOKEN }}
             - name: Update Rust
               run: rustup update stable
             - name: Checkout code

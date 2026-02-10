@@ -1,10 +1,11 @@
 name: Coverage Upload
 
 on:
-    push:
-        paths:
-            - "**rust-coverage.yml"
-            - "**.rs"
+    workflow_call:
+        secrets:
+            CODECOV_TOKEN:
+                required: true
+    workflow_dispatch:
 
 env:
     CARGO_TERM_COLOR: always
@@ -12,10 +13,6 @@ env:
 jobs:
     coverage-lib:
         runs-on: ubuntu-latest
-
-        concurrency:
-            group: coverage-lib-${{ github.ref }}
-            cancel-in-progress: true
 
         steps:
             - name: Update Rust
@@ -40,7 +37,7 @@ jobs:
             - name: Generate code coverage
               run: cargo llvm-cov nextest --all-features --workspace --codecov --output-path codecov-lib.json --no-cfg-coverage --ignore-filename-regex ".*/puzzle-cube-ui/.*"
             - name: Coverage Upload for Lib
-              uses: codecov/codecov-action@v4
+              uses: codecov/codecov-action@v5
               with:
                   token: ${{ secrets.CODECOV_TOKEN }}
                   files: ./codecov-lib.json
@@ -49,10 +46,6 @@ jobs:
 
     coverage-ui:
         runs-on: ubuntu-latest
-
-        concurrency:
-            group: coverage-ui-${{ github.ref }}
-            cancel-in-progress: true
 
         steps:
             - name: Update Rust
@@ -77,7 +70,7 @@ jobs:
             - name: Generate code coverage
               run: cargo llvm-cov nextest --all-features --workspace --codecov --output-path codecov-ui.json --no-cfg-coverage --ignore-filename-regex ".*/puzzle-cube/.*"
             - name: Coverage Upload for UI
-              uses: codecov/codecov-action@v4
+              uses: codecov/codecov-action@v5
               with:
                   token: ${{ secrets.CODECOV_TOKEN }}
                   files: ./codecov-ui.json
