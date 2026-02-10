@@ -47,7 +47,7 @@ Build command written from inside the `web` dir
 npx wasm-pack build "../puzzle-cube-ui" --target web --out-name web --out-dir ../web/pkg
 ```
 
-Files built into `web/pkg/`, which can be hosted by
+Built files will be in `web/pkg/`, which can be hosted by
 
 ```bash
 npm run serve
