@@ -96,6 +96,17 @@ mod quickcheck_tests {
     }
 
     #[quickcheck]
+    fn single_rotation_changes_two_cubes_identically(rotation: Rotation) -> bool {
+        let mut cube_a = Cube::create(CUBE_SIZE.try_into().unwrap());
+        let mut cube_b = Cube::create(CUBE_SIZE.try_into().unwrap());
+
+        cube_a.rotate(rotation).unwrap();
+        cube_b.rotate(rotation).unwrap();
+
+        cube_a == cube_b
+    }
+
+    #[quickcheck]
     fn rotations_then_undone_same_as_no_rotations(rotations: Vec<Rotation>) -> bool {
         let original_cube = Cube::create(CUBE_SIZE.try_into().unwrap());
         let mut cube = Cube::create(CUBE_SIZE.try_into().unwrap());
