@@ -8,8 +8,8 @@ env:
     CARGO_TERM_COLOR: always
 
 jobs:
-    build-test-lint-audit:
-        name: Build, test, clippy, audit
+    build-test-lint-deny:
+        name: Build, test, clippy, deny
         runs-on: ubuntu-latest
 
         steps:
@@ -40,5 +40,7 @@ jobs:
               run: cargo clippy --verbose -- -D warnings
             - name: Check fmt
               run: cargo fmt --all -- --check
-            - name: Audit
-              uses: actions-rust-lang/audit@v1
+            - name: Deny
+              uses: EmbarkStudios/cargo-deny-action@v2
+              with:
+                  command: check advisories

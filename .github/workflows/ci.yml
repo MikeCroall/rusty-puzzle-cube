@@ -43,9 +43,13 @@ jobs:
                           - 'puzzle-cube-ui/**'
                           - *rust-code
 
+                      rust-tool-configs: &rust-tool-configs
+                          - '**/deny.toml'
+
                       rust-build:
                           - '**/rust-build.yml'
                           - *rust-crates
+                          - *rust-tool-configs
 
                       rust-coverage:
                           - '**/rust-coverage.yml'
