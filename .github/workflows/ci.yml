@@ -14,7 +14,7 @@ concurrency:
 jobs:
     detect-changes:
         name: Detect file changes
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-slim
         permissions:
             contents: read
             pull-requests: read
@@ -87,7 +87,7 @@ jobs:
         name: Check success
         needs: [detect-changes, rust-build, rust-coverage, web-build]
         if: always()
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-slim
         steps:
             - name: Print all results
               run: echo '${{ toJSON(needs) }}'
