@@ -1,102 +1,80 @@
-use std::{fmt::Display, hint::black_box};
+use std::hint::black_box;
 
-use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
+use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
+use itertools::Itertools;
 use rusty_puzzle_cube::cube::{
     Cube, PuzzleCube, direction::Direction, face::Face, rotation::Rotation,
 };
 use strum::{EnumIter, IntoEnumIterator};
 
-struct DisplayDirection(Direction);
-
-impl Display for DisplayDirection {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(match self.0 {
-            Direction::Clockwise => "Clockwise",
-            Direction::Anticlockwise => "Anticlockwise",
-        })
-    }
-}
+const MOVES_TO_MAKE_PER_SAMPLE: usize = 30;
 
 #[derive(EnumIter)]
-enum RotGen {
+enum BasicRotationKind {
     Faces,
     Slices,
 }
 
-impl RotGen {
-    const FACE_COUNT: usize = 6;
-    const TO_TAKE_MULTIPLIER: usize = 100;
+fn bench_id(direction: &Direction, basic_rotation_kind: &BasicRotationKind) -> String {
+    let direction = match direction {
+        Direction::Clockwise => "clockwise",
+        Direction::Anticlockwise => "anticlockwise",
+    };
+    let basic_rotation_kind = match basic_rotation_kind {
+        BasicRotationKind::Faces => "face",
+        BasicRotationKind::Slices => "slice",
+    };
+    format!("{MOVES_TO_MAKE_PER_SAMPLE} {direction} {basic_rotation_kind} turns")
+}
 
-    fn to_take(side_length: usize) -> usize {
-        let slice_count = Self::FACE_COUNT * (side_length - 2);
-        slice_count * Self::TO_TAKE_MULTIPLIER
-    }
-
-    fn format_name(&self, side_length: usize) -> String {
-        let to_take = Self::to_take(side_length);
-        format!(
-            "{} ({to_take} turns)",
-            match self {
-                RotGen::Faces => "faces",
-                RotGen::Slices => "slices",
-            }
-        )
-    }
-
-    fn generate(
-        &self,
-        direction: Direction,
-        side_length: usize,
-    ) -> Box<dyn Iterator<Item = Rotation>> {
-        let faces = Face::iter().map(move |f| match direction {
-            Direction::Clockwise => Rotation::clockwise(f),
-            Direction::Anticlockwise => Rotation::anticlockwise(f),
-        });
-
-        let slices = Face::iter().flat_map(move |face| {
-            (1..(side_length - 1)).map(move |layer| match direction {
-                Direction::Clockwise => Rotation::clockwise_setback_from(face, layer),
-                Direction::Anticlockwise => Rotation::anticlockwise_setback_from(face, layer),
+fn gen_seq(
+    basic_rotation_kind: &BasicRotationKind,
+    direction: &Direction,
+    side_length: usize,
+) -> Vec<Rotation> {
+    match basic_rotation_kind {
+        BasicRotationKind::Faces => Face::iter()
+            .map(move |f| match direction {
+                Direction::Clockwise => Rotation::clockwise(f),
+                Direction::Anticlockwise => Rotation::anticlockwise(f),
             })
-        });
-
-        let to_take = Self::to_take(side_length);
-
-        match self {
-            RotGen::Faces => Box::new(faces.cycle().take(to_take)),
-            RotGen::Slices => Box::new(slices.cycle().take(to_take)),
-        }
-    }
-
-    fn run(&self, direction: Direction, side_length: usize) {
-        let rot = self.generate(direction, side_length);
-
-        Cube::create(side_length.try_into().unwrap())
-            .rotate_seq(rot)
-            .unwrap();
-    }
-
-    fn bench_with_input(
-        &self,
-        group: &mut criterion::BenchmarkGroup<'_, criterion::measurement::WallTime>,
-        side_length: usize,
-        direction: Direction,
-    ) {
-        group.bench_with_input(
-            BenchmarkId::new(self.format_name(side_length), DisplayDirection(direction)),
-            &direction,
-            |b, direction| b.iter(|| self.run(*direction, black_box(side_length))),
-        );
+            .cycle()
+            .take(MOVES_TO_MAKE_PER_SAMPLE)
+            .collect(),
+        BasicRotationKind::Slices => Face::iter()
+            .flat_map(move |face| {
+                (1..(side_length - 1)).map(move |layer| match direction {
+                    Direction::Clockwise => Rotation::clockwise_setback_from(face, layer),
+                    Direction::Anticlockwise => Rotation::anticlockwise_setback_from(face, layer),
+                })
+            })
+            .cycle()
+            .take(MOVES_TO_MAKE_PER_SAMPLE)
+            .collect(),
     }
 }
 
 fn benchmark_nxnxn_cube(c: &mut Criterion, n: usize) {
     let mut group = c.benchmark_group(format!("{n}x{n}x{n} cube"));
 
-    for direction in [Direction::Clockwise, Direction::Anticlockwise] {
-        for rot_gen in RotGen::iter() {
-            rot_gen.bench_with_input(&mut group, n, direction);
-        }
+    for (direction, basic_rotation_kind) in [Direction::Clockwise, Direction::Anticlockwise]
+        .iter()
+        .cartesian_product(BasicRotationKind::iter())
+    {
+        group.bench_function(bench_id(direction, &basic_rotation_kind), move |b| {
+            b.iter_batched(
+                || {
+                    (
+                        Cube::create(n.try_into().unwrap()),
+                        gen_seq(&basic_rotation_kind, direction, n),
+                    )
+                },
+                |(mut cube, seq)| {
+                    cube.rotate_seq(black_box(seq)).unwrap();
+                },
+                BatchSize::SmallInput,
+            );
+        });
     }
 
     group.finish();
