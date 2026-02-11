@@ -36,5 +36,5 @@ jobs:
               run: |
                   npx wasm-pack build "puzzle-cube-ui" --target web --out-name web --out-dir ../web/pkg
                   cd web
-                  npm install
+                  npm ci
                   npm run build
