@@ -282,7 +282,7 @@ impl Cube {
     ) -> anyhow::Result<()> {
         let values = match target_alignment {
             IA::OuterEnd | IA::InnerFirst => {
-                let mut new_values = unadjusted_values.clone();
+                let mut new_values = unadjusted_values;
                 new_values.reverse();
                 new_values
             }
