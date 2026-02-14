@@ -10,5 +10,6 @@ pub mod known_transforms;
 /// Module providing the ability to parse string-encoded sequences of moves and apply them to a cube.
 pub mod notation;
 
-/// Basic property testing.
+/// Property testing.
+#[cfg(test)]
 mod quickcheck;
