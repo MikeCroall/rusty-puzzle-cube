@@ -279,4 +279,15 @@ mod tests {
 
         assert_eq!(expected_cube, cube);
     }
+
+    #[test]
+    fn test_perform_instantly_and_perform_seq_result_in_identical_cubes() {
+        let mut instant_cube = Cube::create(4.try_into().expect("known good value"));
+        let mut seq_cube = Cube::create(4.try_into().expect("known good value"));
+
+        KnownTransform::NestedCube4x4x4.perform_instantly(&mut instant_cube);
+        KnownTransform::NestedCube4x4x4.perform_seq(&mut seq_cube);
+
+        assert_eq!(instant_cube, seq_cube);
+    }
 }

@@ -3,3 +3,7 @@
 
 # for web/wasm version
 node_modules/
+
+# for cargo-mutants
+/mutants.out
+/mutants.out.old

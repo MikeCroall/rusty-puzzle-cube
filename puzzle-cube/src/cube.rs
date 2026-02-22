@@ -471,11 +471,11 @@ mod tests {
         let mut shuffled_large_cube = Cube::create(SideLength::try_from(5)?);
         shuffled_large_cube.shuffle(25);
 
-        let original_cube = Cube::create(SideLength::try_from(3)?);
+        let original_cube = Cube::create(SideLength::try_from(8)?);
 
         assert_eq!(
             original_cube,
-            shuffled_large_cube.recreate_at_size(SideLength::try_from(3)?)
+            shuffled_large_cube.recreate_at_size(SideLength::try_from(8)?)
         );
 
         Ok(())

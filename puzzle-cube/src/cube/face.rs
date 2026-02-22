@@ -46,7 +46,8 @@ impl Distribution<Face> for StandardUniform {
             2 => Face::Front,
             3 => Face::Right,
             4 => Face::Back,
-            _ => Face::Left,
+            5 => Face::Left,
+            _ => unreachable!(),
         }
     }
 }
