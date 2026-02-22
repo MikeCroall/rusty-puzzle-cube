@@ -23,14 +23,15 @@ pub mod cubie_face;
 /// An enum representing the faces of a cube, and providing a mapping for 'adjacents' and `IndexAlignment` that are used to perform rotations of a face.
 pub mod face;
 
-/// Macros that aid in creating custom cube states for test cases.
-pub mod macros;
-
 /// Module defining the Rotation type that represents a single 90° rotation of some part of a cube.
 pub mod rotation;
 
 /// Structs that ensure cubes are constructed with only valid values for side length, depending on the type of cube.
 pub mod side_lengths;
+
+/// Helpers that aid in creating custom cube states for test cases.
+#[cfg(test)]
+pub mod test_helpers;
 
 const HORIZONTAL_PADDING: &str = " ";
 
@@ -407,54 +408,6 @@ impl fmt::Display for Cube {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.print_to_formatter(f)?;
         Ok(())
-    }
-}
-
-#[cfg(test)]
-mod impl_for_tests_only {
-    use super::*;
-
-    macro_rules! assert_side_lengths {
-        ($side_length:expr, $($side:expr),* $(,)?) => {
-            $(
-                assert_eq!($side_length, $side.len(),
-                    "{} had outer length {} but was expected to have length {}",
-                    stringify!($side), $side.len(), $side_length);
-                $side
-                    .iter()
-                    .enumerate()
-                    .for_each(|(index, inner)|
-                        assert_eq!($side_length, inner.len(),
-                            "{} had inner (index {}) length {} but was expected to have length {}",
-                            stringify!($side), index, inner.len(), $side_length));
-            )*
-        };
-    }
-
-    impl Cube {
-        /// Create a new `Cube` instance with pre-made `Side` instances, specifically for easily defining test cases
-        #[must_use]
-        pub fn create_from_sides(
-            up: DefaultSide,
-            down: DefaultSide,
-            front: DefaultSide,
-            right: DefaultSide,
-            back: DefaultSide,
-            left: DefaultSide,
-        ) -> Self {
-            let side_length = up.len();
-            assert_side_lengths!(side_length, up, down, front, right, back, left);
-
-            Self {
-                side_length,
-                up,
-                down,
-                front,
-                right,
-                back,
-                left,
-            }
-        }
     }
 }
 
