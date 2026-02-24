@@ -1,7 +1,9 @@
-use std::{fmt, mem};
+use std::fmt;
 
 use anyhow::Context;
 use itertools::izip;
+
+use crate::cube::flat_side::FlatSide;
 
 use self::cubie_face::CubieFace;
 use self::direction::Direction;
@@ -28,6 +30,9 @@ pub mod rotation;
 
 /// Structs that ensure cubes are constructed with only valid values for side length, depending on the type of cube.
 pub mod side_lengths;
+
+/// An abstraction that allows treating a flat `Vec<CubieFace>` in row-major order as if it were a nested `Vec<Vec<CubieFace>>` to some extent.
+pub mod flat_side;
 
 /// Helpers that aid in creating custom cube states for test cases.
 #[cfg(test)]
@@ -91,7 +96,7 @@ pub trait PuzzleCube {
 }
 
 /// The `Side` type, for the provided `Cube`'s implementation of `PuzzleCube`, that holds the cubies currently on a face.
-pub type DefaultSide = Vec<Vec<CubieFace>>;
+pub type DefaultSide = FlatSide;
 
 /// An implementer of the `PuzzleCube` trait.
 #[derive(PartialEq)]
@@ -244,15 +249,7 @@ impl Cube {
     }
 
     fn rotate_face_90_degrees_clockwise_without_adjacents(&mut self, face: F) {
-        let side_length = self.side_length;
-        let side: &mut Vec<Vec<CubieFace>> = self.side_mut(face);
-        side.reverse();
-        for i in 1..side_length {
-            let (left, right) = side.split_at_mut(i);
-            (0..i).for_each(|j| {
-                mem::swap(&mut left[j][i], &mut right[0][j]);
-            });
-        }
+        self.side_mut(face).rotate_90_degrees_clockwise();
     }
 
     fn rotate_adjacents_90_deg_clockwise_setback(
@@ -301,13 +298,7 @@ impl Cube {
                         format!("requested layer index {layers_back} caused underflow")
                     })?
                 };
-                for (outer_index, value) in values.iter().enumerate() {
-                    side.get_mut(outer_index)
-                        .with_context(|| format!("side did not have requested layer ({outer_index} of outer vec of side)"))?
-                        .get_mut(inner_index)
-                        .with_context(|| format!("side did not have requested layer ({inner_index} of inner vec of side)"))?
-                        .clone_from(value);
-                }
+                side.clone_col_from(inner_index, &values)?;
             }
             IA::InnerFirst | IA::InnerLast => {
                 let outer_index = if target_alignment == IA::InnerFirst {
@@ -317,20 +308,14 @@ impl Cube {
                         format!("requested layer index {layers_back} caused underflow")
                     })?
                 };
-                side.get_mut(outer_index)
-                    .with_context(|| {
-                        format!(
-                            "side did not have requested layer ({outer_index} outer vec of side)"
-                        )
-                    })?
-                    .clone_from_slice(&values);
+                side.clone_row_from(outer_index, &values)?;
             }
         }
         Ok(())
     }
 
     fn write_indented_single_side(&self, f: &mut fmt::Formatter, face: F) -> fmt::Result {
-        for cubie_row in self.side(face) {
+        for cubie_row in self.side(face).rows() {
             write!(
                 f,
                 "{}",
@@ -350,10 +335,10 @@ impl Cube {
         face_c: F,
         face_d: F,
     ) -> fmt::Result {
-        let side_a = self.side(face_a).iter();
-        let side_b = self.side(face_b).iter();
-        let side_c = self.side(face_c).iter();
-        let side_d = self.side(face_d).iter();
+        let side_a = self.side(face_a).rows();
+        let side_b = self.side(face_b).rows();
+        let side_c = self.side(face_c).rows();
+        let side_d = self.side(face_d).rows();
 
         for (cubie_row_a, cubie_row_b, cubie_row_c, cubie_row_d) in
             izip!(side_a, side_b, side_c, side_d)
@@ -472,6 +457,7 @@ mod tests {
         let cube = Cube::create_with_unique_characters(3.try_into().expect("known good value"));
 
         let expected_cube = create_cube_from_sides!(
+            flatten,
             up: vec![
                 vec![CubieFace::White(Some('0')), CubieFace::White(Some('1')), CubieFace::White(Some('2'))],
                 vec![CubieFace::White(Some('3')), CubieFace::White(Some('4')), CubieFace::White(Some('5'))],
@@ -556,6 +542,7 @@ mod tests {
         cube.rotate(Rotation::anticlockwise(Face::Back))?;
 
         let expected_cube = create_cube_from_sides!(
+            flatten,
             up: vec![
                 vec![CubieFace::Red(Some('2')), CubieFace::Red(Some('0'))],
                 vec![CubieFace::White(Some('2')), CubieFace::White(Some('3'))],
@@ -591,6 +578,7 @@ mod tests {
         cube.rotate(Rotation::clockwise_setback_from(Face::Front, 1))?;
 
         let expected_cube = create_cube_from_sides!(
+            flatten,
             up: vec![
                 vec![CubieFace::White(Some('0')), CubieFace::White(Some('1')), CubieFace::White(Some('2'))],
                 vec![CubieFace::Red(Some('7')), CubieFace::Red(Some('4')), CubieFace::Red(Some('1'))],
@@ -632,6 +620,7 @@ mod tests {
         cube.rotate(Rotation::clockwise_multilayer_from(Face::Front, 1))?;
 
         let expected_cube = create_cube_from_sides!(
+            flatten,
             up: vec![
                 vec![CubieFace::White(Some('0')), CubieFace::White(Some('1')), CubieFace::White(Some('2'))],
                 vec![CubieFace::Red(Some('7')), CubieFace::Red(Some('4')), CubieFace::Red(Some('1'))],
@@ -673,6 +662,7 @@ mod tests {
         cube.rotate(Rotation::clockwise_multisetback_from(Face::Left, 1, 2))?;
 
         let expected_cube = create_cube_from_sides!(
+            flatten,
             up: vec![
                 vec![CubieFace::White(Some('0')), CubieFace::Green(Some('>')), CubieFace::Green(Some('=')), CubieFace::White(Some('3'))],
                 vec![CubieFace::White(Some('4')), CubieFace::Green(Some(':')), CubieFace::Green(Some('9')), CubieFace::White(Some('7'))],
@@ -742,10 +732,7 @@ mod tests {
 
         assert!(result.is_err());
         let err = result.unwrap_err();
-        assert!(
-            format!("{err:?}")
-                .starts_with("side did not have required layer (4 of outer vec of side)")
-        );
+        assert!(format!("{err:?}").starts_with("side did not have required row (4)"));
         Ok(())
     }
 

@@ -159,8 +159,7 @@ fn face_to_instances<C: PuzzleCube<Side = DefaultSide>>(
 ) {
     let transformations =
         cube.side(face)
-            .iter()
-            .flatten()
+            .iter_flat()
             .enumerate()
             .flat_map(move |(i, _cubie_face)| {
                 let y = i / side_length;
@@ -185,8 +184,7 @@ fn face_to_instances<C: PuzzleCube<Side = DefaultSide>>(
 
     let colours = cube
         .side(face)
-        .iter()
-        .flatten()
+        .iter_flat()
         .flat_map(|cubie_face| [cubie_face_to_colour(*cubie_face), Srgba::BLACK]);
 
     (transformations, colours)
