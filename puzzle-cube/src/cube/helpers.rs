@@ -6,6 +6,7 @@ use super::{
     DefaultSide,
     cubie_face::CubieFace,
     face::IndexAlignment as IA,
+    flat_side::FlatSide,
     side_lengths::{SideLength, UniqueCharsSideLength},
 };
 
@@ -14,12 +15,8 @@ pub(super) fn create_side(
     colour_variant_creator: &dyn Fn(Option<char>) -> CubieFace,
 ) -> DefaultSide {
     let side_length = side_length.into();
-    let mut side = vec![];
-    for _outer in 0..side_length {
-        let inner_vec = vec![colour_variant_creator(None); side_length];
-        side.push(inner_vec);
-    }
-    side
+    let vec = vec![colour_variant_creator(None); side_length * side_length];
+    FlatSide::new(side_length, vec)
 }
 
 pub(super) fn create_side_with_unique_characters(
@@ -27,18 +24,16 @@ pub(super) fn create_side_with_unique_characters(
     colour_variant_creator: &dyn Fn(Option<char>) -> CubieFace,
 ) -> DefaultSide {
     let side_length = side_length.into();
-    let mut side = vec![];
-    for outer in 0..side_length {
-        let mut inner_vec = vec![];
-        for inner in 0..side_length {
-            let value = u32::try_from((side_length * outer) + inner)
+    let mut side = Vec::with_capacity(side_length * side_length);
+    for row in 0..side_length {
+        for column in 0..side_length {
+            let value = u32::try_from((side_length * row) + column)
                 .expect("side_length is limited to 8 so conversion to u32 should never fail");
             let display_char = char::from_u32('0' as u32 + value);
-            inner_vec.push(colour_variant_creator(display_char));
+            side.push(colour_variant_creator(display_char));
         }
-        side.push(inner_vec);
     }
-    side
+    FlatSide::new(side_length, side)
 }
 
 pub(super) fn get_clockwise_slice_of_side_setback(
@@ -46,46 +41,41 @@ pub(super) fn get_clockwise_slice_of_side_setback(
     index_alignment: IA,
     layers_back: usize,
 ) -> anyhow::Result<Vec<CubieFace>> {
-    let vec = match index_alignment {
+    Ok(match index_alignment {
         IA::OuterStart => side
-            .iter()
-            .map(|inner| -> anyhow::Result<CubieFace> {
-                Ok(inner
-                    .get(layers_back)
-                    .with_context(|| format!("side did not have required layer ({layers_back} of inner vec of side)"))?
-                    .to_owned())
-            })
-            .collect::<anyhow::Result<Vec<CubieFace>>>()?,
-        IA::OuterEnd => side
-            .iter()
-            .map(|inner| -> anyhow::Result<CubieFace> {
-                let required_index = inner.len().checked_sub(layers_back + 1)
-                    .with_context(|| format!("requested layer index {layers_back} caused underflow"))?;
-                Ok(inner
-                    .get(required_index)
-                    .with_context(|| format!("side did not have required layer ({required_index} of inner vec of side)"))?
-                    .to_owned())
-            })
-            .rev()
-            .collect::<anyhow::Result<Vec<CubieFace>>>()?,
+            .col(layers_back)
+            .with_context(|| format!("side did not have required column ({layers_back})"))?
+            .copied()
+            .collect(),
+        IA::OuterEnd => {
+            let required_index = side
+                .side_length()
+                .checked_sub(layers_back + 1)
+                .with_context(|| format!("requested layer index {layers_back} caused underflow"))?;
+            side.col(required_index)
+                .with_context(|| format!("side did not have required column ({layers_back})"))?
+                .rev()
+                .copied()
+                .collect()
+        }
         IA::InnerFirst => {
             let mut inner_first_vec = side
-                .get(layers_back)
-                .with_context(|| format!("side did not have required layer ({layers_back} of outer vec of side)"))?
+                .row(layers_back)
+                .with_context(|| format!("side did not have required row ({layers_back})"))?
                 .to_owned();
             inner_first_vec.reverse();
             inner_first_vec
         }
         IA::InnerLast => {
-            let required_index = side.len().checked_sub(layers_back + 1)
+            let required_index = side
+                .side_length()
+                .checked_sub(layers_back + 1)
                 .with_context(|| format!("requested layer index {layers_back} caused underflow"))?;
-            side
-                .get(required_index)
-                .with_context(|| format!("side did not have required layer ({required_index} of outer vec of side)"))?
+            side.row(required_index)
+                .with_context(|| format!("side did not have required row ({required_index})"))?
                 .to_owned()
         }
-    };
-    Ok(vec)
+    })
 }
 
 #[cfg(test)]
@@ -97,8 +87,7 @@ mod tests {
     fn only_use_visible_unique_characters() {
         let side = create_side_with_unique_characters(UniqueCharsSideLength::MAX, &CubieFace::Blue);
 
-        side.iter()
-            .flatten()
+        side.iter_flat()
             .map(|cubie| cubie.get_coloured_display_char().input)
             .for_each(|string| {
                 assert_eq!(

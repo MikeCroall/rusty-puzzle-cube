@@ -226,7 +226,9 @@ fn cubies_are_never_created_or_destroyed_only_moved(rotations: Vec<Rotation>) ->
 
     cube.rotate_seq(rotations).unwrap();
 
-    let cubie_chars: UniqueCubieChars = Face::iter().flat_map(|f| cube.side(f)).flatten().collect();
+    let cubie_chars: UniqueCubieChars = Face::iter()
+        .flat_map(|f| cube.side(f).iter_flat())
+        .collect();
 
     let expected_unique_chars_per_side = CUBE_SIZE * CUBE_SIZE;
     cubie_chars.all_sides_have_n_unique_chars(expected_unique_chars_per_side)
