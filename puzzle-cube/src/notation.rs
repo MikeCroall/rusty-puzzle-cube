@@ -239,7 +239,7 @@ impl Display for Rotation {
 
 #[cfg(test)]
 mod tests {
-    use crate::cube::{Cube, cubie_face::CubieFace};
+    use crate::cube::Cube;
     use crate::{create_cube_from_sides, create_cube_side};
 
     use super::*;
@@ -480,10 +480,7 @@ Caused by:
 
         let error = perform_notation(sequence, &mut cube).unwrap_err();
 
-        assert!(
-            format!("{error:?}")
-                .starts_with("side did not have required layer (3 of outer vec of side)")
-        );
+        assert!(format!("{error:?}").starts_with("side did not have required row (3)"));
     }
 
     test_parse_token_and_reverse!(
