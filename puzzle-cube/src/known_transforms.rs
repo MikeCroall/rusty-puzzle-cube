@@ -128,10 +128,7 @@ impl KnownTransform {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        create_cube_from_sides, create_cube_side,
-        cube::{Cube, cubie_face::CubieFace},
-    };
+    use crate::{create_cube_from_sides, create_cube_side, cube::Cube};
 
     use super::*;
     use pretty_assertions::assert_eq;
