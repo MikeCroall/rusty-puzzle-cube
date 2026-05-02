@@ -14,7 +14,7 @@ pub(super) fn save_as_image(
     camera: &Camera,
     tiles: &Gm<InstancedMesh, ColorMaterial>,
 ) -> Result<(), Error> {
-    let mut texture = Texture2D::new_empty::<[u8; 4]>(
+    let texture = Texture2D::new_empty::<[u8; 4]>(
         ctx,
         viewport.width,
         viewport.height,
@@ -24,7 +24,7 @@ pub(super) fn save_as_image(
         Wrapping::ClampToEdge,
         Wrapping::ClampToEdge,
     );
-    let mut depth_texture = DepthTexture2D::new::<f32>(
+    let depth_texture = DepthTexture2D::new::<f32>(
         ctx,
         viewport.width,
         viewport.height,

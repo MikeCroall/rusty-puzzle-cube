@@ -9,8 +9,8 @@ use strum::IntoEnumIterator;
 use three_d::{
     Viewport,
     egui::{
-        Button, Checkbox, ComboBox, Context, ProgressBar, Rgba, RichText, ScrollArea, SidePanel,
-        Slider, Ui, special_emojis::GITHUB,
+        Button, Checkbox, ComboBox, Panel, ProgressBar, Rgba, RichText, ScrollArea, Slider, Ui,
+        special_emojis::GITHUB,
     },
 };
 
@@ -19,8 +19,8 @@ const MAX_CUBE_SIZE: usize = 100;
 const EXTRA_SPACING: f32 = 10.;
 
 impl<C: PuzzleCube3D + Display, const UNDO_SIZE: usize> GuiState<C, UNDO_SIZE> {
-    pub(crate) fn show_ui(&mut self, gui_ctx: &Context, viewport: Viewport) {
-        SidePanel::left("side_panel").show(gui_ctx, |ui| {
+    pub(crate) fn show_ui(&mut self, ui: &mut Ui, viewport: Viewport) {
+        Panel::left("side_panel").show_inside(ui, |ui| {
             ScrollArea::vertical().show(ui, |ui| {
                 Self::header(ui);
                 ui.separator();

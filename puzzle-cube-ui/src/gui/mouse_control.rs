@@ -7,8 +7,8 @@ use rusty_puzzle_cube::cube::{
     Cube, PuzzleCube as _, direction::Direction, face::Face, rotation::Rotation,
 };
 use three_d::{
-    Event, FreeOrbitControl, InnerSpace, MouseButton, OrbitControl, Radians, Transform, Vec3, pick,
-    radians,
+    Cull, Event, FreeOrbitControl, InnerSpace, MouseButton, OrbitControl, Radians, Transform, Vec3,
+    pick, radians,
 };
 use three_d_asset::PixelPoint;
 use tracing::{debug, error};
@@ -130,7 +130,13 @@ impl MouseControl {
         position: PixelPoint,
         handled: &mut bool,
     ) {
-        let Some(start_pick) = pick(&state.ctx, &state.camera, position, &state.pick_cube) else {
+        let Ok(Some(start_pick)) = pick(
+            &state.ctx,
+            &state.camera,
+            position,
+            &state.pick_cube,
+            Cull::Back,
+        ) else {
             return;
         };
         let Some(face) = pick_to_face(start_pick.position) else {
@@ -153,7 +159,13 @@ impl MouseControl {
         let Some(FaceDrag { start_pick, face }) = self.drag else {
             return;
         };
-        let Some(current_pick) = pick(&state.ctx, &state.camera, position, &state.pick_cube) else {
+        let Ok(Some(current_pick)) = pick(
+            &state.ctx,
+            &state.camera,
+            position,
+            &state.pick_cube,
+            Cull::Back,
+        ) else {
             return;
         };
         let Some(new_face) = pick_to_face(current_pick.position) else {
@@ -187,7 +199,13 @@ impl MouseControl {
         let Some(FaceDrag { start_pick, face }) = &self.drag else {
             return;
         };
-        let Some(end_pick) = pick(&state.ctx, &state.camera, position, &state.pick_cube) else {
+        let Ok(Some(end_pick)) = pick(
+            &state.ctx,
+            &state.camera,
+            position,
+            &state.pick_cube,
+            Cull::Back,
+        ) else {
             return;
         };
         if let Some(decided_move) =

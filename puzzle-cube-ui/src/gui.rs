@@ -45,9 +45,10 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
             frame_input.accumulated_time,
             frame_input.viewport,
             frame_input.device_pixel_ratio,
-            |gui_ctx| {
-                state.show_ui(gui_ctx, frame_input.viewport);
-                panel_width = gui_ctx.used_rect().width();
+            #[expect(clippy::cast_precision_loss)]
+            |ui| {
+                state.show_ui(ui, frame_input.viewport);
+                panel_width = frame_input.window_width as f32 - ui.available_width();
             },
         );
 
@@ -78,9 +79,10 @@ pub(super) fn start_gui() -> anyhow::Result<()> {
                 frame_input.accumulated_time,
                 frame_input.viewport,
                 frame_input.device_pixel_ratio,
-                |gui_ctx| {
-                    state.show_ui(gui_ctx, frame_input.viewport);
-                    panel_width = gui_ctx.used_rect().width();
+                #[expect(clippy::cast_precision_loss)]
+                |ui| {
+                    state.show_ui(ui, frame_input.viewport);
+                    panel_width = frame_input.window_width as f32 - ui.available_width();
                 },
             );
         }
