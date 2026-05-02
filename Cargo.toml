@@ -16,7 +16,7 @@ pastey = "0.2.1"
 pretty_assertions = "1.4.1"
 quickcheck = "1.1.0"
 quickcheck_macros = "1.2.0"
-rand = "0.10.0"
+rand = "0.10.1"
 rusty-puzzle-cube = { path = "puzzle-cube" }
 strum = "0.28.0"
 three-d = "0.18.2"
