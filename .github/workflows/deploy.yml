@@ -32,10 +32,10 @@ jobs:
                       target/
                   key: ${{ runner.os }}-cargo-wasm-${{ hashFiles('**/Cargo.lock') }}
                   restore-keys: ${{ runner.os }}-cargo-wasm-
-            - name: Use Node.js 25.*
+            - name: Use Node.js 26.*
               uses: actions/setup-node@v6
               with:
-                  node-version: 25
+                  node-version: 26
             - name: Build wasm page
               run: |
                   npx wasm-pack build "puzzle-cube-ui" --target web --out-name web --out-dir ../web/pkg
