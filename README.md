@@ -17,7 +17,7 @@ Still a work in progress. Screenshots and/or demo gif may not be fully up to dat
 
 Demo gif generated with below ffmpeg command
 
-ffmpeg -ss 1 -t 35 -i demo-2026.mkv \                                           ✔  24s
+ffmpeg -ss 1 -t 35 -i demo-2026.mkv \
 -vf "fps=15,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse" \
 -loop 0 demo-2026.gif
 
