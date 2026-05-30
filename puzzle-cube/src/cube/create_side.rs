@@ -1,11 +1,8 @@
 use std::vec;
 
-use anyhow::Context;
-
 use super::{
     DefaultSide,
     cubie_face::CubieFace,
-    face::IndexAlignment as IA,
     side_lengths::{SideLength, UniqueCharsSideLength},
 };
 
@@ -39,53 +36,6 @@ pub(super) fn create_side_with_unique_characters(
         side.push(inner_vec);
     }
     side
-}
-
-pub(super) fn get_clockwise_slice_of_side_setback(
-    side: &DefaultSide,
-    index_alignment: IA,
-    layers_back: usize,
-) -> anyhow::Result<Vec<CubieFace>> {
-    let vec = match index_alignment {
-        IA::OuterStart => side
-            .iter()
-            .map(|inner| -> anyhow::Result<CubieFace> {
-                Ok(inner
-                    .get(layers_back)
-                    .with_context(|| format!("side did not have required layer ({layers_back} of inner vec of side)"))?
-                    .to_owned())
-            })
-            .collect::<anyhow::Result<Vec<CubieFace>>>()?,
-        IA::OuterEnd => side
-            .iter()
-            .map(|inner| -> anyhow::Result<CubieFace> {
-                let required_index = inner.len().checked_sub(layers_back + 1)
-                    .with_context(|| format!("requested layer index {layers_back} caused underflow"))?;
-                Ok(inner
-                    .get(required_index)
-                    .with_context(|| format!("side did not have required layer ({required_index} of inner vec of side)"))?
-                    .to_owned())
-            })
-            .rev()
-            .collect::<anyhow::Result<Vec<CubieFace>>>()?,
-        IA::InnerFirst => {
-            let mut inner_first_vec = side
-                .get(layers_back)
-                .with_context(|| format!("side did not have required layer ({layers_back} of outer vec of side)"))?
-                .to_owned();
-            inner_first_vec.reverse();
-            inner_first_vec
-        }
-        IA::InnerLast => {
-            let required_index = side.len().checked_sub(layers_back + 1)
-                .with_context(|| format!("requested layer index {layers_back} caused underflow"))?;
-            side
-                .get(required_index)
-                .with_context(|| format!("side did not have required layer ({required_index} of outer vec of side)"))?
-                .to_owned()
-        }
-    };
-    Ok(vec)
 }
 
 #[cfg(test)]

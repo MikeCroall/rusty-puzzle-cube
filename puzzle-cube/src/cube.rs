@@ -1,18 +1,15 @@
-use std::{fmt, mem};
+use std::fmt;
 
-use anyhow::Context;
 use itertools::izip;
 
+use self::create_side::{create_side, create_side_with_unique_characters};
 use self::cubie_face::CubieFace;
 use self::direction::Direction;
-use self::face::{Face as F, IndexAlignment as IA};
-use self::helpers::{
-    create_side, create_side_with_unique_characters, get_clockwise_slice_of_side_setback,
-};
+use self::face::Face as F;
 use self::rotation::{Rotation, RotationKind};
 use self::side_lengths::{SideLength, UniqueCharsSideLength};
 
-mod helpers;
+mod create_side;
 
 /// An enum representing clockwise and anti-clockwise directions for a rotation.
 pub mod direction;
@@ -96,7 +93,7 @@ pub type DefaultSide = Vec<Vec<CubieFace>>;
 /// An implementer of the `PuzzleCube` trait.
 #[derive(PartialEq)]
 pub struct Cube {
-    side_length: usize,
+    pub(crate) side_length: usize,
     up: DefaultSide,
     down: DefaultSide,
     front: DefaultSide,
@@ -132,54 +129,51 @@ impl PuzzleCube for Cube {
 
         match rotation {
             Rotation {
-                direction: Direction::Anticlockwise,
-                ..
-            } => {
-                let reversed = !rotation;
-                self.rotate(reversed)?;
-                self.rotate(reversed)?;
-                self.rotate(reversed)?;
-            }
-            Rotation {
                 relative_to,
-                direction: Direction::Clockwise,
+                direction,
                 kind: RotationKind::FaceOnly,
-            } => {
-                self.rotate_layer(relative_to, 0)?;
-            }
+            } => match direction {
+                Direction::Clockwise => self.rotate_layer_clockwise(relative_to, 0)?,
+                Direction::Anticlockwise => self.rotate_layer_anticlockwise(relative_to, 0)?,
+            },
             Rotation {
                 relative_to,
-                direction: Direction::Clockwise,
+                direction,
                 kind: RotationKind::Setback { layer },
-            } => {
-                self.rotate_layer(relative_to, layer)?;
-            }
-            r @ Rotation {
-                direction: Direction::Clockwise,
+            } => match direction {
+                Direction::Clockwise => self.rotate_layer_clockwise(relative_to, layer)?,
+                Direction::Anticlockwise => self.rotate_layer_anticlockwise(relative_to, layer)?,
+            },
+            Rotation {
+                relative_to,
+                direction,
                 kind: RotationKind::Multilayer { layer },
-                ..
             } => {
                 for layer in 0..=layer {
-                    self.rotate(Rotation {
-                        kind: RotationKind::Setback { layer },
-                        ..r
-                    })?;
+                    match direction {
+                        Direction::Clockwise => self.rotate_layer_clockwise(relative_to, layer)?,
+                        Direction::Anticlockwise => {
+                            self.rotate_layer_anticlockwise(relative_to, layer)?;
+                        }
+                    }
                 }
             }
-            r @ Rotation {
-                direction: Direction::Clockwise,
+            Rotation {
+                relative_to,
+                direction,
                 kind:
                     RotationKind::MultiSetback {
                         start_layer,
                         end_layer,
                     },
-                ..
             } => {
                 for layer in start_layer..=end_layer {
-                    self.rotate(Rotation {
-                        kind: RotationKind::Setback { layer },
-                        ..r
-                    })?;
+                    match direction {
+                        Direction::Clockwise => self.rotate_layer_clockwise(relative_to, layer)?,
+                        Direction::Anticlockwise => {
+                            self.rotate_layer_anticlockwise(relative_to, layer)?;
+                        }
+                    }
                 }
             }
         }
@@ -225,7 +219,7 @@ impl Cube {
         }
     }
 
-    fn side_mut(&mut self, face: F) -> &mut DefaultSide {
+    pub(crate) fn side_mut(&mut self, face: F) -> &mut DefaultSide {
         match face {
             F::Up => &mut self.up,
             F::Down => &mut self.down,
@@ -234,99 +228,6 @@ impl Cube {
             F::Back => &mut self.back,
             F::Left => &mut self.left,
         }
-    }
-
-    fn rotate_layer(&mut self, face: F, layers_back: usize) -> anyhow::Result<()> {
-        if layers_back == 0 {
-            self.rotate_face_90_degrees_clockwise_without_adjacents(face);
-        }
-        self.rotate_adjacents_90_deg_clockwise_setback(face, layers_back)
-    }
-
-    fn rotate_face_90_degrees_clockwise_without_adjacents(&mut self, face: F) {
-        let side_length = self.side_length;
-        let side: &mut Vec<Vec<CubieFace>> = self.side_mut(face);
-        side.reverse();
-        for i in 1..side_length {
-            let (left, right) = side.split_at_mut(i);
-            (0..i).for_each(|j| {
-                mem::swap(&mut left[j][i], &mut right[0][j]);
-            });
-        }
-    }
-
-    fn rotate_adjacents_90_deg_clockwise_setback(
-        &mut self,
-        face: F,
-        layers_back: usize,
-    ) -> anyhow::Result<()> {
-        let adjacents = face.adjacent_faces_clockwise();
-
-        let slices = adjacents
-            .map(|adj| get_clockwise_slice_of_side_setback(self.side(adj.0), adj.1, layers_back));
-
-        adjacents
-            .iter()
-            .cycle()
-            .skip(1)
-            .zip(slices)
-            .try_for_each(|(adjacent, slice)| {
-                self.copy_setback_adjacent_over(*adjacent, slice?, layers_back)
-            })
-    }
-
-    fn copy_setback_adjacent_over(
-        &mut self,
-        (target_face, target_alignment): (F, IA),
-        unadjusted_values: Vec<CubieFace>,
-        layers_back: usize,
-    ) -> anyhow::Result<()> {
-        let values = match target_alignment {
-            IA::OuterEnd | IA::InnerFirst => {
-                let mut new_values = unadjusted_values;
-                new_values.reverse();
-                new_values
-            }
-            IA::OuterStart | IA::InnerLast => unadjusted_values,
-        };
-
-        let side_length = self.side_length;
-        let side = self.side_mut(target_face);
-        match target_alignment {
-            IA::OuterStart | IA::OuterEnd => {
-                let inner_index = if target_alignment == IA::OuterStart {
-                    layers_back
-                } else {
-                    side_length.checked_sub(layers_back + 1).with_context(|| {
-                        format!("requested layer index {layers_back} caused underflow")
-                    })?
-                };
-                for (outer_index, value) in values.iter().enumerate() {
-                    side.get_mut(outer_index)
-                        .with_context(|| format!("side did not have requested layer ({outer_index} of outer vec of side)"))?
-                        .get_mut(inner_index)
-                        .with_context(|| format!("side did not have requested layer ({inner_index} of inner vec of side)"))?
-                        .clone_from(value);
-                }
-            }
-            IA::InnerFirst | IA::InnerLast => {
-                let outer_index = if target_alignment == IA::InnerFirst {
-                    layers_back
-                } else {
-                    side_length.checked_sub(layers_back + 1).with_context(|| {
-                        format!("requested layer index {layers_back} caused underflow")
-                    })?
-                };
-                side.get_mut(outer_index)
-                    .with_context(|| {
-                        format!(
-                            "side did not have requested layer ({outer_index} outer vec of side)"
-                        )
-                    })?
-                    .clone_from_slice(&values);
-            }
-        }
-        Ok(())
     }
 
     fn write_indented_single_side(&self, f: &mut fmt::Formatter, face: F) -> fmt::Result {
@@ -765,6 +666,55 @@ mod tests {
         no_seq_cube.rotate(rot_3)?;
 
         assert_eq!(no_seq_cube, seq_cube);
+        Ok(())
+    }
+
+    #[test]
+    /// Recreate a bug found during anticlockwise refactoring.
+    ///
+    /// The bug arose from the [`RotationKind::Multilayer`] having a `layer` index equal to `side_length - 1`.
+    /// This meant that [`Cube::rotate_layer_clockwise`], which was expecting to never receive an index as high as `side_length - 1`
+    /// was not updating the face opposite the `relative_to` face due to [`Rotation::normalise`] being used prior to the call.
+    /// During the anticlockwise refactor, [`Cube::rotate`] became no longer recursive, meaning [`Rotation`]s that previously
+    /// went through 2 rounds of normalisation (the second of which being after splitting a multilayer [`Rotation`] into multiple
+    /// separate [`Rotation`]s for recursive calls), were now only going through a single normalisation.
+    ///
+    /// This was originally caught by the suite of [`quickcheck`] tests, and formalised into this test case for clarity.
+    fn post_normalise_opposite_face_layer() -> anyhow::Result<()> {
+        let mut cube = Cube::create_with_unique_characters(2.try_into()?);
+        cube.rotate(Rotation {
+            relative_to: Face::Front,
+            direction: Direction::Clockwise,
+            kind: RotationKind::Multilayer { layer: 1 },
+        })?;
+
+        let expected_cube = create_cube_from_sides!(
+            up: vec![
+                vec![CubieFace::Red(Some('2')), CubieFace::Red(Some('0'))],
+                vec![CubieFace::Red(Some('3')), CubieFace::Red(Some('1'))],
+            ],
+            down: vec![
+                vec![CubieFace::Orange(Some('2')), CubieFace::Orange(Some('0'))],
+                vec![CubieFace::Orange(Some('3')), CubieFace::Orange(Some('1'))],
+            ],
+            front: vec![
+                vec![CubieFace::Blue(Some('2')), CubieFace::Blue(Some('0'))],
+                vec![CubieFace::Blue(Some('3')), CubieFace::Blue(Some('1'))],
+            ],
+            right: vec![
+                vec![CubieFace::White(Some('2')), CubieFace::White(Some('0'))],
+                vec![CubieFace::White(Some('3')), CubieFace::White(Some('1'))],
+            ],
+            back: vec![
+                vec![CubieFace::Green(Some('2')), CubieFace::Green(Some('0'))],
+                vec![CubieFace::Green(Some('3')), CubieFace::Green(Some('1'))],
+            ],
+            left: vec![
+                vec![CubieFace::Yellow(Some('2')), CubieFace::Yellow(Some('0'))],
+                vec![CubieFace::Yellow(Some('3')), CubieFace::Yellow(Some('1'))],
+            ],
+        );
+        assert_eq!(expected_cube, cube);
         Ok(())
     }
 }
