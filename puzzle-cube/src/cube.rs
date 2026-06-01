@@ -4,12 +4,14 @@ use itertools::izip;
 
 use self::create_side::{create_side, create_side_with_unique_characters};
 use self::cubie_face::CubieFace;
-use self::direction::Direction;
 use self::face::Face as F;
 use self::rotation::{Rotation, RotationKind};
 use self::side_lengths::{SideLength, UniqueCharsSideLength};
 
 mod create_side;
+
+/// Module defining how to mutate a cube for a rotation.
+pub mod apply_rotation;
 
 /// An enum representing clockwise and anti-clockwise directions for a rotation.
 pub mod direction;
@@ -127,56 +129,26 @@ impl PuzzleCube for Cube {
     fn rotate(&mut self, rotation: Rotation) -> anyhow::Result<()> {
         let rotation = rotation.normalise(self.side_length);
 
-        match rotation {
-            Rotation {
-                relative_to,
-                direction,
-                kind: RotationKind::FaceOnly,
-            } => match direction {
-                Direction::Clockwise => self.rotate_layer_clockwise(relative_to, 0)?,
-                Direction::Anticlockwise => self.rotate_layer_anticlockwise(relative_to, 0)?,
-            },
-            Rotation {
-                relative_to,
-                direction,
-                kind: RotationKind::Setback { layer },
-            } => match direction {
-                Direction::Clockwise => self.rotate_layer_clockwise(relative_to, layer)?,
-                Direction::Anticlockwise => self.rotate_layer_anticlockwise(relative_to, layer)?,
-            },
-            Rotation {
-                relative_to,
-                direction,
-                kind: RotationKind::Multilayer { layer },
-            } => {
-                for layer in 0..=layer {
-                    match direction {
-                        Direction::Clockwise => self.rotate_layer_clockwise(relative_to, layer)?,
-                        Direction::Anticlockwise => {
-                            self.rotate_layer_anticlockwise(relative_to, layer)?;
-                        }
-                    }
-                }
-            }
-            Rotation {
-                relative_to,
-                direction,
-                kind:
-                    RotationKind::MultiSetback {
-                        start_layer,
-                        end_layer,
-                    },
-            } => {
-                for layer in start_layer..=end_layer {
-                    match direction {
-                        Direction::Clockwise => self.rotate_layer_clockwise(relative_to, layer)?,
-                        Direction::Anticlockwise => {
-                            self.rotate_layer_anticlockwise(relative_to, layer)?;
-                        }
-                    }
-                }
-            }
+        let Rotation {
+            relative_to,
+            direction,
+            kind,
+        } = rotation;
+
+        let (start_layer, end_layer) = match kind {
+            RotationKind::FaceOnly => (0, 0),
+            RotationKind::Setback { layer } => (layer, layer),
+            RotationKind::Multilayer { layer } => (0, layer),
+            RotationKind::MultiSetback {
+                start_layer,
+                end_layer,
+            } => (start_layer, end_layer),
+        };
+
+        for layer in start_layer..=end_layer {
+            self.rotate_layer(relative_to, direction, layer)?;
         }
+
         Ok(())
     }
 }
@@ -316,6 +288,7 @@ impl fmt::Display for Cube {
 mod tests {
     use crate::{create_cube_from_sides, create_cube_side};
 
+    use super::direction::Direction;
     use super::face::Face;
     use super::*;
     use pretty_assertions::{assert_eq, assert_ne};
