@@ -7,6 +7,14 @@ use rusty_puzzle_cube::cube::{
 };
 use three_d::{Instances, Mat4, Srgba};
 
+use crate::gui::{
+    anim_cube::HighlightState,
+    colours::{
+        BLUE_HIGHLIGHTED, GREEN_HIGHLIGHTED, ORANGE_HIGHLIGHTED, RED_HIGHLIGHTED,
+        WHITE_HIGHLIGHTED, YELLOW_HIGHLIGHTED,
+    },
+};
+
 use super::{
     anim_cube::{AnimCube, AnimationProgress, AnimationState},
     colours::{BLUE, GREEN, ORANGE, RED, WHITE, YELLOW},
@@ -27,11 +35,12 @@ pub(crate) trait PuzzleCube3D: PuzzleCube {
 }
 
 macro_rules! all_faces_to_instances {
-    ($cube:ident, $side_length:ident, $rotation_with_anim_transform:ident) => {{
+    ($cube:ident, $side_length:ident, $rotation_with_anim_transform:ident, $highlight_state:ident) => {{
         let (iter_transformations, iter_colours) = all_faces_to_instances!(
             $cube,
             $side_length,
             $rotation_with_anim_transform,
+            $highlight_state,
             Face::Front,
             Face::Back,
             Face::Left,
@@ -48,12 +57,12 @@ macro_rules! all_faces_to_instances {
 
         (transformations, colours)
     }};
-    ($cube:ident, $side_length:ident, $rotation_with_anim_transform:ident, $this_face:expr) => {
-        $crate::gui::cube_3d_ext::face_to_instances($this_face, $cube, $side_length, $rotation_with_anim_transform)
+    ($cube:ident, $side_length:ident, $rotation_with_anim_transform:ident, $highlight_state:ident, $this_face:expr) => {
+        $crate::gui::cube_3d_ext::face_to_instances($this_face, $cube, $side_length, $rotation_with_anim_transform, $highlight_state)
     };
-    ($cube:ident, $side_length:ident, $rotation_with_anim_transform:ident, $this_face:expr, $($tail:expr),+ $(,)?) => {{
-        let (transforms, colours) = all_faces_to_instances!($cube, $side_length, $rotation_with_anim_transform, $this_face);
-        let (tail_transforms, tail_colours) = all_faces_to_instances!($cube, $side_length, $rotation_with_anim_transform, $($tail),*);
+    ($cube:ident, $side_length:ident, $rotation_with_anim_transform:ident, $highlight_state:ident, $this_face:expr, $($tail:expr),+ $(,)?) => {{
+        let (transforms, colours) = all_faces_to_instances!($cube, $side_length, $rotation_with_anim_transform, $highlight_state, $this_face);
+        let (tail_transforms, tail_colours) = all_faces_to_instances!($cube, $side_length, $rotation_with_anim_transform, $highlight_state, $($tail),*);
         (
             transforms.chain(tail_transforms),
             colours.chain(tail_colours),
@@ -66,8 +75,13 @@ impl<C: PuzzleCube<Side = DefaultSide>> PuzzleCube3D for AnimCube<C> {
         let cube = self;
         let side_length = self.side_length();
         let rotation_with_anim_transform = choose_anim_transform(&self.animation);
-        let (transformations, colours) =
-            all_faces_to_instances!(cube, side_length, rotation_with_anim_transform);
+        let highlight_state = &self.highlight;
+        let (transformations, colours) = all_faces_to_instances!(
+            cube,
+            side_length,
+            rotation_with_anim_transform,
+            highlight_state
+        );
         Instances {
             transformations,
             colors: Some(colours),
@@ -148,14 +162,15 @@ fn choose_anim_transform(animation: &AnimationState) -> Option<(Rotation, Mat4)>
     }
 }
 
-fn face_to_instances<C: PuzzleCube<Side = DefaultSide>>(
+fn face_to_instances<'a, C: PuzzleCube<Side = DefaultSide>>(
     face: Face,
-    cube: &C,
+    cube: &'a C,
     side_length: usize,
     rotation_with_anim_transform: Option<(Rotation, Mat4)>,
+    highlight_state: &'a HighlightState,
 ) -> (
-    impl Iterator<Item = Mat4> + '_,
-    impl Iterator<Item = Srgba> + '_,
+    impl Iterator<Item = Mat4> + 'a,
+    impl Iterator<Item = Srgba> + 'a,
 ) {
     let transformations =
         cube.side(face)
@@ -187,7 +202,15 @@ fn face_to_instances<C: PuzzleCube<Side = DefaultSide>>(
         .side(face)
         .iter()
         .flatten()
-        .flat_map(|cubie_face| [cubie_face_to_colour(*cubie_face), Srgba::BLACK]);
+        .enumerate()
+        .flat_map(move |(i, cubie_face)| {
+            let y = side_length - i / side_length - 1; // gui has y axis flipped compared to lib
+            let x = i % side_length;
+
+            let should_highlight = matches!(highlight_state, HighlightState::Cubie(hovered) if hovered.face == face && hovered.col == x && hovered.row == y);
+
+            [cubie_face_to_colour(*cubie_face, should_highlight), Srgba::BLACK]
+        });
 
     (transformations, colours)
 }
@@ -264,14 +287,25 @@ fn should_apply_anim(
     }
 }
 
-fn cubie_face_to_colour(cubie_face: CubieFace) -> Srgba {
-    match cubie_face {
-        CubieFace::Blue(_) => BLUE,
-        CubieFace::Green(_) => GREEN,
-        CubieFace::Orange(_) => ORANGE,
-        CubieFace::Red(_) => RED,
-        CubieFace::White(_) => WHITE,
-        CubieFace::Yellow(_) => YELLOW,
+fn cubie_face_to_colour(cubie_face: CubieFace, should_highlight: bool) -> Srgba {
+    if should_highlight {
+        match cubie_face {
+            CubieFace::Blue(_) => BLUE_HIGHLIGHTED,
+            CubieFace::Green(_) => GREEN_HIGHLIGHTED,
+            CubieFace::Orange(_) => ORANGE_HIGHLIGHTED,
+            CubieFace::Red(_) => RED_HIGHLIGHTED,
+            CubieFace::White(_) => WHITE_HIGHLIGHTED,
+            CubieFace::Yellow(_) => YELLOW_HIGHLIGHTED,
+        }
+    } else {
+        match cubie_face {
+            CubieFace::Blue(_) => BLUE,
+            CubieFace::Green(_) => GREEN,
+            CubieFace::Orange(_) => ORANGE,
+            CubieFace::Red(_) => RED,
+            CubieFace::White(_) => WHITE,
+            CubieFace::Yellow(_) => YELLOW,
+        }
     }
 }
 
@@ -283,7 +317,7 @@ mod tests {
     #[test]
     fn test_cubie_face_to_colour_blue() {
         assert_eq!(
-            cubie_face_to_colour(CubieFace::Blue(None)),
+            cubie_face_to_colour(CubieFace::Blue(None), false),
             Srgba {
                 r: 0,
                 g: 0,
@@ -296,7 +330,7 @@ mod tests {
     #[test]
     fn test_cubie_face_to_colour_green() {
         assert_eq!(
-            cubie_face_to_colour(CubieFace::Green(None)),
+            cubie_face_to_colour(CubieFace::Green(None), false),
             Srgba {
                 r: 0,
                 g: 204,
@@ -309,7 +343,7 @@ mod tests {
     #[test]
     fn test_cubie_face_to_colour_orange() {
         assert_eq!(
-            cubie_face_to_colour(CubieFace::Orange(None)),
+            cubie_face_to_colour(CubieFace::Orange(None), false),
             Srgba {
                 r: 255,
                 g: 125,
@@ -322,7 +356,7 @@ mod tests {
     #[test]
     fn test_cubie_face_to_colour_red() {
         assert_eq!(
-            cubie_face_to_colour(CubieFace::Red(None)),
+            cubie_face_to_colour(CubieFace::Red(None), false),
             Srgba {
                 r: 204,
                 g: 0,
@@ -335,7 +369,7 @@ mod tests {
     #[test]
     fn test_cubie_face_to_colour_white() {
         assert_eq!(
-            cubie_face_to_colour(CubieFace::White(None)),
+            cubie_face_to_colour(CubieFace::White(None), false),
             Srgba {
                 r: 255,
                 g: 255,
@@ -348,7 +382,7 @@ mod tests {
     #[test]
     fn test_cubie_face_to_colour_yellow() {
         assert_eq!(
-            cubie_face_to_colour(CubieFace::Yellow(None)),
+            cubie_face_to_colour(CubieFace::Yellow(None), false),
             Srgba {
                 r: 224,
                 g: 224,

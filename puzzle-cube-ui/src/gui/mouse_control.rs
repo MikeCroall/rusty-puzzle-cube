@@ -1,7 +1,10 @@
 use std::f32::consts::PI;
 
 use crate::gui::{
-    GuiState, anim_cube::AnimCube, decided_move::DecidedMove, transforms::move_face_into_place,
+    GuiState,
+    anim_cube::{AnimCube, HighlightState, HoveredCubieCoordinate},
+    decided_move::DecidedMove,
+    transforms::move_face_into_place,
 };
 use rusty_puzzle_cube::cube::{
     Cube, PuzzleCube as _, direction::Direction, face::Face, rotation::Rotation,
@@ -72,6 +75,7 @@ impl MouseControl {
 
         let mut updated_cube = false;
         let mut rotation_if_released_now = RotationIfReleasedNow::NotAttempted;
+        let highlight_before = state.cube.highlight;
         for event in events.iter_mut() {
             match event {
                 Event::MousePress {
@@ -108,9 +112,17 @@ impl MouseControl {
                         &mut updated_cube,
                     );
                 }
+                Event::MouseMotion {
+                    button: None,
+                    position,
+                    ..
+                } => {
+                    self.handle_mouse_motion_no_btn(state, *position);
+                }
                 _ => {}
             }
         }
+        updated_cube |= highlight_before != state.cube.highlight;
 
         MouseControlOutput {
             updated_cube,
@@ -156,6 +168,7 @@ impl MouseControl {
         position: PixelPoint,
         handled: &mut bool,
     ) {
+        state.cube.highlight = HighlightState::None;
         let Some(FaceDrag { start_pick, face }) = self.drag else {
             return;
         };
@@ -221,6 +234,33 @@ impl MouseControl {
             }
             *handled = true;
         }
+    }
+
+    fn handle_mouse_motion_no_btn(
+        &mut self,
+        state: &mut GuiState<AnimCube<Cube>, 100>,
+        position: PixelPoint,
+    ) {
+        if state.cube.is_animating() {
+            state.cube.highlight = HighlightState::None;
+            return;
+        }
+        let Ok(Some(current_pick)) = pick(
+            &state.ctx,
+            &state.camera,
+            position,
+            &state.pick_cube,
+            Cull::Back,
+        ) else {
+            state.cube.highlight = HighlightState::None;
+            return;
+        };
+        let Some(hovered_face) = pick_to_face(current_pick.position) else {
+            state.cube.highlight = HighlightState::None;
+            return;
+        };
+        let hovered_cubie = pick_to_cubie(state.side_length, current_pick.position, hovered_face);
+        state.cube.highlight = HighlightState::Cubie(hovered_cubie);
     }
 }
 
@@ -289,6 +329,32 @@ fn picks_to_move(
         translate_vertical_drag_for_whole_face(col, dragged_face, toward_positive)
     };
     Some(DecidedMove::WholeFace { face, direction })
+}
+
+fn pick_to_cubie(side_length: usize, pick: Vec3, hovered_face: Face) -> HoveredCubieCoordinate {
+    let UnrotatedPick(unrotated) = unrotate_pick(pick, hovered_face);
+
+    let row_0_to_1 = f32::midpoint(unrotated.y, 1.);
+    let row = (row_0_to_1 * side_length as f32) as usize;
+
+    let col_0_to_1 = f32::midpoint(unrotated.x, 1.);
+    let col = (col_0_to_1 * side_length as f32) as usize;
+
+    HoveredCubieCoordinate {
+        face: hovered_face,
+        row,
+        col,
+    }
+}
+
+struct UnrotatedPick(Vec3);
+
+fn unrotate_pick(pick: Vec3, face: Face) -> UnrotatedPick {
+    let unrotate_mat = move_face_into_place(face)
+        .inverse_transform()
+        .expect("All faces rotations must be invertible");
+    let unrotated = (unrotate_mat * pick.extend(1.)).truncate();
+    UnrotatedPick(unrotated)
 }
 
 struct UnrotatedPicks {

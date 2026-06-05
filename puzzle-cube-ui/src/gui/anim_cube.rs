@@ -9,6 +9,7 @@ const ANIM_SPEED: f32 = 0.005;
 pub(crate) struct AnimCube<C: PuzzleCube<Side = DefaultSide>> {
     cube: C,
     pub(crate) animation: AnimationState,
+    pub(crate) highlight: HighlightState,
 }
 
 #[derive(Debug, Default, Copy, Clone)]
@@ -113,11 +114,26 @@ impl AnimationState {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub(crate) struct HoveredCubieCoordinate {
+    pub(crate) face: Face,
+    pub(crate) row: usize,
+    pub(crate) col: usize,
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub(crate) enum HighlightState {
+    #[default]
+    None,
+    Cubie(HoveredCubieCoordinate),
+}
+
 impl<C: PuzzleCube<Side = DefaultSide>> AnimCube<C> {
     pub fn new(cube: C) -> Self {
         AnimCube {
             cube,
             animation: AnimationState::default(),
+            highlight: HighlightState::default(),
         }
     }
 
@@ -143,6 +159,7 @@ impl<C: PuzzleCube<Side = DefaultSide>> PuzzleCube for AnimCube<C> {
         AnimCube {
             cube,
             animation: AnimationState::Stationary,
+            highlight: HighlightState::None,
         }
     }
 
