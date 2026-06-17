@@ -8,6 +8,6 @@
         "text-encoding": "^0.7.0",
         "webpack": "^5.107.2",
         "webpack-cli": "^7.0.3",
-        "webpack-dev-server": "^5.2.3"
+        "webpack-dev-server": "^5.2.5"
     }
 }
