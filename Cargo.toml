@@ -4,13 +4,13 @@ members = ["puzzle-cube", "puzzle-cube-ui"]
 
 [workspace.dependencies]
 anyhow = "1.0.102"
-circular-buffer = "1.2.0"
+circular-buffer = "2.0.0"
 colored = "3.1.1"
 console_error_panic_hook = "0.1.7"
 console_log = "1.0.0"
 criterion = "0.8.2"
 getrandom = "0.4.2"
-itertools = "0.14.0"
+itertools = "0.15.0"
 log = "0.4.31"
 pastey = "0.2.3"
 pretty_assertions = "1.4.1"
