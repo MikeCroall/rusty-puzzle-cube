@@ -4,7 +4,7 @@ use crate::gui::{
     anim_cube::AnimCube, cube_3d_ext::PuzzleCube3D, defaults::initial_camera, initial_anim_cube,
     initial_instances, inner_cube, mouse_control::RotationIfReleasedNow,
 };
-use circular_buffer::CircularBuffer;
+use circular_buffer::FixedCircularBuffer;
 use rusty_puzzle_cube::{
     cube::{Cube, rotation::Rotation},
     known_transforms::KnownTransform,
@@ -15,7 +15,7 @@ use tracing::info;
 pub(crate) struct GuiState<C: PuzzleCube3D + Display, const UNDO_SIZE: usize> {
     pub(crate) side_length: usize,
     pub(crate) cube: C,
-    pub(crate) undo_queue: CircularBuffer<UNDO_SIZE, Rotation>,
+    pub(crate) undo_queue: FixedCircularBuffer<Rotation, UNDO_SIZE>,
     pub(crate) selected_transform: KnownTransform,
     pub(crate) camera: Camera,
     pub(crate) lock_upright: bool,
@@ -33,7 +33,7 @@ impl<const UNDO_SIZE: usize> GuiState<AnimCube<Cube>, UNDO_SIZE> {
         info!("Initialising default cube");
         let side_length = 4;
         let cube = initial_anim_cube(side_length)?;
-        let undo_queue = CircularBuffer::<UNDO_SIZE, Rotation>::new();
+        let undo_queue = FixedCircularBuffer::<Rotation, UNDO_SIZE>::new();
 
         info!("Initialising GUI");
         let ctx = window.gl();
