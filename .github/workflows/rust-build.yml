@@ -1,46 +1,93 @@
-name: Rust Build
+name: Rust
 
 on:
     workflow_call:
+        secrets:
+            CODECOV_TOKEN:
+                required: false
     workflow_dispatch:
 
 env:
     CARGO_TERM_COLOR: always
 
 jobs:
-    build-test-lint-deny:
-        name: Build, test, clippy, deny
-        runs-on: ubuntu-latest
-
+    fmt:
+        name: Format
+        runs-on: ubuntu-slim
         steps:
-            - name: Update Rust
-              run: rustup update stable
-            - name: Checkout code
-              uses: actions/checkout@v7
-            - name: Use dependencies cache
-              uses: actions/cache@v6
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+            - uses: dtolnay/rust-toolchain@stable
               with:
-                  path: |
-                      ~/.cargo/bin/
-                      ~/.cargo/registry/index/
-                      ~/.cargo/registry/cache/
-                      ~/.cargo/git/db/
-                      target/
-                  key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-                  restore-keys: ${{ runner.os }}-cargo-
-            - name: Machete
-              uses: bnjbvr/cargo-machete@main
-            - name: Install cargo-nextest
-              uses: taiki-e/install-action@nextest
-            - name: Test
-              run: cargo nextest run --verbose
-            - name: Doc tests (skipped by nextest)
-              run: cargo test --doc
-            - name: Clippy
-              run: cargo clippy --verbose --all-targets -- -D warnings
-            - name: Check fmt
-              run: cargo fmt --all -- --check
-            - name: Deny
-              uses: EmbarkStudios/cargo-deny-action@v2
+                  components: rustfmt
+            - run: cargo fmt --all -- --check
+
+    deps:
+        name: Dependency checks
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+            - uses: bnjbvr/cargo-machete@ac30a525c0a8d163a92d727b3ff079ee3f6ecb08 # v0.9.2
+            - uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1
+              if: ${{ !cancelled() }}
               with:
-                  command: check advisories
+                  command: check advisories bans
+
+    clippy:
+        name: Clippy (${{ matrix.name }})
+        needs: fmt
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - name: native
+                      args: --all-targets
+                    - name: wasm
+                      args: --target wasm32-unknown-unknown
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+            - uses: dtolnay/rust-toolchain@stable
+              with:
+                  components: clippy
+                  targets: wasm32-unknown-unknown
+            - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+              with:
+                  key: ${{ matrix.name }}
+                  save-if: ${{ github.ref == 'refs/heads/main' }}
+            - run: cargo clippy --workspace --all-features ${{ matrix.args }} -- -D warnings
+
+    test-coverage:
+        name: Test with coverage
+        needs: fmt
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+            - uses: dtolnay/rust-toolchain@stable
+              with:
+                  components: llvm-tools-preview
+            - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+              with:
+                  save-if: ${{ github.ref == 'refs/heads/main' }}
+            - uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
+              with:
+                  tool: cargo-llvm-cov,nextest
+            - name: Doc tests (not instrumented, not run by nextest)
+              run: cargo test --doc --workspace --all-features
+            - name: Tests with coverage
+              run: cargo llvm-cov nextest --workspace --all-features --no-report
+            - name: Per-crate reports
+              run: |
+                  cargo llvm-cov report --codecov --output-path lib.json --ignore-filename-regex '/puzzle-cube-ui/'
+                  cargo llvm-cov report --codecov --output-path ui.json  --ignore-filename-regex '/puzzle-cube/'
+            - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+              with:
+                  token: "${{ secrets.CODECOV_TOKEN }}"
+                  files: lib.json
+                  flags: lib
+                  fail_ci_if_error: "${{ github.actor != 'dependabot[bot]' }}"
+            - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+              with:
+                  token: "${{ secrets.CODECOV_TOKEN }}"
+                  files: ui.json
+                  flags: ui
+                  fail_ci_if_error: "${{ github.actor != 'dependabot[bot]' }}"

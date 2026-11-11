@@ -1,0 +1,10 @@
+flag_management:
+    default_rules:
+        carryforward: false
+    individual_flags:
+        - name: lib
+          paths:
+              - puzzle-cube/
+        - name: ui
+          paths:
+              - puzzle-cube-ui/

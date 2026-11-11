@@ -2,6 +2,7 @@ name: CI
 
 on:
     push:
+        paths-ignore: ["**.md", "**.png"]
     workflow_dispatch:
 
 env:
@@ -9,109 +10,37 @@ env:
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
-    cancel-in-progress: true
+    cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+    contents: read
 
 jobs:
-    detect-changes:
-        name: Detect file changes
-        runs-on: ubuntu-slim
-        permissions:
-            contents: read
-            pull-requests: read
-
-        outputs:
-            rust-build: ${{ steps.filter.outputs.rust-build }}
-            rust-coverage: ${{ steps.filter.outputs.rust-coverage }}
-            web-build: ${{ steps.filter.outputs.web-build }}
-            deploy: ${{ steps.filter.outputs.deploy }}
-
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v7
-            - name: Detect changes
-              uses: dorny/paths-filter@v4
-              id: filter
-              with:
-                  filters: |
-                      rust-code: &rust-code
-                          - '**/*.rs'
-
-                      rust-crates: &rust-crates
-                          - '**/Cargo.toml'
-                          - '**/Cargo.lock'
-                          - 'puzzle-cube/**'
-                          - 'puzzle-cube-ui/**'
-                          - *rust-code
-
-                      rust-tool-configs: &rust-tool-configs
-                          - '**/deny.toml'
-
-                      rust-build:
-                          - '**/rust-build.yml'
-                          - *rust-crates
-                          - *rust-tool-configs
-
-                      rust-coverage:
-                          - '**/rust-coverage.yml'
-                          - *rust-code
-
-                      web-files: &web-files
-                          - '**/*.html'
-                          - '**/*.js'
-                          - '**/*.json'
-                          - 'web/**'
-
-                      web-build:
-                          - '**/web-build.yml'
-                          - *web-files
-
-                      deploy:
-                          - '**/deploy.yml'
-                          - *rust-crates
-                          - *web-files
-
     rust-build:
-        needs: detect-changes
-        if: ${{ github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.rust-build == 'true' }}
         uses: ./.github/workflows/rust-build.yml
-
-    rust-coverage:
-        needs: detect-changes
-        if: ${{ (github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.rust-coverage == 'true') && github.ref_name == github.event.repository.default_branch }}
-        uses: ./.github/workflows/rust-coverage.yml
         secrets:
             CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
     web-build:
-        needs: detect-changes
-        if: ${{ github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.web-build == 'true' }}
         uses: ./.github/workflows/web-build.yml
 
     success:
         name: Check success
-        needs: [detect-changes, rust-build, rust-coverage, web-build]
+        needs: [rust-build, web-build]
         if: always()
         runs-on: ubuntu-slim
+        env:
+            NEEDS: ${{ toJSON(needs) }}
         steps:
             - name: Print all results
-              run: echo '${{ toJSON(needs) }}'
+              run: echo "$NEEDS"
             - name: Exit if any failures or cancellations
               if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
               run: exit 1
 
     deploy:
-        needs: [detect-changes, success]
-        if: >-
-            ${{
-                always() &&
-                github.ref_name == github.event.repository.default_branch &&
-                ! contains(needs.*.result, 'failure') &&
-                ! contains(needs.*.result, 'cancelled') &&
-                (
-                    github.event_name == 'workflow_dispatch' ||
-                    needs.detect-changes.outputs.deploy == 'true'
-                )
-            }}
+        needs: [success]
+        if: github.ref_name == github.event.repository.default_branch
         uses: ./.github/workflows/deploy.yml
         permissions:
             id-token: write
