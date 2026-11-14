@@ -2,7 +2,7 @@ name: CI
 
 on:
     push:
-        paths-ignore: ["**.md", "**.png"]
+        paths-ignore: [".github/dependabot.yml", "**.md", "**.png"]
     workflow_dispatch:
 
 env:
