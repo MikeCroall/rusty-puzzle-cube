@@ -53,7 +53,7 @@ jobs:
               with:
                   key: ${{ matrix.name }}
                   save-if: ${{ github.ref == 'refs/heads/main' }}
-            - run: cargo clippy --workspace --all-features ${{ matrix.args }} -- -D warnings
+            - run: cargo clippy --workspace --all-features ${{ matrix.args }} --locked -- -D warnings
 
     test-coverage:
         name: Test with coverage
